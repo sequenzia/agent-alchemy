@@ -1,5 +1,15 @@
 {
-  "enabledPlugins": {
-    "plugin-dev@claude-plugins-official": true
-  }
+  "env": {
+    "CLAUDE_CODE_TASK_LIST_ID": "claude-alchemy"
+  },
+  "permissions": {
+    "additionalDirectories": [
+      "/Users/sequenzia/dev/repos/claude-plugins",
+      "/Users/sequenzia/dev/repos/claude-task-manager"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "context7"
+  ]
 }
