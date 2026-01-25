@@ -1,3 +1,7 @@
 packages:
-  - 'claude-tools'
-  - 'claude-apps/*'
+  - claude-tools
+  - claude-apps/*
+
+ignoredBuiltDependencies:
+  - sharp
+  - unrs-resolver
