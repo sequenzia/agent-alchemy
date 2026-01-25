@@ -2,11 +2,11 @@
 
 **Supercharge your Claude Code workflow with powerful plugins and a visual task manager.**
 
-Claude Alchemy is a collection of tools and applications designed to help developers get the most out of [Claude Code](https://docs.anthropic.com/en/docs/claude-code). Whether you're generating PRDs, managing complex feature development, or tracking AI-generated tasks—this project has you covered.
+Claude Alchemy is a collection of tools and applications designed to help developers get the most out of [Claude Code](https://docs.anthropic.com/en/docs/claude-code).
 
 ## Task Manager
 
-**See your Claude Code tasks come to life.**
+**See your Claude Code Tasks in real-time.**
 
 The Task Manager is a real-time Kanban board that visualizes Claude's native task system (`~/.claude/tasks/`). Watch tasks flow from Pending → In Progress → Completed as Claude works through your project.
 
