@@ -1,0 +1,6 @@
+{
+  "name": "@claude-alchemy/tools",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Claude Code plugins for PRD generation and developer workflows"
+}

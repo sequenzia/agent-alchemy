@@ -1,0 +1,66 @@
+import { fileWatcher, type FileWatcherEvent } from '@/lib/fileWatcher'
+
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url)
+  const taskListId = searchParams.get('taskListId')
+
+  // Ensure file watcher is started
+  if (!fileWatcher.isStarted()) {
+    await fileWatcher.start()
+  }
+
+  const encoder = new TextEncoder()
+
+  const stream = new ReadableStream({
+    start(controller) {
+      // Send initial connection event
+      controller.enqueue(encoder.encode(`event: connected\ndata: {}\n\n`))
+
+      // Handler for task events
+      const handleTaskEvent = (event: FileWatcherEvent) => {
+        // Filter by taskListId if specified
+        if (taskListId && event.taskListId !== taskListId) {
+          return
+        }
+
+        try {
+          const data = JSON.stringify(event)
+          controller.enqueue(encoder.encode(`event: ${event.type}\ndata: ${data}\n\n`))
+        } catch (error) {
+          console.error('Error sending SSE event:', error)
+        }
+      }
+
+      // Subscribe to file watcher events
+      fileWatcher.on('taskEvent', handleTaskEvent)
+
+      // Heartbeat to keep connection alive
+      const heartbeat = setInterval(() => {
+        try {
+          controller.enqueue(encoder.encode(`:heartbeat\n\n`))
+        } catch {
+          // Connection likely closed
+          clearInterval(heartbeat)
+        }
+      }, 30000)
+
+      // Cleanup on abort
+      request.signal.addEventListener('abort', () => {
+        clearInterval(heartbeat)
+        fileWatcher.off('taskEvent', handleTaskEvent)
+      })
+    },
+  })
+
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache, no-transform',
+      'Connection': 'keep-alive',
+      'X-Accel-Buffering': 'no', // Disable nginx buffering
+    },
+  })
+}

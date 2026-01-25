@@ -1,0 +1,34 @@
+{
+  "name": "claude-alchemy",
+  "description": "Directory of Claude Code extensions including development tools, productivity plugins, and MCP integrations",
+  "owner": {
+    "name": "Stephen Sequenzia",
+    "email": "sequenzia@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "prd-tools",
+      "description": "Generate and analyze Product Requirements Documents through interactive workflows",
+      "version": "0.1.0",
+      "author": {
+        "name": "Stephen Sequenzia",
+        "email": "sequenzia@gmail.com"
+      },
+      "source": "./claude-tools/prd-tools",
+      "category": "development",
+      "homepage": "https://github.com/sequenzia/claude-alchemy/tree/main/claude-tools/prd-tools"
+    },
+    {
+      "name": "dev-tools",
+      "description": "Developer tools for feature development, Git workflows, and release automation",
+      "version": "0.1.0",
+      "author": {
+        "name": "Stephen Sequenzia",
+        "email": "sequenzia@gmail.com"
+      },
+      "source": "./claude-tools/dev-tools",
+      "category": "development",
+      "homepage": "https://github.com/sequenzia/claude-alchemy/tree/main/claude-tools/dev-tools"
+    }
+  ]
+}

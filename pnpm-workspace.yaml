@@ -1,0 +1,3 @@
+packages:
+  - 'claude-tools'
+  - 'claude-apps/*'
