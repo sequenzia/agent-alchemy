@@ -39,7 +39,7 @@ claude plugins add sequenzia/claude-alchemy
 
 Or individually: `claude plugins add sequenzia/claude-alchemy/claude-tools/prd-tools`
 
-### prd-tools (v0.3.1)
+### prd-tools (v0.1.0)
 
 Generate Product Requirements Documents through interactive interviews with depth-aware templates and research capabilities.
 
@@ -56,7 +56,7 @@ Generate Product Requirements Documents through interactive interviews with dept
 - PRD quality analysis with interactive resolution
 - Native Claude Code Task generation with dependencies
 
-### dev-tools (v0.2.6)
+### dev-tools (v0.1.0)
 
 Developer tools for feature development, codebase analysis, Git workflows, and release automation.
 
