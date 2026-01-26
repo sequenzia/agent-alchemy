@@ -4,13 +4,15 @@
 
 Claude Alchemy is a collection of tools and applications designed to help developers get the most out of [Claude Code](https://docs.anthropic.com/en/docs/claude-code).
 
+![Claude Task Manager](./internal/images/claude-task-manager.png)
+
+**See more screenshots [screenshots](#screenshots) below**
+
 ## Task Manager
 
 **See your Claude Code Tasks in real-time.**
 
 The Task Manager is a real-time Kanban board that visualizes Claude's native task system (`~/.claude/tasks/`). Watch tasks flow from Pending → In Progress → Completed as Claude works through your project.
-
-![Claude Task Manager](claude-apps/task-manager/internal/images/claude-task-manager.png)
 
 **Key Features:**
 - **Real-time updates** — Tasks update instantly via Server-Sent Events as Claude works
@@ -89,6 +91,21 @@ PRD Creation → Task Generation → Task Visualization → Implementation → R
  prd-tools     prd-tools:          task-manager        dev-tools:    dev-tools
               create-tasks              app            feature-dev    (release)
 ```
+
+## Screenshots
+
+### Task Manager Kanban View
+![Claude Task Manager](./internal/images/claude-task-manager.png)
+
+### Tasks Generated from prd-tools
+![PRD Tasks](./internal/images/tasks-generated-by-prd-tools.png)
+
+### Single Task View with Dependencies, Test Cases and Acceptance Criteria
+![Task Detail View](./internal/images/task-in-task-manager.png)
+
+### Completed Tasks in Claude Code
+![Completed Tasks](./internal/images/completed-tasks-in-claude.png)
+
 
 ## Development
 

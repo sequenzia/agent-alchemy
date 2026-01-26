@@ -15,7 +15,7 @@ A real-time Kanban board for visualizing and managing Claude AI task files. Buil
 
 ## Screenshots
 
-![Claude Task Manager](./internal/images/claude-task-manager.png)
+![Claude Task Manager](../../internal/images/claude-task-manager.png)
 
 ## Prerequisites
 
