@@ -49,12 +49,14 @@ First, read the task generation skill and reference files:
 Read: skills/task-generation/SKILL.md
 Read: skills/task-generation/references/decomposition-patterns.md
 Read: skills/task-generation/references/dependency-inference.md
+Read: skills/task-generation/references/testing-requirements.md
 ```
 
 These provide:
 - Task schema and metadata standards
 - Decomposition patterns by feature type
 - Dependency inference rules
+- Testing requirements by task type and acceptance criteria patterns
 
 ---
 
@@ -68,10 +70,11 @@ Extract information from each PRD section:
 |-------------|---------|
 | **1. Overview** | Project name, description for task context |
 | **5.x Functional Requirements** | Features, priorities (P0-P3), user stories |
-| **6.x Non-Functional Requirements** | Constraints, performance requirements |
+| **6.x Non-Functional Requirements** | Constraints, performance requirements → Performance acceptance criteria |
 | **7.x Technical Considerations** | Tech stack, architecture decisions |
 | **7.3 Data Models** (Full-Tech) | Entity definitions → data model tasks |
 | **7.4 API Specifications** (Full-Tech) | Endpoints → API tasks |
+| **8.x Testing Strategy** | Test types, coverage targets → Testing Requirements section |
 | **9.x Implementation Plan** | Phases → task grouping |
 | **10.x Dependencies** | Explicit dependencies → blockedBy relationships |
 
@@ -81,8 +84,21 @@ For each feature in Section 5.x:
 1. Note feature name and description
 2. Extract priority (P0/P1/P2/P3)
 3. List user stories (US-XXX)
-4. Collect acceptance criteria
+4. Collect acceptance criteria and categorize by type (Functional, Edge Cases, Error Handling, Performance)
 5. Identify implied sub-features
+
+### Testing Extraction
+
+From Section 8.x (Testing Strategy) if present:
+1. Note test types specified (unit, integration, E2E)
+2. Extract coverage targets
+3. Identify critical paths requiring E2E tests
+4. Note any performance testing requirements
+
+From Section 6.x (Non-Functional Requirements):
+1. Extract performance targets → Performance acceptance criteria
+2. Extract security requirements → Security testing requirements
+3. Extract reliability requirements → Integration test requirements
 
 ### Depth-Based Granularity
 
@@ -128,7 +144,7 @@ For each feature, apply the standard layer pattern:
 
 ### Task Structure
 
-Each task must have:
+Each task must have categorized acceptance criteria and testing requirements:
 
 ```
 subject: "Create User data model"              # Imperative mood
@@ -137,9 +153,26 @@ description: |
 
   {Technical details if applicable}
 
-  Acceptance Criteria:
-  - [ ] Criterion 1
-  - [ ] Criterion 2
+  **Acceptance Criteria:**
+
+  _Functional:_
+  - [ ] Core behavior criterion
+  - [ ] Expected output criterion
+
+  _Edge Cases:_
+  - [ ] Boundary condition criterion
+  - [ ] Unusual scenario criterion
+
+  _Error Handling:_
+  - [ ] Error scenario criterion
+  - [ ] Recovery behavior criterion
+
+  _Performance:_ (include if applicable)
+  - [ ] Performance target criterion
+
+  **Testing Requirements:**
+  • {Inferred test type}: {What to test}
+  • {PRD-specified test}: {What to test}
 
   Source: {prd_path} Section {number}
 activeForm: "Creating User data model"         # Present continuous
@@ -150,6 +183,40 @@ metadata:
   prd_path: "specs/PRD-Example.md"             # Source PRD
   feature_name: "User Authentication"          # Parent feature
   task_uid: "{prd_path}:{feature}:{type}:{seq}" # Unique ID
+```
+
+### Acceptance Criteria Categories
+
+Group acceptance criteria into these categories:
+
+| Category | What to Include |
+|----------|-----------------|
+| **Functional** | Core behavior, expected outputs, state changes |
+| **Edge Cases** | Boundaries, empty/null, max values, concurrent operations |
+| **Error Handling** | Invalid input, failures, timeouts, graceful degradation |
+| **Performance** | Response times, throughput, resource limits (if applicable) |
+
+### Testing Requirements Generation
+
+Generate testing requirements by combining:
+
+1. **Inferred from task type** (see `references/testing-requirements.md`):
+   - Data Model → Unit + Integration tests
+   - API Endpoint → Integration + E2E tests
+   - UI Component → Component + E2E tests
+   - Business Logic → Unit + Integration tests
+
+2. **Extracted from PRD** (Section 8 or feature-specific):
+   - Explicit test types mentioned
+   - Coverage targets
+   - Critical path tests
+
+Format as bullet points with test type and description:
+```
+**Testing Requirements:**
+• Unit: Schema validation for all field types
+• Integration: Database persistence and retrieval
+• E2E: Complete login workflow (from PRD 8.1)
 ```
 
 ### Priority Mapping
@@ -279,16 +346,39 @@ If user selects "Show task details":
 
 ### Step 1: Create All Tasks
 
-Use TaskCreate for each task, capturing the returned ID:
+Use TaskCreate for each task with enhanced structure, capturing the returned ID:
 
 ```
 TaskCreate:
   subject: "Create User data model"
   description: |
-    Define the User data model...
+    Define the User data model based on PRD section 7.3.
 
-    Acceptance Criteria:
-    - [ ] ...
+    Fields:
+    - id: UUID (primary key)
+    - email: string (unique, required)
+    - passwordHash: string (required)
+    - createdAt: timestamp
+
+    **Acceptance Criteria:**
+
+    _Functional:_
+    - [ ] All fields defined with correct types
+    - [ ] Indexes created for email lookup
+    - [ ] Migration script created
+
+    _Edge Cases:_
+    - [ ] Handle duplicate email constraint violation
+    - [ ] Support maximum email length (254 chars)
+
+    _Error Handling:_
+    - [ ] Clear error messages for constraint violations
+
+    **Testing Requirements:**
+    • Unit: Schema validation for all field types
+    • Unit: Email format validation
+    • Integration: Database persistence and retrieval
+    • Integration: Unique constraint enforcement
 
     Source: specs/PRD-Auth.md Section 7.3
   activeForm: "Creating User data model"

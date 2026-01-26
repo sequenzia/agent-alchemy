@@ -202,12 +202,90 @@ Use imperative mood for task subjects:
 
 {If applicable: Fields, endpoints, or components to create}
 
-Acceptance Criteria:
-- [ ] Criterion 1
-- [ ] Criterion 2
-- [ ] Criterion 3
+**Acceptance Criteria:**
+
+_Functional:_
+- [ ] {Primary behavior criterion}
+- [ ] {Secondary behavior criterion}
+
+_Edge Cases:_
+- [ ] {Boundary condition criterion}
+
+_Error Handling:_
+- [ ] {Error scenario criterion}
+
+_Performance:_ (if applicable)
+- [ ] {Performance target criterion}
+
+**Testing Requirements:**
+• {Test type}: {What to test}
+• {Test type}: {What to test}
 
 Source: {PRD path} Section {number}
+```
+
+## Testing Suggestions by Pattern
+
+### Standard Feature Testing
+
+| Task Type | Suggested Tests |
+|-----------|-----------------|
+| Data Model | Unit: schema validation, field constraints; Integration: persistence |
+| API/Service | Integration: success/error responses; E2E: full flow |
+| Business Logic | Unit: core logic, edge cases; Integration: with real deps |
+| UI/Frontend | Component: states, interactions; E2E: user workflows |
+| Integration | Unit: mocked client; Integration: real API (sandbox) |
+| Test Tasks | N/A (these ARE the tests) |
+
+### Authentication Testing
+
+```
+Security-focused testing requirements:
+• Unit: Token generation, password hashing
+• Integration: Login/logout flows, session management
+• Security: Brute force protection, token expiry, CSRF
+• E2E: Complete auth workflow
+```
+
+### CRUD Testing
+
+```
+Standard CRUD testing requirements:
+• Integration: Each endpoint (GET, POST, PUT, DELETE)
+• Integration: Validation errors (400 responses)
+• Integration: Not found errors (404 responses)
+• Integration: Authorization (401/403 responses)
+• E2E: Create → Read → Update → Delete workflow
+```
+
+### Integration Feature Testing
+
+```
+External service testing requirements:
+• Unit: Client methods with mocked responses
+• Unit: Error handling (timeouts, rate limits, retries)
+• Contract: API schema validation
+• Integration: Real API calls (sandbox environment)
+```
+
+### Background Job Testing
+
+```
+Async task testing requirements:
+• Unit: Job logic with mocked dependencies
+• Unit: Retry logic and failure handling
+• Integration: Queue behavior, job scheduling
+• Integration: Idempotency verification
+```
+
+### Migration/Refactoring Testing
+
+```
+Migration testing requirements:
+• Integration: Data migration correctness
+• Integration: Rollback procedures
+• E2E: Feature flag toggling
+• Performance: Migration execution time
 ```
 
 ## Complexity Indicators

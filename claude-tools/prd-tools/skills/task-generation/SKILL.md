@@ -45,7 +45,7 @@ Every task should trace back to the source PRD:
 
 ## Task Schema
 
-Each task created via TaskCreate follows this structure:
+Each task created via TaskCreate follows this enhanced structure with categorized acceptance criteria and testing requirements:
 
 ```
 TaskCreate:
@@ -59,10 +59,25 @@ TaskCreate:
     - passwordHash: string (required)
     - createdAt: timestamp
 
-    Acceptance Criteria:
+    **Acceptance Criteria:**
+
+    _Functional:_
     - [ ] Schema defined with all required fields
     - [ ] Indexes created for email lookup
     - [ ] Migration script created
+
+    _Edge Cases:_
+    - [ ] Handle duplicate email constraint violation
+    - [ ] Support maximum email length (254 chars)
+
+    _Error Handling:_
+    - [ ] Clear error messages for constraint violations
+
+    **Testing Requirements:**
+    • Unit: Schema validation for all field types
+    • Unit: Email format validation
+    • Integration: Database persistence and retrieval
+    • Integration: Unique constraint enforcement
 
     Source: specs/PRD-Auth.md Section 7.3
   activeForm: "Creating User data model"              # Present continuous
@@ -74,6 +89,26 @@ TaskCreate:
     feature_name: "User Authentication"               # Parent feature
     task_uid: "specs/PRD-Auth.md:user-auth:model:001" # Unique ID for merge
 ```
+
+### Acceptance Criteria Categories
+
+Structure acceptance criteria into these categories:
+
+| Category | Purpose | Examples |
+|----------|---------|----------|
+| **Functional** | Core behavior that must work | Feature works as specified, correct outputs |
+| **Edge Cases** | Boundary conditions, unusual scenarios | Empty input, max values, concurrent ops |
+| **Error Handling** | Failure scenarios and recovery | Invalid input, network failures, timeouts |
+| **Performance** | Speed and resource requirements | Response times, throughput targets |
+
+### Testing Requirements Section
+
+Add a Testing Requirements section below acceptance criteria. Infer test types from:
+1. **Task layer** - Data model → Unit + Integration; API → Integration + E2E
+2. **PRD testing section** - Extract explicit test requirements from Section 8
+3. **Task priority** - Higher priority → more thorough testing
+
+See `references/testing-requirements.md` for detailed test type mappings.
 
 ## PRD Section Mapping
 
@@ -148,3 +183,4 @@ When generating tasks for a PRD that already has tasks:
 
 - `references/decomposition-patterns.md` - Feature decomposition patterns by type
 - `references/dependency-inference.md` - Automatic dependency inference rules
+- `references/testing-requirements.md` - Test type mappings and acceptance criteria patterns
