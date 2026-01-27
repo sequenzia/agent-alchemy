@@ -1,11 +1,15 @@
 ---
-description: Bump the version of a plugin in this repository
+name: bump-plugin-version
+description: Bump the version of a plugin in this repository. Use to increment plugin versions and update marketplace metadata.
+model: haiku
+user-invocable: true
+disable-model-invocation: true
 allowed-tools: Read, Edit, Glob, AskUserQuestion, Bash
 ---
 
 # Plugin Version Bumper
 
-Bump the version of any plugin in this repository. This command discovers available plugins, prompts for the bump level, and updates both the plugin configuration and marketplace metadata.
+Bump the version of any plugin in this repository. This skill discovers available plugins, prompts for the bump level, and updates both the plugin configuration and marketplace metadata.
 
 ## Workflow
 

@@ -1,6 +1,10 @@
 ---
-description: Prepare and execute a Python package release with verification steps
-argument-hint: [version-override]
+name: release
+description: Prepare and execute a Python package release with verification steps. Use for releasing Python packages with uv and ruff.
+argument-hint: "[version-override]"
+model: haiku
+user-invocable: true
+disable-model-invocation: true
 allowed-tools: Read, Edit, Bash, AskUserQuestion, Glob, Task
 ---
 

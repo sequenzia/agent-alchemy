@@ -1,12 +1,9 @@
 ---
-description: Keep a Changelog format guidelines and entry writing best practices
-triggers:
-  - changelog format
-  - keep a changelog
-  - changelog entry
-  - write changelog
-  - changelog categories
-  - changelog best practices
+name: changelog-format
+description: Keep a Changelog format guidelines and entry writing best practices. Use when writing changelog entries, updating CHANGELOG.md, or following Keep a Changelog specification.
+model: inherit
+user-invocable: false
+disable-model-invocation: false
 ---
 
 # Keep a Changelog Format

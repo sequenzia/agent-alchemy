@@ -7,9 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-01-26
+
+### Changed
+
+- **BREAKING**: Migrate all commands to skills following Claude Code skills documentation guidelines
+- Update all skill frontmatter to use valid fields only (remove invalid `triggers` field)
+- Add `user-invocable: false` to reference skills (architecture-patterns, language-patterns, code-quality, project-conventions, changelog-format)
+- Add `disable-model-invocation: true` to workflow skills (git-commit, git-push, feature-dev, analyze-codebase, release, bump-plugin-version)
+- Reorganize supporting files into per-skill references directories
+- Update README.md to document skills-based architecture
+
+### Removed
+
+- Remove `commands/` directory (all commands migrated to `skills/`)
+- Remove root `references/` directory (files moved to `skills/feature-dev/references/`)
+
 ### Added
 
-- Add `/dev-tools:analyze-codebase` command for comprehensive codebase analysis
+- Add `/dev-tools:analyze-codebase` skill for comprehensive codebase analysis
 - Add `codebase-analyzer` agent (Opus) for deep architecture and pattern analysis
 - Add `report-generator` agent (Sonnet) for generating polished markdown reports
 - Add 3-phase workflow: exploration, analysis, report generation

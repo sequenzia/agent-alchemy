@@ -3,6 +3,7 @@ description: Generates comprehensive markdown reports from codebase analysis fin
 tools:
   - Read
   - Write
+model: inherit
 color: purple
 ---
 

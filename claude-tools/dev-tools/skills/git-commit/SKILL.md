@@ -1,5 +1,9 @@
 ---
-description: Commit staged changes with conventional commit message
+name: git-commit
+description: Commit staged changes with conventional commit message. Use when user says "commit changes", "commit this", "save my changes", or wants to create a git commit.
+model: haiku
+user-invocable: true
+disable-model-invocation: true
 allowed-tools: Bash, AskUserQuestion
 ---
 

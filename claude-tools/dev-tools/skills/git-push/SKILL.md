@@ -1,5 +1,9 @@
 ---
-description: Push commits to remote with automatic rebase on conflict
+name: git-push
+description: Push commits to remote with automatic rebase on conflict. Use when user says "push changes", "push to remote", "push it up".
+model: haiku
+user-invocable: true
+disable-model-invocation: true
 allowed-tools: Bash
 ---
 
