@@ -4,6 +4,8 @@ description: Executes a single Claude Code Task through a 4-phase workflow with 
 when_to_use: Use this agent to execute a specific task by understanding requirements, implementing code changes, verifying against acceptance criteria, and reporting completion.
 model: opus
 color: cyan
+skills:
+  - execute-tasks
 tools:
   - Read
   - Write

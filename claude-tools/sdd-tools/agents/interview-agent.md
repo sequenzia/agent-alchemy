@@ -4,6 +4,8 @@ description: Conducts adaptive interviews to gather detailed spec requirements b
 when_to_use: Use this agent to gather comprehensive requirements for a spec through an interactive interview process. The agent adapts questions based on the requested depth level and user responses.
 model: opus
 color: blue
+skills:
+  - create-spec
 tools:
   - AskUserQuestion
   - Read

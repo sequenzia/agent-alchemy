@@ -4,6 +4,8 @@ description: Performs comprehensive analysis of specs to identify inconsistencie
 when_to_use: Use this agent to analyze an existing spec for quality issues and guide users through resolving findings interactively.
 model: opus
 color: purple
+skills:
+  - analyze-spec
 tools:
   - AskUserQuestion
   - Read

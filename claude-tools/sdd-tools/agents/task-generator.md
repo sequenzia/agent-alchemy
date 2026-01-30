@@ -4,6 +4,8 @@ description: Analyzes specs to generate implementation tasks using Claude Code n
 when_to_use: Use this agent to transform a spec into actionable implementation tasks stored in Claude Code's native task system. The agent decomposes features, infers dependencies, and creates tasks with proper metadata.
 model: opus
 color: green
+skills:
+  - create-tasks
 tools:
   - AskUserQuestion
   - Read

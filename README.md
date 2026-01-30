@@ -44,7 +44,7 @@ claude plugins add sequenzia/claude-alchemy
 
 Or individually: `claude plugins add sequenzia/claude-alchemy/claude-tools/sdd-tools`
 
-### sdd-tools (v0.3.0)
+### sdd-tools (v0.1.0)
 
 Generate specifications through interactive interviews with depth-aware templates and research capabilities.
 
