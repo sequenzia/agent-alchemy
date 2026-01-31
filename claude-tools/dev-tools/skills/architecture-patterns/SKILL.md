@@ -1,5 +1,9 @@
 ---
-description: Provides architectural pattern knowledge for designing feature implementations including MVC, event-driven, microservices, and CQRS patterns
+name: architecture-patterns
+description: Provides architectural pattern knowledge for designing feature implementations including MVC, event-driven, microservices, and CQRS patterns. Use when designing system architecture or choosing implementation patterns.
+model: inherit
+user-invocable: false
+disable-model-invocation: false
 ---
 
 # Architecture Patterns

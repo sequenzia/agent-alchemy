@@ -1,5 +1,9 @@
 ---
-description: Guides discovery and application of project-specific conventions including code patterns, naming, structure, and team practices
+name: project-conventions
+description: Guides discovery and application of project-specific conventions including code patterns, naming, structure, and team practices. Use when exploring a codebase or implementing features to match existing patterns.
+model: inherit
+user-invocable: false
+disable-model-invocation: false
 ---
 
 # Project Conventions

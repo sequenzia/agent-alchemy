@@ -1,17 +1,9 @@
 ---
-description: Orchestrates git commit and push operations based on user intent
-triggers:
-  - commit changes
-  - save changes
-  - commit this
-  - commit it
-  - push it
-  - push changes
-  - push to remote
-  - push it up
-  - commit and push
-  - ship it
-  - send it up
+name: git-workflow
+description: Orchestrates git commit and push operations based on user intent. Use when user says "commit changes", "push it", "commit and push", "ship it", "send it up", "save changes", or wants to perform git operations.
+model: haiku
+user-invocable: false
+disable-model-invocation: false
 ---
 
 # Git Workflow
