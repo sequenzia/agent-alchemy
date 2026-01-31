@@ -17,6 +17,12 @@ A Claude Code plugin for generating and analyzing specifications through interac
 1. Copy the `sdd-tools` folder to your Claude Code plugins directory
 2. Restart Claude Code or reload plugins
 
+## End-to-End Workflow
+
+The sdd-tools pipeline takes you from idea to working implementation: **create-spec → create-tasks → execute-tasks**. Each step produces artifacts that feed into the next, with optional real-time monitoring via the Task Manager app.
+
+See the full [End-to-End Workflow Guide](../../internal/docs/sdd-tools-workflow.md) for detailed coverage of each step, including the 4-phase execution model, adaptive verification, execution context sharing, and Task Manager integration.
+
 ## Usage
 
 ### Creating a Spec
@@ -225,47 +231,6 @@ Research findings are automatically formatted for spec incorporation and include
 - Performance SLAs
 - Testing Strategy
 - Deployment Plan
-
-### Executing Tasks
-
-Run the execute-tasks skill to execute pending tasks in dependency order:
-
-```
-/sdd-tools:execute-tasks
-```
-
-This will:
-1. Load all pending tasks and build an execution plan
-2. Sort tasks by priority and dependency order
-3. Launch an autonomous agent for each task
-4. Verify each task against its acceptance criteria
-5. Retry failed tasks (up to 3 attempts by default)
-6. Report a session summary with pass/fail breakdown
-
-#### Execute a Specific Task
-
-```
-/sdd-tools:execute-tasks 5
-```
-
-#### Custom Retry Limit
-
-```
-/sdd-tools:execute-tasks --retries 1
-```
-
-#### Execution Context
-
-Tasks share learnings through `.claude/execution-context.md`. Later tasks benefit from patterns, decisions, and issues discovered by earlier tasks. This file persists across sessions so you can resume execution where you left off.
-
-#### Task Verification
-
-Tasks are verified adaptively based on their type:
-
-| Task Type | Verification Method |
-|-----------|-------------------|
-| Spec-generated (has acceptance criteria) | Criterion-by-criterion evaluation |
-| General (no acceptance criteria) | Inferred checklist from description |
 
 ## Tips for Best Results
 

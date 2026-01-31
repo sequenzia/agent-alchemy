@@ -62,6 +62,8 @@ Generate specifications through interactive interviews with depth-aware template
 - Spec quality analysis with interactive resolution
 - Native Claude Code Task generation with dependencies
 
+See the [sdd-tools Workflow Guide](./internal/docs/sdd-tools-workflow.md) for a detailed walkthrough of the spec → tasks → execution pipeline.
+
 ### dev-tools (v0.3.0)
 
 Developer tools for feature development, codebase analysis, Git workflows, and release automation.
