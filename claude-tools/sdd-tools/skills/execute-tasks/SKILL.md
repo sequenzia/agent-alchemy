@@ -81,10 +81,7 @@ Collect unblocked pending tasks (filtered by task group if specified), sort by p
 ### Step 4: Check Settings
 Read `.claude/sdd-tools.local.md` if it exists for execution preferences.
 
-### Step 5: Present Execution Plan and Confirm
-Display the plan showing tasks to execute, blocked tasks, and completed count. Then ask the user to confirm before proceeding with execution. If the user cancels, stop without modifying any tasks.
-
-### Step 5.5: Initialize Execution Directory
+### Step 5: Initialize Execution Directory
 Generate a `task_execution_id` using three-tier resolution: (1) if `--task-group` provided → `{task_group}-{YYYYMMDD}-{HHMMSS}`, (2) else if all open tasks share the same `metadata.task_group` → `{task_group}-{YYYYMMDD}-{HHMMSS}`, (3) else → `exec-session-{YYYYMMDD}-{HHMMSS}`. Create `.claude/{task_execution_id}/` directory containing:
 - `execution_plan.md` — saved execution plan from Step 5
 - `execution-context.md` — initialized with standard template
@@ -92,16 +89,21 @@ Generate a `task_execution_id` using three-tier resolution: (1) if `--task-group
 - `tasks/` — subdirectory for archiving completed task files
 - `execution_pointer.txt` at `~/.claude/tasks/{CLAUDE_CODE_TASK_LIST_ID}/` — created immediately with path to `.claude/{task_execution_id}/`
 
-### Step 6: Initialize Execution Context
-Read `.claude/{task_execution_id}/execution-context.md` (created in Step 5.5). If a prior execution context exists from a previous session, merge relevant learnings into the new one.
+### Step 6: Present Execution Plan and Confirm
+Display the plan showing tasks to execute, blocked tasks, and completed count. Also display the the details of step 5 which includes the execution directory path and files created, including the execution pointer file location.
 
-### Step 7: Execute Loop
+Then ask the user to confirm before proceeding with execution. If the user cancels, stop without modifying any tasks.
+
+### Step 7: Initialize Execution Context
+Read `.claude/{task_execution_id}/execution-context.md` (created in Step 5). If a prior execution context exists from a previous session, merge relevant learnings into the new one.
+
+### Step 8: Execute Loop
 For each task: get details, mark in progress, launch `sdd-tools:task-executor` agent, process result (PASS/PARTIAL/FAIL), handle retries, track token usage (placeholder/estimated), log result to `.claude/{task_execution_id}/task_log.md`, archive completed task files to `.claude/{task_execution_id}/tasks/`, refresh task list for newly unblocked tasks.
 
-### Step 8: Session Summary
+### Step 9: Session Summary
 Display execution results with pass/fail counts, failed task list, newly unblocked tasks, and token usage summary (placeholder). Save `session_summary.md` to `.claude/{task_execution_id}/`. Update `execution_pointer.txt` at `~/.claude/tasks/{CLAUDE_CODE_TASK_LIST_ID}/` pointing to the execution directory.
 
-### Step 9: Update CLAUDE.md
+### Step 10: Update CLAUDE.md
 Review execution context for project-wide changes (new patterns, dependencies, commands, structure changes, design decisions). Make targeted edits to CLAUDE.md if meaningful changes occurred. Skip if only task-specific or internal implementation details.
 
 ## Task Classification
