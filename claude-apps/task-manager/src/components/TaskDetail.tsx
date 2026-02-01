@@ -1,5 +1,6 @@
 'use client'
 
+import { ScrollText } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -7,6 +8,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
 import type { Task, TaskMetadata } from '@/types/task'
 
 const priorityColors: Record<NonNullable<TaskMetadata['priority']>, string> = {
@@ -44,9 +46,10 @@ interface TaskDetailProps {
   task: Task | null
   onClose: () => void
   onNavigateToTask?: (taskId: string) => void
+  onOpenExecutionContext?: () => void
 }
 
-export function TaskDetail({ task, onClose, onNavigateToTask }: TaskDetailProps) {
+export function TaskDetail({ task, onClose, onNavigateToTask, onOpenExecutionContext }: TaskDetailProps) {
   if (!task) return null
 
   const statusDisplay = {
@@ -165,6 +168,20 @@ export function TaskDetail({ task, onClose, onNavigateToTask }: TaskDetailProps)
             </div>
           )}
         </div>
+
+          {onOpenExecutionContext && (
+            <div className="border-t pt-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onOpenExecutionContext}
+                className="w-full"
+              >
+                <ScrollText className="h-4 w-4 mr-2" />
+                View Execution Context
+              </Button>
+            </div>
+          )}
       </DialogContent>
     </Dialog>
   )

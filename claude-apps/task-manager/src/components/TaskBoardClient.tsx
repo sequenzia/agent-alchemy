@@ -8,7 +8,7 @@ import { TaskDetail } from '@/components/TaskDetail'
 import { TaskListSelector } from '@/components/TaskListSelector'
 import { SearchInput } from '@/components/SearchInput'
 import { ThemeToggle } from '@/components/ThemeToggle'
-import { ExecutionSidebar } from '@/components/ExecutionSidebar'
+import { ExecutionDialog } from '@/components/ExecutionDialog'
 import { Button } from '@/components/ui/button'
 import { useTasks } from '@/hooks/useTasks'
 import { useExecutionContext } from '@/hooks/useExecutionContext'
@@ -31,7 +31,7 @@ export function TaskBoardClient({
 }: TaskBoardClientProps) {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [executionDialogOpen, setExecutionDialogOpen] = useState(false)
 
   // Use TanStack Query with initial data from server
   const { data: tasks } = useTasks(listId, initialTasks)
@@ -62,12 +62,11 @@ export function TaskBoardClient({
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                title="Toggle execution context"
-                className={sidebarOpen ? 'bg-accent' : ''}
+                onClick={() => setExecutionDialogOpen(true)}
+                title="View execution context"
               >
                 <ScrollText className="h-5 w-5" />
-                <span className="sr-only">Toggle execution context</span>
+                <span className="sr-only">View execution context</span>
               </Button>
             )}
             <ThemeToggle />
@@ -75,30 +74,32 @@ export function TaskBoardClient({
         </div>
       </header>
       {currentTasks.length > 0 && <SummaryStats tasks={currentTasks} />}
-      <div className="flex" style={{ height: currentTasks.length > 0 ? 'calc(100vh - 121px)' : 'calc(100vh - 65px)' }}>
-        <main className="flex-1 min-w-0">
-          {currentTasks.length === 0 ? (
-            <div className="flex items-center justify-center h-full">
-              <p className="text-muted-foreground">No tasks found</p>
-            </div>
-          ) : (
-            <KanbanBoard
-              tasks={currentTasks}
-              searchQuery={searchQuery}
-              onTaskClick={setSelectedTask}
-            />
-          )}
-        </main>
-        <ExecutionSidebar
-          executionContext={executionContext ?? null}
-          open={sidebarOpen}
-          onClose={() => setSidebarOpen(false)}
-        />
-      </div>
+      <main style={{ height: currentTasks.length > 0 ? 'calc(100vh - 121px)' : 'calc(100vh - 65px)' }}>
+        {currentTasks.length === 0 ? (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-muted-foreground">No tasks found</p>
+          </div>
+        ) : (
+          <KanbanBoard
+            tasks={currentTasks}
+            searchQuery={searchQuery}
+            onTaskClick={setSelectedTask}
+          />
+        )}
+      </main>
       <TaskDetail
         task={selectedTask}
         onClose={() => setSelectedTask(null)}
         onNavigateToTask={handleNavigateToTask}
+        onOpenExecutionContext={hasExecContext ? () => {
+          setSelectedTask(null)
+          setExecutionDialogOpen(true)
+        } : undefined}
+      />
+      <ExecutionDialog
+        executionContext={executionContext ?? null}
+        open={executionDialogOpen}
+        onOpenChange={setExecutionDialogOpen}
       />
     </>
   )
