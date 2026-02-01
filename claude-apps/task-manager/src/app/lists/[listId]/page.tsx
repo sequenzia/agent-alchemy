@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation'
-import { getTaskLists, getTasks } from '@/lib/taskService'
+import { getTaskLists, getTasks, getExecutionContext } from '@/lib/taskService'
 import { TaskBoardClient } from '@/components/TaskBoardClient'
 
 interface PageProps {
@@ -10,10 +10,11 @@ export default async function TaskListPage({ params }: PageProps) {
   const { listId } = await params
   const decodedListId = decodeURIComponent(listId)
 
-  // Fetch data on the server
-  const [taskLists, tasks] = await Promise.all([
+  // Fetch data on the server in parallel
+  const [taskLists, tasks, executionContext] = await Promise.all([
     getTaskLists(),
     getTasks(decodedListId),
+    getExecutionContext(decodedListId),
   ])
 
   // Check if the task list exists
@@ -28,6 +29,7 @@ export default async function TaskListPage({ params }: PageProps) {
         listId={decodedListId}
         initialTasks={tasks}
         taskLists={taskLists}
+        initialExecutionContext={executionContext}
       />
     </div>
   )

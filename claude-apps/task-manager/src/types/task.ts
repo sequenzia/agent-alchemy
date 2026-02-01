@@ -29,10 +29,16 @@ export interface TaskList {
 }
 
 export type SSEEventType = 'task:created' | 'task:updated' | 'task:deleted'
+export type ExecutionSSEEventType = 'execution:updated'
 
 export interface SSEEvent {
   type: SSEEventType
   taskListId: string
   taskId: string
   task?: Task
+}
+
+export interface ExecutionSSEEvent {
+  type: ExecutionSSEEventType
+  taskListId: string
 }

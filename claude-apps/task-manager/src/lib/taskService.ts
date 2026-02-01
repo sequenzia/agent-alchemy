@@ -1,7 +1,8 @@
-import { readdir, readFile, access } from 'node:fs/promises'
-import { join, basename } from 'node:path'
+import { readdir, readFile, access, stat } from 'node:fs/promises'
+import { join, basename, resolve, relative } from 'node:path'
 import { homedir } from 'node:os'
 import type { Task, TaskList, TaskStatus } from '@/types/task'
+import type { ExecutionContext, ExecutionArtifact } from '@/types/execution'
 
 const TASKS_DIR = join(homedir(), '.claude', 'tasks')
 
@@ -133,4 +134,88 @@ export async function getTask(
 
 export function getTasksDir(): string {
   return TASKS_DIR
+}
+
+/**
+ * Resolve the execution directory from an execution_pointer.txt file.
+ * The pointer may contain an absolute path or a path relative to the user's
+ * home directory (e.g., `.claude/exec-20260131-143022/`).
+ * Returns null if the resolved path escapes the home directory (path traversal).
+ */
+function resolveExecutionDir(pointerContent: string): string | null {
+  const raw = pointerContent.trim()
+  if (!raw) return null
+
+  const home = homedir()
+  const resolved = raw.startsWith('/') ? resolve(raw) : resolve(home, raw)
+
+  // Guard against path traversal — execution dir must be under home
+  const rel = relative(home, resolved)
+  if (rel.startsWith('..') || resolve(home, rel) !== resolved) {
+    console.warn(`Execution pointer path escapes home directory: ${raw}`)
+    return null
+  }
+
+  return resolved
+}
+
+export async function getExecutionContext(
+  taskListId: string
+): Promise<ExecutionContext | null> {
+  const listDir = join(TASKS_DIR, taskListId)
+  const pointerPath = join(listDir, 'execution_pointer.txt')
+
+  let pointerContent: string
+  try {
+    pointerContent = await readFile(pointerPath, 'utf-8')
+  } catch {
+    // No pointer file — no execution context
+    return null
+  }
+
+  const execDir = resolveExecutionDir(pointerContent)
+  if (!execDir) return null
+
+  try {
+    await access(execDir)
+  } catch {
+    console.warn(`Execution directory not found: ${execDir}`)
+    return null
+  }
+
+  const entries = await readdir(execDir)
+  const mdFiles = entries.filter((f) => f.endsWith('.md'))
+
+  const artifacts: ExecutionArtifact[] = []
+  for (const file of mdFiles) {
+    const filePath = join(execDir, file)
+    try {
+      const [content, fileStat] = await Promise.all([
+        readFile(filePath, 'utf-8'),
+        stat(filePath),
+      ])
+      artifacts.push({
+        name: basename(file, '.md'),
+        content,
+        lastModified: fileStat.mtimeMs,
+      })
+    } catch (error) {
+      console.warn(`Error reading execution artifact ${file}:`, error)
+    }
+  }
+
+  if (artifacts.length === 0) return null
+
+  // Sort: execution_context first, then task_log, execution_plan, session_summary, rest alpha
+  const order = ['execution_context', 'task_log', 'execution_plan', 'session_summary']
+  artifacts.sort((a, b) => {
+    const ai = order.indexOf(a.name)
+    const bi = order.indexOf(b.name)
+    if (ai !== -1 && bi !== -1) return ai - bi
+    if (ai !== -1) return -1
+    if (bi !== -1) return 1
+    return a.name.localeCompare(b.name)
+  })
+
+  return { executionDir: execDir, artifacts }
 }

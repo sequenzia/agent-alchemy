@@ -1,4 +1,5 @@
 import type { Task, TaskList } from '@/types/task'
+import type { ExecutionContext } from '@/types/execution'
 
 const API_BASE = '/api'
 
@@ -8,6 +9,10 @@ export interface TaskListsResponse {
 
 export interface TasksResponse {
   tasks: Task[]
+}
+
+export interface ExecutionContextResponse {
+  executionContext: ExecutionContext | null
 }
 
 export async function fetchTaskLists(): Promise<TaskList[]> {
@@ -26,4 +31,17 @@ export async function fetchTasks(taskListId: string): Promise<Task[]> {
   }
   const data: TasksResponse = await response.json()
   return data.tasks
+}
+
+export async function fetchExecutionContext(
+  taskListId: string
+): Promise<ExecutionContext | null> {
+  const response = await fetch(
+    `${API_BASE}/execution-context/${encodeURIComponent(taskListId)}`
+  )
+  if (!response.ok) {
+    throw new Error(`Failed to fetch execution context: ${response.statusText}`)
+  }
+  const data: ExecutionContextResponse = await response.json()
+  return data.executionContext
 }

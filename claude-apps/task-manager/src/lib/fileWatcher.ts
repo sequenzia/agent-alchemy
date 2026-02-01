@@ -2,14 +2,19 @@ import { watch, type FSWatcher } from 'chokidar'
 import { EventEmitter } from 'node:events'
 import { readFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
-import { join, basename, dirname } from 'node:path'
-import type { Task, SSEEventType } from '@/types/task'
+import { join, basename, dirname, relative } from 'node:path'
+import type { Task, SSEEventType, ExecutionSSEEventType } from '@/types/task'
 
 export interface FileWatcherEvent {
   type: SSEEventType
   taskListId: string
   taskId: string
   task?: Task
+}
+
+export interface ExecutionWatcherEvent {
+  type: ExecutionSSEEventType
+  taskListId: string
 }
 
 export class FileWatcher extends EventEmitter {
@@ -38,16 +43,25 @@ export class FileWatcher extends EventEmitter {
 
     this.watcher
       .on('add', (path) => {
-        if (!path.endsWith('.json')) return
-        this.handleFileChange('task:created', path)
+        if (path.endsWith('.json')) {
+          this.handleFileChange('task:created', path)
+        } else if (this.isExecutionFile(path)) {
+          this.handleExecutionChange(path)
+        }
       })
       .on('change', (path) => {
-        if (!path.endsWith('.json')) return
-        this.handleFileChange('task:updated', path)
+        if (path.endsWith('.json')) {
+          this.handleFileChange('task:updated', path)
+        } else if (this.isExecutionFile(path)) {
+          this.handleExecutionChange(path)
+        }
       })
       .on('unlink', (path) => {
-        if (!path.endsWith('.json')) return
-        this.handleFileDelete(path)
+        if (path.endsWith('.json')) {
+          this.handleFileDelete(path)
+        } else if (this.isExecutionFile(path)) {
+          this.handleExecutionChange(path)
+        }
       })
       .on('error', (error) => console.error('File watcher error:', error))
 
@@ -77,6 +91,26 @@ export class FileWatcher extends EventEmitter {
     } catch (error) {
       console.error(`Error processing file change: ${filePath}`, error)
     }
+  }
+
+  private isExecutionFile(filePath: string): boolean {
+    return filePath.endsWith('.md') || filePath.endsWith('.txt')
+  }
+
+  private handleExecutionChange(filePath: string): void {
+    // Determine which task list this file belongs to.
+    // Files are under ~/.claude/tasks/<listId>/ (depth 1 for pointer)
+    // or could be watched externally. We derive the listId from the
+    // relative path to the basePath.
+    const rel = relative(this.basePath, filePath)
+    const taskListId = rel.split('/')[0]
+    if (!taskListId) return
+
+    const event: ExecutionWatcherEvent = {
+      type: 'execution:updated',
+      taskListId,
+    }
+    this.emit('executionEvent', event)
   }
 
   private handleFileDelete(filePath: string): void {

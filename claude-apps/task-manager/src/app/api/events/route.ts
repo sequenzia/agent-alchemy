@@ -1,4 +1,4 @@
-import { fileWatcher, type FileWatcherEvent } from '@/lib/fileWatcher'
+import { fileWatcher, type FileWatcherEvent, type ExecutionWatcherEvent } from '@/lib/fileWatcher'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -34,8 +34,23 @@ export async function GET(request: Request) {
         }
       }
 
+      // Handler for execution context events
+      const handleExecutionEvent = (event: ExecutionWatcherEvent) => {
+        if (taskListId && event.taskListId !== taskListId) {
+          return
+        }
+
+        try {
+          const data = JSON.stringify(event)
+          controller.enqueue(encoder.encode(`event: ${event.type}\ndata: ${data}\n\n`))
+        } catch (error) {
+          console.error('Error sending execution SSE event:', error)
+        }
+      }
+
       // Subscribe to file watcher events
       fileWatcher.on('taskEvent', handleTaskEvent)
+      fileWatcher.on('executionEvent', handleExecutionEvent)
 
       // Heartbeat to keep connection alive
       const heartbeat = setInterval(() => {
@@ -51,6 +66,7 @@ export async function GET(request: Request) {
       request.signal.addEventListener('abort', () => {
         clearInterval(heartbeat)
         fileWatcher.off('taskEvent', handleTaskEvent)
+        fileWatcher.off('executionEvent', handleExecutionEvent)
       })
     },
   })

@@ -5,6 +5,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import { taskKeys } from './useTasks'
 import { taskListKeys } from './useTaskLists'
+import { executionContextKeys } from './useExecutionContext'
 
 export function useSSE(taskListId: string | null) {
   const queryClient = useQueryClient()
@@ -27,9 +28,17 @@ export function useSSE(taskListId: string | null) {
       router.refresh()
     }
 
+    const handleExecutionEvent = () => {
+      queryClient.invalidateQueries({
+        queryKey: executionContextKeys.list(taskListId),
+      })
+      router.refresh()
+    }
+
     eventSource.addEventListener('task:created', handleTaskEvent)
     eventSource.addEventListener('task:updated', handleTaskEvent)
     eventSource.addEventListener('task:deleted', handleTaskEvent)
+    eventSource.addEventListener('execution:updated', handleExecutionEvent)
 
     eventSource.addEventListener('connected', (event) => {
       console.log('SSE connected:', event.data)
