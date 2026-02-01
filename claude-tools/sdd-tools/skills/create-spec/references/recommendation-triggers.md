@@ -1,6 +1,6 @@
 # Recommendation Triggers
 
-This document defines patterns that trigger proactive recommendations during spec interviews. When these patterns are detected in user responses, the interview agent should offer relevant best practices and recommendations.
+This document defines patterns that trigger proactive recommendations during spec interviews. When these patterns are detected in user responses, the interview process should offer relevant best practices and recommendations.
 
 ## Trigger Categories
 

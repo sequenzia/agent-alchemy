@@ -35,7 +35,7 @@ Run the create command to start generating a spec:
 
 This will:
 1. Ask for initial information (name, type, depth, description)
-2. Launch an adaptive interview to gather detailed requirements
+2. Conduct an adaptive interview to gather detailed requirements
 3. Present a summary for your review
 4. Generate the spec and save it to your configured location
 
@@ -240,7 +240,7 @@ Research findings are automatically formatted for spec incorporation and include
 
 3. **Review the summary carefully**: The pre-compilation summary is your chance to add or correct information before the spec is generated.
 
-4. **For new features**: Allow the agent to explore your codebase - it helps identify existing patterns and integration points.
+4. **For new features**: Allow codebase exploration - it helps identify existing patterns and integration points.
 
 ## File Structure
 
@@ -249,7 +249,6 @@ sdd-tools/
 ├── .claude-plugin/
 │   └── plugin.json           # Plugin manifest
 ├── agents/
-│   ├── interview-agent.md    # Adaptive interview agent
 │   ├── research-agent.md     # On-demand research agent
 │   ├── spec-analyzer.md      # Spec quality analysis agent
 │   ├── task-generator.md     # Spec to tasks decomposition agent
@@ -295,7 +294,7 @@ Check your `.claude/sdd-tools.local.md` settings file for the correct `output_pa
 The interview depth is based on the level you select. Choose "Full technical documentation" for the most comprehensive interview.
 
 ### Want to skip certain questions
-If a question isn't relevant, you can indicate "no preference" or "not applicable" and the agent will adapt accordingly.
+If a question isn't relevant, you can indicate "no preference" or "not applicable" and the interview will adapt accordingly.
 
 ## Contributing
 

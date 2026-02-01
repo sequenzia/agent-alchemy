@@ -19,7 +19,7 @@ The spec creation skill launches an adaptive interview that builds a structured 
 3. **Depth level** — controls interview length and spec detail
 4. **Description** — free-form context that shapes the interview
 
-**Adaptive Interview** — The interview agent walks through four categories, adjusting question count and depth based on your chosen level:
+**Adaptive Interview** — The interview walks through four categories, adjusting question count and depth based on your chosen level:
 
 | Category | Covers |
 |----------|--------|
@@ -30,9 +30,9 @@ The spec creation skill launches an adaptive interview that builds a structured 
 
 High-level interviews focus on the first two categories with broad questions. Detailed and full-tech interviews go deeper into all four, adding follow-up questions on metrics baselines, secondary personas, data models, and deployment plans.
 
-**Proactive Recommendations** — As you answer, the agent detects patterns (e.g., mentioning "login", "millions of users", "GDPR") and offers best-practice recommendations inline. For compliance topics (HIPAA, GDPR, PCI, WCAG), it can automatically research current requirements without you asking.
+**Proactive Recommendations** — As you answer, the skill detects patterns (e.g., mentioning "login", "millions of users", "GDPR") and offers best-practice recommendations inline. For compliance topics (HIPAA, GDPR, PCI, WCAG), it can automatically research current requirements without you asking.
 
-**Pre-Compilation Summary** — Before generating the spec, the agent presents a summary of everything gathered for your review. You can add, correct, or remove information at this stage.
+**Pre-Compilation Summary** — Before generating the spec, a summary of everything gathered is presented for your review. You can add, correct, or remove information at this stage.
 
 **Output** — The final spec is written to `specs/SPEC-{name}.md` (configurable via settings). The template used depends on your depth level — high-level, detailed, or full-tech.
 
