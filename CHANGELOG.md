@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### dev-tools
+
+#### Added
+
+- `update-changelog` skill for changelog updates with optional sub-project scoping
+- Scope-aware git filtering in changelog workflow (scopes: sdd-tools, dev-tools, task-manager, project, all)
+- Sub-project heading support in changelog output for monorepo organization
+
+#### Changed
+
+- Refactored changelog-agent to support sub-project scoped updates with path filtering
+
 ### sdd-tools
 
 #### Added
