@@ -112,7 +112,7 @@ PARTIAL status means non-functional criteria failed but functional criteria pass
 
 ## Monitoring with Task Manager
 
-The [task-manager app](../../claude-apps/task-manager/) provides a real-time Kanban board that visualizes task execution as it happens.
+The [task-manager app](../../apps/task-manager/) provides a real-time Kanban board that visualizes task execution as it happens.
 
 ```bash
 # In one terminal — start the dashboard

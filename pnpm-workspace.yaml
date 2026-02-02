@@ -1,6 +1,5 @@
 packages:
-  - claude-tools
-  - claude-apps/*
+  - apps/*
 
 ignoredBuiltDependencies:
   - sharp

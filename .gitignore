@@ -21,7 +21,7 @@ dist/
 
 # Package managers
 pnpm-lock.yaml
-!claude-apps/*/pnpm-lock.yaml
+!apps/*/pnpm-lock.yaml
 
 # Misc
 .DS_Store

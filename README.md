@@ -22,7 +22,7 @@ The Task Manager is a real-time Kanban board that visualizes Claude's native tas
 - **Dark/light themes** — Easy on the eyes during those long coding sessions
 
 ```bash
-cd claude-apps/task-manager
+cd apps/task-manager
 pnpm install && pnpm dev  # Starts on http://localhost:3030
 ```
 
