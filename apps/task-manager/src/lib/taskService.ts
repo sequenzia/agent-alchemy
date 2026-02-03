@@ -137,9 +137,9 @@ export function getTasksDir(): string {
 }
 
 /**
- * Resolve the execution directory from an execution_pointer.txt file.
- * The pointer may contain an absolute path or a path relative to the user's
- * home directory (e.g., `.claude/exec-20260131-143022/`).
+ * Resolve the execution directory from an execution_pointer.md file.
+ * The pointer contains an absolute path to the session folder
+ * (e.g., the absolute path to `.claude/session/__live_session__/`).
  * Returns null if the resolved path escapes the home directory (path traversal).
  */
 function resolveExecutionDir(pointerContent: string): string | null {
@@ -163,7 +163,7 @@ export async function getExecutionContext(
   taskListId: string
 ): Promise<ExecutionContext | null> {
   const listDir = join(TASKS_DIR, taskListId)
-  const pointerPath = join(listDir, 'execution_pointer.txt')
+  const pointerPath = join(listDir, 'execution_pointer.md')
 
   let pointerContent: string
   try {

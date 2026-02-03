@@ -88,10 +88,23 @@ Generate a unique `task_execution_id` using three-tier resolution:
 2. ELSE IF all open tasks (pending + in_progress) share the same non-empty `metadata.task_group` → `{task_group}-{YYYYMMDD}-{HHMMSS}`
 3. ELSE → `exec-session-{YYYYMMDD}-{HHMMSS}` (e.g., `exec-session-20260131-143022`)
 
-Create the execution directory at `.claude/{task_execution_id}/` with:
+### Clean Stale Live Session
+
+Before creating new files, check if `.claude/session/__live_session__/` contains leftover files from a previous session (e.g., due to interruption):
+
+1. Check if `.claude/session/__live_session__/` exists and contains any files
+2. If files are found:
+   - Create `.claude/session/interrupted-{YYYYMMDD}-{HHMMSS}/` using the current timestamp
+   - Move all contents from `__live_session__/` to the interrupted archive folder
+   - Log: `Archived stale session to .claude/session/interrupted-{YYYYMMDD}-{HHMMSS}/`
+3. If `__live_session__/` is empty or doesn't exist, proceed normally
+
+### Create Session Files
+
+Create `.claude/session/__live_session__/` (and `.claude/session/` parent if needed) with:
 
 1. **`execution_plan.md`** - Save the execution plan displayed in Step 5
-2. **`execution-context.md`** - Initialize with standard template:
+2. **`execution_context.md`** - Initialize with standard template:
    ```markdown
    # Execution Context
 
@@ -118,13 +131,13 @@ Create the execution directory at `.claude/{task_execution_id}/` with:
    |---------|---------|--------|----------|-------------|
    ```
 4. **`tasks/`** - Empty subdirectory for archiving completed task files
-5. **`execution_pointer.txt`** at `~/.claude/tasks/{CLAUDE_CODE_TASK_LIST_ID}/` — Create immediately with the path to `.claude/{task_execution_id}/`. This ensures the pointer exists even if the session is interrupted before completing.
+5. **`execution_pointer.md`** at `~/.claude/tasks/{CLAUDE_CODE_TASK_LIST_ID}/` — Create immediately with the absolute path to `.claude/session/__live_session__/`. This ensures the pointer exists even if the session is interrupted before completing.
 
 ## Step 6: Initialize Execution Context
 
-Read `.claude/{task_execution_id}/execution-context.md` (created in Step 5.5).
+Read `.claude/session/__live_session__/execution_context.md` (created in Step 5.5).
 
-If a prior execution session's context exists, merge relevant learnings (Project Patterns, Key Decisions, Known Issues, File Map) into the new execution context.
+If a prior execution session's context exists, look in `.claude/session/` for the most recent timestamped subfolder and merge relevant learnings (Project Patterns, Key Decisions, Known Issues, File Map) into the new execution context.
 
 ## Step 7: Execute Loop
 
@@ -174,19 +187,19 @@ Task:
 
     Instructions:
     1. Read the execute-tasks skill and reference files
-    2. Read .claude/{task_execution_id}/execution-context.md for prior learnings
+    2. Read .claude/session/__live_session__/execution_context.md for prior learnings
     3. Understand the task requirements and explore the codebase
     4. Implement the necessary changes
     5. Verify against acceptance criteria (or inferred criteria for general tasks)
     6. Update task status if PASS (mark completed)
-    7. Append learnings to .claude/{task_execution_id}/execution-context.md
+    7. Append learnings to .claude/session/__live_session__/execution_context.md
     8. Return a structured verification report
     9. Report token usage estimate (N/A or estimated)
 ```
 
 ### 7d: Log Task Result
 
-After the agent returns, append a row to `.claude/{task_execution_id}/task_log.md`:
+After the agent returns, append a row to `.claude/session/__live_session__/task_log.md`:
 
 ```markdown
 | {id} | {subject} | {PASS/PARTIAL/FAIL} | {attempt_number}/{max_retries} | N/A |
@@ -213,7 +226,7 @@ After each task completes (PASS or retries exhausted):
 
 ### 7g: Archive Completed Task Files
 
-If the task result is PASS, copy the task's JSON file from `~/.claude/tasks/{CLAUDE_CODE_TASK_LIST_ID}/` to `.claude/{task_execution_id}/tasks/`. Do not delete the original file.
+If the task result is PASS, copy the task's JSON file from `~/.claude/tasks/{CLAUDE_CODE_TASK_LIST_ID}/` to `.claude/session/__live_session__/tasks/`. Do not delete the original file.
 
 ## Step 8: Session Summary
 
@@ -247,12 +260,14 @@ NEWLY UNBLOCKED:
 ```
 
 After displaying the summary:
-1. Save `session_summary.md` to `.claude/{task_execution_id}/` with the full summary content
-2. Update `execution_pointer.txt` at `~/.claude/tasks/{CLAUDE_CODE_TASK_LIST_ID}/` containing the path to `.claude/{task_execution_id}/` so future sessions can find the latest execution
+1. Save `session_summary.md` to `.claude/session/__live_session__/` with the full summary content
+2. **Archive the session**: Create `.claude/session/{task_execution_id}/` and move all contents from `__live_session__/` to the archival folder
+3. `__live_session__/` is left as an empty directory (not deleted)
+4. `execution_pointer.md` stays pointing to `__live_session__/` (no update needed — it will be empty until the next execution)
 
 ## Step 9: Update CLAUDE.md
 
-Review `.claude/{task_execution_id}/execution-context.md` for project-wide changes that should be reflected in CLAUDE.md.
+Review `.claude/session/{task_execution_id}/execution_context.md` for project-wide changes that should be reflected in CLAUDE.md.
 
 Update CLAUDE.md if the session introduced:
 - New architectural patterns or conventions
@@ -280,4 +295,4 @@ Process:
 - The execution context file enables knowledge sharing across task boundaries
 - Failed tasks remain as `in_progress` for manual review or re-execution
 - Run the execute-tasks skill again to pick up where you left off — it will execute any remaining unblocked tasks
-- All file operations within `.claude/{task_execution_id}/` and execution_pointer.txt are pre-authorized and should never prompt for user confirmation
+- All file operations within `.claude/session/` (including `__live_session__/` and archival folders) and `execution_pointer.md` are pre-authorized and should never prompt for user confirmation

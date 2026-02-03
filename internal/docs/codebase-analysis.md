@@ -18,7 +18,7 @@ The codebase has two conceptually linked but technically independent systems:
 
 **Plugin System** — Two Claude Code plugins (`claude-alchemy-tools` and `claude-alchemy-sdd`) define structured development methodologies entirely through markdown files. Skills are multi-phase workflows (up to 10 steps) that orchestrate specialized agents in parallel using Claude Code's Task tool. Agents are spawned with model tiering — Sonnet for exploratory breadth, Opus for synthesis/architecture/review depth, Haiku for simple procedural tasks. A reference material system (`references/` subdirectories) provides templates, criteria, and patterns loaded at runtime.
 
-**Task Manager App** — A Next.js 16 application using App Router with a clear server/client boundary. Server Components fetch initial task data from `~/.claude/tasks/`, Client Components manage state via TanStack Query, and a Chokidar-based file watcher pushes real-time updates through Server-Sent Events. The cross-system bridge is an `execution_pointer.txt` file written by the `execute-tasks` skill and read by the Task Manager to display execution artifacts.
+**Task Manager App** — A Next.js 16 application using App Router with a clear server/client boundary. Server Components fetch initial task data from `~/.claude/tasks/`, Client Components manage state via TanStack Query, and a Chokidar-based file watcher pushes real-time updates through Server-Sent Events. The cross-system bridge is an `execution_pointer.md` file written by the `execute-tasks` skill and read by the Task Manager to display execution artifacts.
 
 **Tech Stack**: Next.js 16.1.4, React 19.2.3, TypeScript 5, TanStack Query v5, Tailwind CSS v4, shadcn/ui, Chokidar 5, pnpm workspaces.
 
@@ -105,7 +105,7 @@ feature-dev → spawns code-explorer (3x) → codebase-synthesizer → code-arch
 codebase-analysis → spawns code-explorer (2-3x) → codebase-synthesizer
 create-spec → spawns researcher → writes specs/SPEC-{name}.md
 create-tasks → reads spec → calls TaskCreate/TaskUpdate APIs
-execute-tasks → spawns task-executor (1 per task) → writes execution-context.md, execution_pointer.txt
+execute-tasks → spawns task-executor (1 per task) → writes execution_context.md, execution_pointer.md
 ```
 
 ### Task Manager Data Flow
@@ -115,7 +115,7 @@ execute-tasks → spawns task-executor (1 per task) → writes execution-context
 
 ### Cross-System Bridge
 ```
-execute-tasks skill → writes execution_pointer.txt → Task Manager reads via getExecutionContext() → ExecutionDialog
+execute-tasks skill → writes execution_pointer.md → Task Manager reads via getExecutionContext() → ExecutionDialog
 ```
 
 ---
@@ -126,7 +126,7 @@ execute-tasks skill → writes execution_pointer.txt → Task Manager reads via 
 |-----------|----------|--------|
 | No automated tests | High | Task Manager service logic (parsing, validation, path traversal protection) is unverified |
 | Plugin workflow complexity | Medium | Up to 10 agent invocations per skill; failures require user-driven retry/skip/abort |
-| Context file growth | Medium | execution-context.md grows with each task; may exceed context limits for later agents |
+| Context file growth | Medium | execution_context.md grows with each task; may exceed context limits for later agents |
 | Release skill mismatch | Medium | Python-centric release skill in a TypeScript/pnpm monorepo |
 | Claude Code API dependency | Medium | Plugins depend on Task tool, subagent_type, TaskCreate APIs that could change |
 | Empty root CLAUDE.md | Low | First execution session operates without project-wide context |
@@ -137,7 +137,7 @@ execute-tasks skill → writes execution_pointer.txt → Task Manager reads via 
 
 1. **Add tests for Task Manager**: `taskService.ts` has significant parsing/validation logic that should have unit tests. `fileWatcher.ts` and the SSE route handler would benefit from integration tests.
 2. **Populate root CLAUDE.md**: Document monorepo structure, plugin-app relationship, and common workflows.
-3. **Budget context size for execute-tasks**: Implement truncation or summarization of execution-context.md for long sessions.
+3. **Budget context size for execute-tasks**: Implement truncation or summarization of execution_context.md for long sessions.
 4. **Adapt or document the release skill**: Either adapt for TypeScript/pnpm or document as a template for Python projects.
 5. **Document the execution_pointer bridge**: The contract between execute-tasks and Task Manager is a critical integration point.
 

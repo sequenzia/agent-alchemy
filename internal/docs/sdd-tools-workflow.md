@@ -88,7 +88,7 @@ The execution skill runs each task autonomously in its own subagent, following a
 | **Verify** | Spec-generated tasks: walks each acceptance criterion by category. General tasks: infers checklist from description. Runs tests and linter |
 | **Complete** | Determines PASS/PARTIAL/FAIL, updates task status, appends learnings to execution context |
 
-**Execution Context** — Tasks share learnings through `.claude/execution-context.md`. This file accumulates:
+**Execution Context** — Tasks share learnings through `.claude/session/__live_session__/execution_context.md`. This file accumulates:
 - **Project Patterns** — coding patterns, conventions, tech stack details
 - **Key Decisions** — architecture choices and approach rationale
 - **Known Issues** — problems encountered and workarounds

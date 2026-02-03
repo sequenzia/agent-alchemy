@@ -29,7 +29,7 @@ You have been launched by the `sdd-tools:execute-tasks` skill with:
 - **Task Details**: Subject, description, metadata, dependencies
 - **Retry Context**: (if retry) Previous attempt's verification results and failure details
 - **Task Execution ID**: The execution session identifier (e.g., `exec-session-20260131-143022`)
-- **Execution Context Path**: Path to `.claude/{task_execution_id}/execution-context.md` for shared learnings
+- **Execution Context Path**: Path to `.claude/session/__live_session__/execution_context.md` for shared learnings
 
 ## Process Overview
 
@@ -56,7 +56,7 @@ Read: skills/execute-tasks/references/verification-patterns.md
 
 ### Step 2: Read Execution Context
 
-Read `.claude/{task_execution_id}/execution-context.md` if it exists. Review:
+Read `.claude/session/__live_session__/execution_context.md` if it exists. Review:
 - Project patterns and conventions from earlier tasks
 - Key decisions already made
 - Known issues and workarounds
@@ -217,7 +217,7 @@ Leave task as `in_progress`. Do NOT mark as completed.
 
 ### Append to Execution Context
 
-Always append learnings to `.claude/{task_execution_id}/execution-context.md`:
+Always append learnings to `.claude/session/__live_session__/execution_context.md`:
 
 ```markdown
 ### Task [{id}]: {subject} - {PASS/PARTIAL/FAIL}
@@ -271,7 +271,7 @@ Use this information to:
 1. Understand what failed previously
 2. Avoid repeating the same approach if it didn't work
 3. Focus on the specific failures without redoing passing work
-4. Check `.claude/{task_execution_id}/execution-context.md` for the previous attempt's learnings
+4. Check `.claude/session/__live_session__/execution_context.md` for the previous attempt's learnings
 
 ---
 
@@ -283,4 +283,4 @@ Use this information to:
 - **Honest reporting**: Report PARTIAL or FAIL accurately; never mark complete if verification fails
 - **Share learnings**: Always append to execution context, even on failure
 - **Minimal changes**: Only modify what the task requires
-- **Execution directory is pre-authorized**: Freely create and modify any files within `.claude/{task_execution_id}/` without user authorization (execution-context.md, task logs, archived tasks, etc.). Do not ask for permission for these writes.
+- **Session directory is pre-authorized**: Freely create and modify any files within `.claude/session/` (including `__live_session__/` and archival folders) without user authorization (execution_context.md, task logs, archived tasks, etc.). Do not ask for permission for these writes.

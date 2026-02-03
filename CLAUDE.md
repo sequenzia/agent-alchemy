@@ -22,7 +22,7 @@ Claude Alchemy is a pnpm monorepo with two Claude Code plugins and a Next.js Tas
 
 ## Critical Integration Points
 
-- **execution_pointer.txt**: Written by `execute-tasks` skill to `~/.claude/tasks/{listId}/`, read by Task Manager's `taskService.ts` to display execution artifacts
+- **execution_pointer.md**: Written by `execute-tasks` skill to `~/.claude/tasks/{listId}/`, contains absolute path to `.claude/session/__live_session__/`, read by Task Manager's `taskService.ts` to display execution artifacts
 - **Task storage**: `~/.claude/tasks/claude-alchemy/` (set via CLAUDE_CODE_TASK_LIST_ID in .claude/settings.json)
 
 ## Task Manager Architecture
