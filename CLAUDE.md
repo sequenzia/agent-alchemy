@@ -2,7 +2,14 @@
 
 ## Project Overview
 
-Claude Alchemy is a pnpm monorepo with two Claude Code plugins and a Next.js Task Manager app.
+Claude Alchemy is a pnpm monorepo with two Claude Code plugins and a Next.js Task Manager app. The three subsystems communicate through a **filesystem-as-message-bus** pattern — no shared runtime code, no database, no IPC.
+
+## Tech Stack
+
+- Next.js 16.1.4, React 19.2.3, TypeScript 5, TanStack Query v5.90.20
+- Tailwind CSS v4, shadcn/ui (Radix primitives), Chokidar 5
+- pnpm workspaces (Node >=18, pnpm >=8)
+- Plugins are markdown-only with no build step (NOT in pnpm workspace)
 
 ## Monorepo Structure
 
@@ -27,10 +34,23 @@ Claude Alchemy is a pnpm monorepo with two Claude Code plugins and a Next.js Tas
 
 ## Task Manager Architecture
 
-- Server Components fetch from `~/.claude/tasks/`, pass to Client Components
-- Chokidar singleton watches filesystem, pushes events via SSE
-- `useSSE` hook receives events, invalidates TanStack Query cache
+- Server Components fetch from `~/.claude/tasks/`, pass to Client Components as `initialData` for TanStack Query
+- Chokidar singleton (via `globalThis` to survive HMR) watches filesystem with 300ms polling
+- SSE endpoint (`/api/events`) streams filtered events to browser
+- `useSSE` hook receives events, performs dual invalidation: TanStack Query cache + `router.refresh()` for Server Components
 - Key files: `src/lib/taskService.ts`, `src/lib/fileWatcher.ts`, `src/app/api/events/route.ts`
+
+### Real-Time Data Flow
+
+```
+~/.claude/tasks/*.json → Chokidar → SSE route → useSSE → TanStack Query invalidation → UI
+```
+
+### Security Patterns
+
+- `resolveExecutionDir()` in `taskService.ts` guards against path traversal using `path.relative()` — ensure pointer targets stay under `$HOME`
+- API routes validate `listId` against `..` and `/` patterns
+- `parseTask()` defensively normalizes JSON: defaults status to `pending`, coerces arrays, converts id to string
 
 ## Plugin Architecture
 
@@ -38,3 +58,5 @@ Claude Alchemy is a pnpm monorepo with two Claude Code plugins and a Next.js Tas
 - Reference materials in `skills/*/references/` loaded at runtime
 - Multi-phase workflows with explicit transition directives
 - All user interactions through `AskUserQuestion` tool
+- SDD plugin has PreToolUse hook (`hooks/auto-approve-session.sh`) for autonomous session file operations
+- Plugin versions tracked in both `.claude-plugin/plugin.json` and root `marketplace.json` (update both when versioning)
