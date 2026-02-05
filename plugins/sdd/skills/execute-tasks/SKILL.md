@@ -98,7 +98,7 @@ Then ask the user to confirm before proceeding with execution. If the user cance
 Read `.claude/sessions/__live_session__/execution_context.md` (created in Step 5). If a prior execution context exists, look in `.claude/sessions/` for the most recent timestamped subfolder and merge relevant learnings into the new one.
 
 ### Step 8: Execute Loop
-For each task: get details, mark in progress, launch `claude-alchemy-sdd:task-executor` agent, process result (PASS/PARTIAL/FAIL), handle retries, track token usage (placeholder/estimated), log result to `.claude/sessions/__live_session__/task_log.md`, archive completed task files to `.claude/sessions/__live_session__/tasks/`, refresh task list for newly unblocked tasks.
+For each task: get details, mark in progress, launch `claude-alchemy-sdd:task-executor` agent, process result (PASS/PARTIAL/FAIL), handle retries, track token usage (placeholder/estimated), log result to `.claude/sessions/__live_session__/task_log.md`, copy completed task files to `.claude/sessions/__live_session__/tasks/`, refresh task list for newly unblocked tasks.
 
 ### Step 9: Session Summary
 Display execution results with pass/fail counts, failed task list, newly unblocked tasks, and token usage summary (placeholder). Save `session_summary.md` to `.claude/sessions/__live_session__/`. Archive the session by moving all contents from `__live_session__/` to `.claude/sessions/{task_execution_id}/`, leaving `__live_session__/` as an empty directory. `execution_pointer.md` stays pointing to `__live_session__/`.
@@ -194,7 +194,6 @@ This enables later tasks to benefit from earlier discoveries and retry attempts 
 - **Honest failure handling**: After retries exhausted, tasks stay `in_progress` (not completed), and execution continues to the next task.
 - **Circular dependency detection**: If all remaining tasks are blocked by each other, break at the weakest link (task with fewest blockers) and log a warning.
 - **Shared context**: Agents read and write `.claude/sessions/__live_session__/execution_context.md` so later tasks benefit from earlier discoveries.
-- **Session directory is auto-approved**: All file operations within `.claude/sessions/` (including `__live_session__/` and archival folders) and `$HOME/.claude/tasks/{CLAUDE_CODE_TASK_LIST_ID}/execution_pointer.md` are auto-approved by the `auto-approve-session.sh` PreToolUse hook and will not prompt for user authorization. These are the skill's working files.
 
 ## Example Usage
 
