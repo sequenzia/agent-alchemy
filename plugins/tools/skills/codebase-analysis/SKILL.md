@@ -52,7 +52,7 @@ Execute a structured 4-phase codebase analysis workflow to gather insights.
 
 4. **Launch code-explorer agents:**
 
-   Launch agents in parallel using the Task tool with `subagent_type: "dev-tools:code-explorer"`:
+   Launch agents in parallel using the Task tool with `subagent_type: "claude-alchemy-tools:code-explorer"`:
    ```
    Path to analyze: [PATH]
    Analysis context: [context from step 1]
@@ -80,7 +80,7 @@ Execute a structured 4-phase codebase analysis workflow to gather insights.
 
 1. **Launch codebase-synthesizer agent:**
 
-   Use the Task tool with `subagent_type: "dev-tools:codebase-synthesizer"` and `model: "opus"`:
+   Use the Task tool with `subagent_type: "claude-alchemy-tools:codebase-synthesizer"` and `model: "opus"`:
    ```
    Analysis context: [context from Phase 1]
    Codebase path: [PATH]
@@ -230,8 +230,8 @@ Execute a structured 4-phase codebase analysis workflow to gather insights.
 
    2. **Plan the fix:**
       - Simple: Read the target file, propose changes directly
-      - Complex (architectural): Launch `dev-tools:code-architect` agent with `model: "opus"` to design the fix
-      - Complex (needs investigation): Launch `dev-tools:code-explorer` agent to investigate before proposing
+      - Complex (architectural): Launch `claude-alchemy-tools:code-architect` agent with `model: "opus"` to design the fix
+      - Complex (needs investigation): Launch `claude-alchemy-tools:code-explorer` agent to investigate before proposing
 
    3. **Present proposal:** Show files to modify, specific changes, and rationale
 

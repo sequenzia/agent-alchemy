@@ -123,7 +123,7 @@ Execute these phases in order, completing ALL of them:
 2. **Launch code-explorer agents based on action type:**
 
    ### For `generate` (new pages):
-   Launch 2 code-explorer agents in parallel using the Task tool with `subagent_type: "dev-tools:code-explorer"`:
+   Launch 2 code-explorer agents in parallel using the Task tool with `subagent_type: "claude-alchemy-tools:code-explorer"`:
 
    ```
    Agent 1 — Public APIs:
@@ -247,7 +247,7 @@ Execute these phases in order, completing ALL of them:
 
 3. **Launch docs-writer agents for independent pages:**
 
-   Launch agents in parallel using the Task tool with `subagent_type: "dev-tools:docs-writer"` and `model: "opus"`:
+   Launch agents in parallel using the Task tool with `subagent_type: "claude-alchemy-tools:docs-writer"` and `model: "opus"`:
 
    ```
    Documentation task: [page type — API reference / architecture / how-to / change summary]

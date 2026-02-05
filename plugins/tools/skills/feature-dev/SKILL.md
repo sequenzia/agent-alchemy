@@ -59,7 +59,7 @@ Execute these phases in order, completing ALL of them:
    Agent 3: Explore utilities, helpers, and shared infrastructure (if applicable)
    ```
 
-   Use the Task tool with `subagent_type: "dev-tools:code-explorer"`:
+   Use the Task tool with `subagent_type: "claude-alchemy-tools:code-explorer"`:
    ```
    Feature: [feature description]
    Focus area: [specific focus for this agent]
@@ -77,7 +77,7 @@ Execute these phases in order, completing ALL of them:
 
    Launch a codebase-synthesizer agent to merge and analyze the exploration results.
 
-   Use the Task tool with `subagent_type: "dev-tools:codebase-synthesizer"` and `model: "opus"`:
+   Use the Task tool with `subagent_type: "claude-alchemy-tools:codebase-synthesizer"` and `model: "opus"`:
    ```
    Analysis context: [feature description]
    Codebase path: [current working directory]
@@ -138,7 +138,7 @@ Execute these phases in order, completing ALL of them:
    Agent 3: Design an approach optimized for the project's existing patterns (if applicable)
    ```
 
-   Use the Task tool with `subagent_type: "dev-tools:code-architect"`:
+   Use the Task tool with `subagent_type: "claude-alchemy-tools:code-architect"`:
    ```
    Feature: [feature description]
    Design approach: [specific approach for this agent]
@@ -220,7 +220,7 @@ Execute these phases in order, completing ALL of them:
    Agent 3: Review for maintainability and code quality
    ```
 
-   Use the Task tool with `subagent_type: "dev-tools:code-reviewer"`:
+   Use the Task tool with `subagent_type: "claude-alchemy-tools:code-reviewer"`:
    ```
    Review focus: [specific focus for this agent]
 
