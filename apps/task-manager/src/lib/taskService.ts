@@ -2,7 +2,7 @@ import { readdir, readFile, access, stat } from 'node:fs/promises'
 import { join, basename, resolve, relative } from 'node:path'
 import { homedir } from 'node:os'
 import type { Task, TaskList, TaskStatus } from '@/types/task'
-import type { ExecutionContext, ExecutionArtifact } from '@/types/execution'
+import type { ExecutionContext, ExecutionArtifact, ExecutionProgress } from '@/types/execution'
 
 const TASKS_DIR = join(homedir(), '.claude', 'tasks')
 
@@ -178,6 +178,73 @@ export async function getExecutionDir(
   return resolveExecutionDir(pointerContent)
 }
 
+function parseProgressMd(content: string): ExecutionProgress | null {
+  try {
+    const statusMatch = content.match(/Status:\s*(.+)/)
+    const updatedMatch = content.match(/Updated:\s*(.+)/)
+    if (!statusMatch || !updatedMatch) return null
+
+    const status = statusMatch[1].trim()
+    const updated = updatedMatch[1].trim()
+
+    // Detect old format (has "Current Task:" instead of "## Active Tasks")
+    const isOldFormat = /Current Task:/.test(content) && !/## Active Tasks/.test(content)
+
+    if (isOldFormat) {
+      const currentTaskMatch = content.match(/Current Task:\s*\[(\d+)\]\s*(.+?)(?:\s*\(.+\))?\s*$/)
+      const phaseMatch = content.match(/Phase:\s*(.+)/)
+      const activeTasks = currentTaskMatch
+        ? [{ id: currentTaskMatch[1], subject: currentTaskMatch[2].trim(), phase: phaseMatch ? phaseMatch[1].trim() : '' }]
+        : []
+
+      return {
+        status,
+        wave: 1,
+        totalWaves: 1,
+        updated,
+        activeTasks,
+        completedTasks: [],
+      }
+    }
+
+    // New format
+    const waveMatch = content.match(/Wave:\s*(\d+)\s*of\s*(\d+)/)
+    const maxParallelMatch = content.match(/Max Parallel:\s*(\d+)/)
+
+    const wave = waveMatch ? parseInt(waveMatch[1], 10) : 1
+    const totalWaves = waveMatch ? parseInt(waveMatch[2], 10) : 1
+    const maxParallel = maxParallelMatch ? parseInt(maxParallelMatch[1], 10) : undefined
+
+    const activeTasks: ExecutionProgress['activeTasks'] = []
+    const activeSection = content.match(/## Active Tasks\n([\s\S]*?)(?=\n##|$)/)
+    if (activeSection) {
+      const lines = activeSection[1].trim().split('\n')
+      for (const line of lines) {
+        const m = line.match(/^- \[(\d+)\]\s*(.+?)\s*—\s*(.+)$/)
+        if (m) {
+          activeTasks.push({ id: m[1], subject: m[2].trim(), phase: m[3].trim() })
+        }
+      }
+    }
+
+    const completedTasks: ExecutionProgress['completedTasks'] = []
+    const completedSection = content.match(/## Completed This Session\n([\s\S]*?)(?=\n##|$)/)
+    if (completedSection) {
+      const lines = completedSection[1].trim().split('\n')
+      for (const line of lines) {
+        const m = line.match(/^- \[(\d+)\]\s*(.+?)\s*—\s*(.+)$/)
+        if (m) {
+          completedTasks.push({ id: m[1], subject: m[2].trim(), result: m[3].trim() })
+        }
+      }
+    }
+
+    return { status, wave, totalWaves, maxParallel, updated, activeTasks, completedTasks }
+  } catch {
+    return null
+  }
+}
+
 export async function getExecutionContext(
   taskListId: string
 ): Promise<ExecutionContext | null> {
@@ -205,7 +272,7 @@ export async function getExecutionContext(
   const entries = await readdir(execDir)
   const mdFiles = entries.filter((f) => f.endsWith('.md'))
 
-  const artifacts: ExecutionArtifact[] = []
+  const allArtifacts: ExecutionArtifact[] = []
   for (const file of mdFiles) {
     const filePath = join(execDir, file)
     try {
@@ -213,7 +280,7 @@ export async function getExecutionContext(
         readFile(filePath, 'utf-8'),
         stat(filePath),
       ])
-      artifacts.push({
+      allArtifacts.push({
         name: basename(file, '.md'),
         content,
         lastModified: fileStat.mtimeMs,
@@ -223,7 +290,13 @@ export async function getExecutionContext(
     }
   }
 
+  // Filter out temporary per-wave context files
+  const artifacts = allArtifacts.filter(a => !a.name.startsWith('context-task-'))
+
   if (artifacts.length === 0) return null
+
+  const progressArtifact = artifacts.find(a => a.name === 'progress')
+  const progress = progressArtifact ? parseProgressMd(progressArtifact.content) : null
 
   // Sort: execution_context first, then task_log, execution_plan, session_summary, rest alpha
   const order = ['execution_context', 'task_log', 'execution_plan', 'session_summary']
@@ -236,5 +309,5 @@ export async function getExecutionContext(
     return a.name.localeCompare(b.name)
   })
 
-  return { executionDir: execDir, artifacts }
+  return { executionDir: execDir, artifacts, progress }
 }

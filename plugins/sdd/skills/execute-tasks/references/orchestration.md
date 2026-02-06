@@ -21,11 +21,32 @@ Handle edge cases before proceeding:
 
 ## Step 3: Build Execution Plan
 
-Collect all unblocked pending tasks (status `pending`, empty `blockedBy` list, matching task group if filtered).
+### 3a: Resolve Max Parallel
 
-If a specific `task-id` was provided, the plan contains only that task.
+Determine the maximum number of concurrent tasks per wave using this precedence:
+1. `--max-parallel` CLI argument (highest priority)
+2. `max_parallel` setting in `.claude/claude-alchemy.local.md`
+3. Default: 5
 
-Otherwise, sort by priority:
+### 3b: Build Dependency Graph
+
+Collect all tasks and build a dependency graph from `blockedBy` relationships.
+
+If a specific `task-id` was provided, the plan contains only that task (single-task mode, effectively `max_parallel = 1`).
+
+### 3c: Assign Tasks to Waves
+
+Use topological sorting to assign tasks to dependency-based waves:
+- **Wave 1**: All pending tasks with empty `blockedBy` list (no dependencies)
+- **Wave 2**: Tasks whose dependencies are ALL in Wave 1
+- **Wave 3**: Tasks whose dependencies are ALL in Wave 1 or Wave 2
+- Continue until all tasks are assigned to waves
+
+If task group filtering is active, only include tasks matching the specified group.
+
+### 3d: Sort Within Waves
+
+Within each wave, sort by priority:
 1. `critical` tasks first
 2. `high` tasks next
 3. `medium` tasks next
@@ -33,6 +54,12 @@ Otherwise, sort by priority:
 5. Tasks without priority metadata last
 
 Break ties by "unblocks most others" — tasks that appear in the most `blockedBy` lists of other tasks execute first.
+
+If a wave contains more tasks than `max_parallel`, split into sub-waves of `max_parallel` size, maintaining the priority ordering.
+
+### 3e: Circular Dependency Detection
+
+Detect circular dependencies: if any tasks remain unassigned after topological sorting, they form a cycle. Report the cycle to the user and attempt to break at the weakest link (task with fewest blockers).
 
 ## Step 4: Check Settings
 
@@ -50,13 +77,21 @@ EXECUTION PLAN
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Tasks to execute: {count}
 Retry limit: {retries} per task
+Max parallel: {max_parallel} per wave
 
-EXECUTION ORDER:
+WAVE 1 ({n} tasks):
   1. [{id}] {subject} ({priority})
   2. [{id}] {subject} ({priority})
   ...
 
-BLOCKED (waiting on dependencies):
+WAVE 2 ({n} tasks):
+  3. [{id}] {subject} ({priority}) — after [{dep_ids}]
+  4. [{id}] {subject} ({priority}) — after [{dep_ids}]
+  ...
+
+{Additional waves...}
+
+BLOCKED (unresolvable dependencies):
   [{id}] {subject} — blocked by: {blocker ids}
   ...
 
@@ -70,7 +105,7 @@ After displaying the plan, use AskUserQuestion to confirm:
 ```yaml
 questions:
   - header: "Confirm Execution"
-    question: "Ready to execute {count} tasks with up to {retries} retries per task?"
+    question: "Ready to execute {count} tasks in {wave_count} waves (max {max_parallel} parallel) with up to {retries} retries per task?"
     options:
       - label: "Yes, start execution"
         description: "Proceed with the execution plan above"
@@ -167,9 +202,13 @@ Create `.claude/sessions/__live_session__/` (and `.claude/sessions/` parent if n
    ```markdown
    # Execution Progress
    Status: Initializing
-   Current Task: —
-   Phase: —
+   Wave: 0 of {total_waves}
+   Max Parallel: {max_parallel}
    Updated: {ISO 8601 timestamp}
+
+   ## Active Tasks
+
+   ## Completed This Session
    ```
 6. **`execution_pointer.md`** at `$HOME/.claude/tasks/{CLAUDE_CODE_TASK_LIST_ID}/execution_pointer.md` — Create immediately with the fully resolved absolute path to the live session directory (e.g., `/Users/sequenzia/dev/repos/my-project/.claude/sessions/__live_session__/`). Construct this by prepending the current working directory to `.claude/sessions/__live_session__/`. This ensures the pointer exists even if the session is interrupted before completing.
 
@@ -191,31 +230,42 @@ This prevents the execution context from growing unbounded across multiple execu
 
 ## Step 7: Execute Loop
 
-Execute tasks autonomously. No user interaction between tasks.
+Execute tasks in waves. No user interaction between waves.
 
-For each task in the execution plan:
+### 7a: Initialize Wave
 
-### 7a: Get Task Details
+1. Identify all unblocked tasks (pending status, all dependencies completed)
+2. Sort by priority (same rules as Step 3d)
+3. Take up to `max_parallel` tasks for this wave
+4. If no unblocked tasks remain, exit the loop
 
-Use `TaskGet` to load full task details.
+### 7b: Snapshot Execution Context
 
-### 7b: Mark In Progress
+Read `.claude/sessions/__live_session__/execution_context.md` and hold it as the baseline for this wave. All agents in this wave will read from this same snapshot. This prevents concurrent agents from seeing partial context writes from sibling tasks.
 
-Use `TaskUpdate` to set status to `in_progress`.
+### 7c: Launch Wave Agents
 
-Update `progress.md` with:
-```
-Status: Executing
-Current Task: [{id}] {subject} ({n} of {total})
-Phase: Launching agent
-Updated: {ISO 8601 timestamp}
-```
+1. Mark all wave tasks as `in_progress` via `TaskUpdate`
+2. Record `wave_start_time`
+3. Update `progress.md`:
+   ```markdown
+   # Execution Progress
+   Status: Executing
+   Wave: {current_wave} of {total_waves}
+   Max Parallel: {max_parallel}
+   Updated: {ISO 8601 timestamp}
 
-### 7c: Launch Executor Agent
+   ## Active Tasks
+   - [{id}] {subject} — Launching agent
+   - [{id}] {subject} — Launching agent
+   ...
 
-Record the current time as `task_start_time` before launching the agent.
+   ## Completed This Session
+   {accumulated completed tasks from prior waves}
+   ```
+4. Launch all wave agents simultaneously using **parallel Task tool calls in a single message turn**:
 
-Launch the `claude-alchemy-sdd:task-executor` agent using the `Task` tool:
+For each task in the wave, use the Task tool:
 
 ```
 Task:
@@ -236,6 +286,12 @@ Task:
     - Source Section: {source_section}
     - Spec Path: {spec_path}
     - Feature: {feature_name}
+
+    CONCURRENT EXECUTION MODE
+    Context Write Path: .claude/sessions/__live_session__/context-task-{id}.md
+    Do NOT write to execution_context.md directly.
+    Do NOT update progress.md — the orchestrator manages it.
+    Write your learnings to the Context Write Path above instead.
 
     {If retry attempt:}
     RETRY ATTEMPT {n} of {max_retries}
@@ -259,64 +315,84 @@ Task:
     4. Implement the necessary changes
     5. Verify against acceptance criteria (or inferred criteria for general tasks)
     6. Update task status if PASS (mark completed)
-    7. Append learnings to .claude/sessions/__live_session__/execution_context.md
+    7. Write learnings to .claude/sessions/__live_session__/context-task-{id}.md
     8. Return a structured verification report
     9. Report any token/usage information available from your session
 ```
 
-### 7d: Log Task Result
+**Important**: When `max_parallel` is 1, omit the `CONCURRENT EXECUTION MODE` section from the prompt. The agent will write directly to `execution_context.md` as in the original sequential behavior.
 
-After the agent returns:
+### 7d: Process Results
+
+As each agent returns:
 
 1. Calculate `duration = current_time - task_start_time`. Format: <60s = `{s}s`, <60m = `{m}m {s}s`, >=60m = `{h}h {m}m {s}s`
 2. Capture token usage from the Task tool response if available, otherwise `N/A`
 3. Append a row to `.claude/sessions/__live_session__/task_log.md`:
+   ```markdown
+   | {id} | {subject} | {PASS/PARTIAL/FAIL} | {attempt_number}/{max_retries} | {duration} | {token_usage or N/A} |
+   ```
+4. Log a brief status line: `[{id}] {subject}: {PASS|PARTIAL|FAIL}`
+5. Update `progress.md` — move the task from Active Tasks to Completed This Session:
+   ```markdown
+   ## Active Tasks
+   - [{other_id}] {subject} — Phase 2 — Implementing
+   ...
 
-```markdown
-| {id} | {subject} | {PASS/PARTIAL/FAIL} | {attempt_number}/{max_retries} | {duration} | {token_usage or N/A} |
-```
+   ## Completed This Session
+   - [{id}] {subject} — PASS ({duration})
+   {prior completed entries}
+   ```
 
-### 7e: Process Result
+**Context append fallback**: If the agent's report contains a `LEARNINGS:` section (indicating the agent failed to write to its context file), manually write those learnings to `.claude/sessions/__live_session__/context-task-{id}.md`.
 
-After logging:
+### 7e: Within-Wave Retry
 
-- Log a brief status line: `[{id}] {subject}: {PASS|PARTIAL|FAIL}`
-- **If PASS**: Continue to next task
-- **If PARTIAL or FAIL**: Check retry count
-  - If retries remaining: Launch a fresh agent invocation with the failure context included in the prompt
-  - If retries exhausted: Log final failure, leave task as `in_progress`, move to next task
+After processing a failed result:
 
-**Context append fallback**: If the agent's report contains a `LEARNINGS:` section (indicating the agent failed to append to `execution_context.md`), manually append those learnings to `.claude/sessions/__live_session__/execution_context.md`.
+1. Check retry count for the failed task
+2. If retries remaining:
+   - Re-launch the agent immediately with failure context included in the prompt
+   - Update `progress.md` active task entry: `- [{id}] {subject} — Retrying ({n}/{max})`
+   - Do NOT wait for other wave agents to complete — retry occupies an existing slot
+3. If retries exhausted:
+   - Leave task as `in_progress`
+   - Log final failure
+   - The slot is freed for any remaining retries
 
-Update `progress.md` with the task result and next action:
-```
-Status: Executing
-Current Task: [{id}] {subject} — {PASS|PARTIAL|FAIL}
-Phase: {Moving to next task | Retrying ({n}/{max}) | Completing session}
-Updated: {ISO 8601 timestamp}
-```
+### 7f: Merge Context After Wave
 
-### 7f: Refresh Task List
+After ALL agents in the current wave have completed (including retries):
 
-After each task completes (PASS or retries exhausted):
+1. Read all `context-task-{id}.md` files from `.claude/sessions/__live_session__/`
+2. Append their contents to `.claude/sessions/__live_session__/execution_context.md` in task ID order
+3. Delete the `context-task-{id}.md` files
 
-1. Use `TaskList` to refresh the full task state
-2. Check if any previously blocked tasks are now unblocked
-3. If newly unblocked tasks found, insert them into the execution plan using the priority sort from Step 3
-4. Continue until no more tasks remain in the plan
+**Skip merge when `max_parallel` is 1** — agents already wrote directly to `execution_context.md`.
 
-### 7g: Archive Completed Task Files
+### 7g: Rebuild Next Wave and Archive
 
-If the task result is PASS, copy the task's JSON file from `~/.claude/tasks/{CLAUDE_CODE_TASK_LIST_ID}/` to `.claude/sessions/__live_session__/tasks/`. Do not delete the original file.
+1. Archive completed task files: for each PASS task in this wave, copy the task's JSON from `~/.claude/tasks/{CLAUDE_CODE_TASK_LIST_ID}/` to `.claude/sessions/__live_session__/tasks/`
+2. Use `TaskList` to refresh the full task state
+3. Check if any previously blocked tasks are now unblocked
+4. If newly unblocked tasks found, form the next wave using priority sort from Step 3d
+5. If no unblocked tasks remain, exit the loop
+6. Loop back to 7a
 
 ## Step 8: Session Summary
 
 Update `progress.md` with final status:
 ```
+# Execution Progress
 Status: Complete
-Current Task: —
-Phase: Generating summary
+Wave: {total_waves} of {total_waves}
+Max Parallel: {max_parallel}
 Updated: {ISO 8601 timestamp}
+
+## Active Tasks
+
+## Completed This Session
+{all completed task entries}
 ```
 
 After all tasks in the plan have been processed:
@@ -329,6 +405,8 @@ Tasks executed: {total attempted}
   Passed: {count}
   Failed: {count} (after {total retries} total retry attempts)
 
+Waves completed: {wave_count}
+Max parallel: {max_parallel}
 Total execution time: {sum of all task durations}
 Token Usage: {total tokens if tracked, otherwise "N/A"}
 

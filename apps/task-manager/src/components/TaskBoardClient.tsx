@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { ScrollText } from 'lucide-react'
 import { KanbanBoard } from '@/components/KanbanBoard'
 import { SummaryStats } from '@/components/SummaryStats'
 import { TaskDetail } from '@/components/TaskDetail'
@@ -9,7 +8,7 @@ import { TaskListSelector } from '@/components/TaskListSelector'
 import { SearchInput } from '@/components/SearchInput'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { ExecutionDialog } from '@/components/ExecutionDialog'
-import { Button } from '@/components/ui/button'
+import { ExecutionProgressBar } from '@/components/ExecutionProgressBar'
 import { useTasks } from '@/hooks/useTasks'
 import { useExecutionContext } from '@/hooks/useExecutionContext'
 import { useSSE } from '@/hooks/useSSE'
@@ -58,17 +57,11 @@ export function TaskBoardClient({
           <div className="flex items-center gap-2 sm:gap-4">
             <TaskListSelector taskLists={taskLists} currentListId={listId} />
             <SearchInput value={searchQuery} onChange={setSearchQuery} />
-            {hasExecContext && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setExecutionDialogOpen(true)}
-                title="View execution context"
-              >
-                <ScrollText className="h-5 w-5" />
-                <span className="sr-only">View execution context</span>
-              </Button>
-            )}
+            <ExecutionProgressBar
+              progress={executionContext?.progress}
+              hasExecContext={hasExecContext}
+              onClick={() => setExecutionDialogOpen(true)}
+            />
             <ThemeToggle />
           </div>
         </div>
