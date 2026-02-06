@@ -1,0 +1,52 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/sequenzia/claude-alchemy/schemas/lsp.schema.json",
+  "title": "Claude Code LSP Server Configuration",
+  "description": "Schema for .lsp.json — Language Server Protocol server definitions for Claude Code plugins",
+  "type": "object",
+  "additionalProperties": {
+    "$ref": "#/$defs/lspServer"
+  },
+  "$defs": {
+    "lspServer": {
+      "type": "object",
+      "description": "Configuration for a single LSP server",
+      "required": ["command", "extensionToLanguage"],
+      "properties": {
+        "command": {
+          "type": "string",
+          "description": "Command to start the language server"
+        },
+        "args": {
+          "type": "array",
+          "description": "Arguments to pass to the server command",
+          "items": { "type": "string" }
+        },
+        "transport": {
+          "type": "string",
+          "description": "Transport protocol",
+          "enum": ["stdio", "tcp", "pipe"]
+        },
+        "extensionToLanguage": {
+          "type": "object",
+          "description": "Map of file extensions to language identifiers (e.g., {\".ts\": \"typescript\"})",
+          "additionalProperties": { "type": "string" }
+        },
+        "env": {
+          "type": "object",
+          "description": "Environment variables for the server process",
+          "additionalProperties": { "type": "string" }
+        },
+        "initializationOptions": {
+          "type": "object",
+          "description": "Options passed to the server during initialization"
+        },
+        "settings": {
+          "type": "object",
+          "description": "Workspace settings to send to the server"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

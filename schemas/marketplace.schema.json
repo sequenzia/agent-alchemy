@@ -1,0 +1,104 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/sequenzia/claude-alchemy/schemas/marketplace.schema.json",
+  "title": "Claude Code Plugin Marketplace Registry",
+  "description": "Schema for marketplace.json — a registry of available Claude Code plugins",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Registry name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Registry description"
+    },
+    "owner": {
+      "type": "object",
+      "description": "Registry owner information",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Owner name"
+        },
+        "email": {
+          "type": "string",
+          "description": "Owner email",
+          "format": "email"
+        },
+        "url": {
+          "type": "string",
+          "description": "Owner website",
+          "format": "uri"
+        }
+      },
+      "additionalProperties": false
+    },
+    "plugins": {
+      "type": "array",
+      "description": "List of registered plugins",
+      "items": {
+        "$ref": "#/$defs/pluginEntry"
+      }
+    }
+  },
+  "required": ["plugins"],
+  "additionalProperties": false,
+  "$defs": {
+    "pluginEntry": {
+      "type": "object",
+      "description": "A single plugin registry entry",
+      "required": ["name", "source"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Plugin identifier (kebab-case)",
+          "pattern": "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$"
+        },
+        "version": {
+          "type": "string",
+          "description": "Current plugin version (semver)",
+          "pattern": "^\\d+\\.\\d+\\.\\d+(-[a-zA-Z0-9.]+)?(\\+[a-zA-Z0-9.]+)?$"
+        },
+        "description": {
+          "type": "string",
+          "description": "Brief plugin description"
+        },
+        "source": {
+          "type": "string",
+          "description": "Relative path to the plugin directory"
+        },
+        "author": {
+          "description": "Plugin author",
+          "oneOf": [
+            { "type": "string" },
+            {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" },
+                "email": { "type": "string", "format": "email" },
+                "url": { "type": "string", "format": "uri" }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "category": {
+          "type": "string",
+          "description": "Plugin category for organization"
+        },
+        "homepage": {
+          "type": "string",
+          "description": "Plugin homepage URL",
+          "format": "uri"
+        },
+        "keywords": {
+          "type": "array",
+          "description": "Discovery tags",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

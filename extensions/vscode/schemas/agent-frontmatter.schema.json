@@ -1,0 +1,105 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/sequenzia/claude-alchemy/schemas/agent-frontmatter.schema.json",
+  "title": "Claude Code Agent Frontmatter",
+  "description": "Schema for YAML frontmatter in agent .md files — defines agent metadata and capabilities",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Unique agent identifier (lowercase letters, numbers, and hyphens)"
+    },
+    "description": {
+      "type": "string",
+      "description": "Brief description of when Claude should delegate to this agent"
+    },
+    "when_to_use": {
+      "type": "string",
+      "description": "Detailed guidance on when to use this agent, can include examples"
+    },
+    "tools": {
+      "description": "Tools available to this agent",
+      "oneOf": [
+        { "type": "string" },
+        {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      ]
+    },
+    "disallowedTools": {
+      "description": "Tools explicitly denied to this agent",
+      "oneOf": [
+        { "type": "string" },
+        {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      ]
+    },
+    "model": {
+      "type": "string",
+      "description": "Model to use for this agent (default: inherit from parent)",
+      "enum": ["sonnet", "opus", "haiku", "inherit"],
+      "default": "inherit"
+    },
+    "permissionMode": {
+      "type": "string",
+      "description": "Permission mode for the agent",
+      "enum": ["default", "acceptEdits", "dontAsk", "bypassPermissions", "plan"]
+    },
+    "skills": {
+      "type": "array",
+      "description": "Skills to preload when this agent is activated",
+      "items": { "type": "string" }
+    },
+    "hooks": {
+      "type": "object",
+      "description": "Lifecycle hooks scoped to this agent",
+      "properties": {
+        "PreToolUse": { "$ref": "#/$defs/matcherGroupArray" },
+        "PostToolUse": { "$ref": "#/$defs/matcherGroupArray" },
+        "Stop": { "$ref": "#/$defs/matcherGroupArray" }
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/matcherGroupArray"
+      }
+    },
+    "memory": {
+      "type": "string",
+      "description": "Persistent memory scope for the agent",
+      "enum": ["user", "project", "local"]
+    },
+    "color": {
+      "type": "string",
+      "description": "Display color for the agent in the UI",
+      "enum": ["blue", "green", "yellow", "red", "purple", "cyan", "orange", "pink"]
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "matcherGroupArray": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "matcher": { "type": "string" },
+          "hooks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": { "type": "string", "enum": ["command", "prompt"] },
+                "command": { "type": "string" },
+                "prompt": { "type": "string" },
+                "timeout": { "type": "number", "minimum": 0 }
+              },
+              "required": ["type"]
+            }
+          }
+        },
+        "required": ["hooks"]
+      }
+    }
+  }
+}
