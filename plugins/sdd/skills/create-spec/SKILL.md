@@ -608,6 +608,8 @@ AskUserQuestion:
       options:
         - label: "Yes, analyze it"
           description: "Run spec analysis to catch inconsistencies, gaps, and ambiguities"
+        - label: "Yes, clear context first"
+          description: "Clear conversation history to free up context, then run spec analysis separately"
         - label: "No, I'm done"
           description: "Finish the workflow"
       multiSelect: false
@@ -643,6 +645,21 @@ Instructions:
 7. Handle chosen mode accordingly
 8. Update report with final resolution status
 ```
+
+### If User Selects "Yes, clear context first"
+
+The `/clear` command terminates the current conversation, so the analysis must be run as a separate invocation. Output the following instructions to the user:
+
+```
+Spec saved to: {spec_path}
+
+To analyze with a fresh context, run these commands:
+
+/clear
+/sdd:analyze-spec {spec_path}
+```
+
+Do NOT attempt to run `/clear` yourself or continue the workflow. The user will manually clear the context and invoke the analysis.
 
 ### If User Selects "No, I'm done"
 
