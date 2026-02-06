@@ -601,16 +601,16 @@ function renderFindings() {
       ${f.impact ? `<div class="finding-issue" style="font-style:italic">${esc(f.impact)}</div>` : ''}
       ${isSelected ? `
         ${f.currentText ? `
-          <div class="finding-detail">
+          <div class="finding-detail" onclick="event.stopPropagation()">
             <div class="finding-detail-label">Current</div>
             <div class="finding-detail-text current">${esc(f.currentText)}</div>
           </div>` : ''}
         ${f.proposedText ? `
-          <div class="finding-detail">
+          <div class="finding-detail" onclick="event.stopPropagation()">
             <div class="finding-detail-label">Proposed</div>
             <div class="finding-detail-text proposed">${esc(f.proposedText)}</div>
           </div>` : ''}
-        <textarea class="comment-area" placeholder="Add a comment (optional)..." onchange="setComment('${f.id}', this.value)">${esc(comment)}</textarea>
+        <textarea class="comment-area" placeholder="Add a comment (optional)..." oninput="setComment('${f.id}', this.value)" onclick="event.stopPropagation()" onmousedown="event.stopPropagation()">${esc(comment)}</textarea>
         <div class="finding-actions">
           ${f.status === 'pending' ? `
             <button class="btn btn-approve" onclick="event.stopPropagation(); setStatus('${f.id}', 'approved')">Approve</button>
