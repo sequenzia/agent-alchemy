@@ -62,14 +62,15 @@ Check for settings at `.claude/claude-alchemy.local.md` to get:
 - Author name (if configured)
 - Any custom preferences
 
-### Step 5: Determine Report Path
+### Step 5: Determine Report Paths
 
-The analysis report should be saved in the same directory as the spec with `.analysis.md` suffix:
+The analysis outputs should be saved in the same directory as the spec:
 
 - Spec: `specs/SPEC-User-Auth.md`
 - Report: `specs/SPEC-User-Auth.analysis.md`
+- HTML Review: `specs/SPEC-User-Auth.analysis.html`
 
-Extract the spec filename and construct the report path.
+Extract the spec filename and construct both output paths.
 
 ### Step 6: Launch Analyzer Agent
 
@@ -85,16 +86,19 @@ Spec Content:
 
 Detected Depth Level: {depth_level}
 Report Output Path: {report_path}
+HTML Review Path: {html_review_path}
+HTML Template Path: skills/analyze-spec/templates/review-template.html
 Author: {author_from_settings or "Not specified"}
 
 Instructions:
-1. Load the analysis skill and reference files
+1. Load the analysis skill, reference files, and HTML review guide
 2. Perform systematic analysis based on the depth level
-3. Generate the analysis report
-4. Present findings summary
-5. Ask if user wants to enter update mode
-6. If yes, guide through interactive resolution
-7. Update report with final resolution status
+3. Generate the analysis report (.analysis.md)
+4. Generate the interactive HTML review (.analysis.html)
+5. Present findings summary
+6. Ask user to choose review mode (HTML review, CLI update, or reports only)
+7. Handle chosen mode accordingly
+8. Update report with final resolution status
 ```
 
 ### Step 7: Handoff Complete
@@ -102,8 +106,9 @@ Instructions:
 Once you have launched the Analyzer Agent, your role is complete. The agent will handle:
 - Loading analysis criteria for the depth level
 - Performing comprehensive analysis
-- Generating and saving the report
-- Interactive update mode (if requested)
+- Generating and saving the report (.analysis.md)
+- Generating the interactive HTML review (.analysis.html)
+- Offering three review modes: HTML review, CLI update, or reports only
 - Updating the spec with approved changes
 
 ## Example Usage
@@ -379,3 +384,5 @@ After all findings processed:
 - `references/analysis-criteria.md` - Depth-specific checklists and detection algorithms
 - `references/report-template.md` - Standard report format
 - `references/common-issues.md` - Issue pattern library with examples
+- `references/html-review-guide.md` - HTML review generation instructions and data schemas
+- `templates/review-template.html` - Self-contained interactive HTML review template

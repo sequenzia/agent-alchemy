@@ -65,7 +65,7 @@ The spec is a planning artifact itself — generating it IS the planning activit
 
 ## Workflow Overview
 
-This workflow has six phases:
+This workflow has seven phases:
 
 1. **Settings Check** — Load user configuration
 2. **Initial Inputs** — Gather spec name, type, depth, and description
@@ -73,6 +73,7 @@ This workflow has six phases:
 4. **Recommendations Round** — Dedicated round for accumulated best-practice suggestions (if applicable)
 5. **Pre-Compilation Summary** — Present gathered requirements for user confirmation
 6. **Spec Compilation** — Generate spec from template and write to file
+7. **Post-Compilation Analysis Offer** — Offer to analyze the spec for quality issues
 
 ---
 
@@ -592,6 +593,60 @@ Choose the appropriate template based on depth level:
 - `400 Bad Request`: Validation errors
 - `401 Unauthorized`: Authentication required
 ```
+
+---
+
+## Phase 7: Post-Compilation Analysis Offer
+
+After the spec is saved and presented to the user, offer to run quality analysis:
+
+```yaml
+AskUserQuestion:
+  questions:
+    - header: "Spec Analysis"
+      question: "Would you like to analyze this spec for quality issues?"
+      options:
+        - label: "Yes, analyze it"
+          description: "Run spec analysis to catch inconsistencies, gaps, and ambiguities"
+        - label: "No, I'm done"
+          description: "Finish the workflow"
+      multiSelect: false
+```
+
+### If User Selects "Yes, analyze it"
+
+Determine the report paths:
+- Report: Same directory as spec, with `.analysis.md` suffix
+- HTML Review: Same directory as spec, with `.analysis.html` suffix
+
+Launch the Spec Analyzer Agent using the Task tool with subagent_type `claude-alchemy-sdd:spec-analyzer`:
+
+```
+Analyze the spec at: {spec_path}
+
+Spec Content:
+{full_spec_content}
+
+Detected Depth Level: {depth_level}
+Report Output Path: {report_path}
+HTML Review Path: {html_review_path}
+HTML Template Path: skills/analyze-spec/templates/review-template.html
+Author: {author_from_settings or "Not specified"}
+
+Instructions:
+1. Load the analysis skill, reference files, and HTML review guide
+2. Perform systematic analysis based on the depth level
+3. Generate the analysis report (.analysis.md)
+4. Generate the interactive HTML review (.analysis.html)
+5. Present findings summary
+6. Ask user to choose review mode (HTML review, CLI update, or reports only)
+7. Handle chosen mode accordingly
+8. Update report with final resolution status
+```
+
+### If User Selects "No, I'm done"
+
+End the workflow. The spec is complete.
 
 ---
 

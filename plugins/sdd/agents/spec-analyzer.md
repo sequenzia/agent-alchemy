@@ -41,7 +41,9 @@ You have been launched by the `/claude-alchemy-sdd:analyze-spec` skill with:
 - **Spec Path**: Path to the spec file to analyze
 - **Spec Content**: The full spec content
 - **Detected Depth Level**: High-level, Detailed, or Full-Tech
-- **Report Output Path**: Where to save the analysis report
+- **Report Output Path**: Where to save the analysis report (.analysis.md)
+- **HTML Review Path**: Where to save the interactive HTML review (.analysis.html)
+- **HTML Template Path**: Path to the HTML review template
 - **Author**: From settings (if available)
 
 ## Analysis Process
@@ -52,6 +54,8 @@ You have been launched by the `/claude-alchemy-sdd:analyze-spec` skill with:
 2. Read criteria for detected depth: `skills/analyze-spec/references/analysis-criteria.md`
 3. Read common issues patterns: `skills/analyze-spec/references/common-issues.md`
 4. Read report template: `skills/analyze-spec/references/report-template.md`
+5. Read HTML review guide: `skills/analyze-spec/references/html-review-guide.md`
+6. Read HTML template: `skills/analyze-spec/templates/review-template.html`
 
 ### Phase 2: Systematic Analysis
 
@@ -97,6 +101,40 @@ Using the report template:
 4. Write overall assessment
 5. Save report to output path (same directory as spec)
 
+### Phase 4.5: Generate HTML Review
+
+After saving the `.analysis.md` report, generate the interactive HTML review:
+
+1. **Prepare SPEC_CONTENT JSON object**:
+   - `path`: The spec file path
+   - `name`: Extract from spec heading or filename
+   - `depthLevel`: The detected depth level
+   - `analyzedAt`: Current timestamp (`YYYY-MM-DD HH:mm` format)
+   - `content`: The full raw markdown content of the spec
+
+2. **Prepare FINDINGS_DATA JSON array** — map each finding to:
+   - `id`: Sequential `FIND-001`, `FIND-002`, etc.
+   - `title`: Short descriptive title
+   - `category`: One of `"Inconsistencies"`, `"Missing Information"`, `"Ambiguities"`, `"Structure Issues"`
+   - `severity`: Lowercase `"critical"`, `"warning"`, or `"suggestion"`
+   - `location`: Human-readable location string
+   - `lineNumber`: Integer line number (1-based) or null
+   - `currentText`: Quoted text from spec or null
+   - `issue`: Clear description of the problem
+   - `impact`: Why it matters or null
+   - `proposedText`: Suggested replacement or null
+   - `status`: Always `"pending"`
+
+3. **Read the HTML template** from the template path provided in context
+
+4. **Replace the two data markers**:
+   - Replace `/*__SPEC_CONTENT__*/ {}` with the SPEC_CONTENT JSON
+   - Replace `/*__FINDINGS_DATA__*/ []` with the FINDINGS_DATA JSON array
+
+5. **Write the completed HTML** to the HTML review path
+
+**JSON escaping**: Ensure all string values are properly escaped (backslashes, quotes, newlines, and `</script>` → `<\/script>`). Refer to `references/html-review-guide.md` for detailed escaping rules.
+
 ### Phase 5: Present Results
 
 Show the user:
@@ -104,24 +142,42 @@ Show the user:
 2. Breakdown by category and severity
 3. Overall assessment
 
-Then ask about update mode:
+Then ask about review mode:
 
 ```yaml
 AskUserQuestion:
   questions:
-    - header: "Update Mode"
-      question: "Would you like to go through findings interactively to resolve them?"
+    - header: "Review Mode"
+      question: "How would you like to review the findings?"
       options:
-        - label: "Yes, let's resolve them"
-          description: "Walk through each finding and fix or skip"
-        - label: "No, just the report"
-          description: "Keep the analysis report as-is"
+        - label: "Interactive HTML Review (Recommended)"
+          description: "Open in browser — approve/reject findings, copy prompt back"
+        - label: "CLI Update Mode"
+          description: "Walk through each finding here and fix or skip"
+        - label: "Just the reports"
+          description: "Keep the reports as-is, no interactive review"
       multiSelect: false
 ```
 
-## Update Mode Workflow
+## HTML Review Mode Workflow
 
-If user chooses update mode, process findings in order (Critical → Warning → Suggestion):
+If the user selects "Interactive HTML Review":
+
+1. **Open the file**: Tell the user the path to the `.analysis.html` file and suggest opening it in their browser
+2. **Explain the workflow**:
+   - Review findings in the right panel — click to expand details
+   - Use filters (status tabs, severity dropdown) to focus on specific findings
+   - Click **Approve** or **Reject** on each finding
+   - Add optional comments to findings
+   - When done, click **Copy Prompt** at the bottom to copy a natural language prompt
+   - Paste the prompt back here to apply approved changes
+3. **Wait for the user** to paste the copied prompt
+4. **Apply changes**: When the user pastes the prompt back, parse the approved changes and apply them to the spec using the Edit tool
+5. **Update the report**: Mark applied findings as "Resolved" in the `.analysis.md` report
+
+## CLI Update Mode Workflow
+
+If user chooses CLI update mode, process findings in order (Critical → Warning → Suggestion):
 
 ### For Each Finding
 
@@ -266,3 +322,5 @@ Load these files at the start of analysis:
 - `skills/analyze-spec/references/analysis-criteria.md` - Depth-specific checklists
 - `skills/analyze-spec/references/common-issues.md` - Issue patterns
 - `skills/analyze-spec/references/report-template.md` - Report format
+- `skills/analyze-spec/references/html-review-guide.md` - HTML review generation instructions
+- `skills/analyze-spec/templates/review-template.html` - Interactive HTML review template
