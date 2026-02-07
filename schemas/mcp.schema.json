@@ -1,6 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://github.com/sequenzia/claude-alchemy/schemas/mcp.schema.json",
+  "$comment": "Source: https://code.claude.com/docs/en/mcp — Last validated: 2026-02-07",
   "title": "Claude Code MCP Server Configuration",
   "description": "Schema for .mcp.json — Model Context Protocol server definitions for Claude Code plugins",
   "type": "object",
@@ -47,6 +48,26 @@
           "type": "string",
           "description": "Transport type",
           "enum": ["stdio", "sse", "http"]
+        },
+        "headers": {
+          "type": "object",
+          "description": "HTTP headers to send with requests (for HTTP/SSE transport)",
+          "additionalProperties": { "type": "string" }
+        },
+        "oauth": {
+          "type": "object",
+          "description": "OAuth configuration for authenticated MCP servers",
+          "properties": {
+            "clientId": {
+              "type": "string",
+              "description": "OAuth client ID"
+            },
+            "callbackPort": {
+              "type": "integer",
+              "description": "Local port for OAuth callback"
+            }
+          },
+          "additionalProperties": false
         }
       },
       "additionalProperties": false

@@ -22,7 +22,9 @@ export interface SchemaProperty {
   items?: SchemaProperty;
   pattern?: string;
   maxLength?: number;
+  minimum?: number;
   properties?: Record<string, SchemaProperty>;
+  additionalProperties?: boolean | SchemaProperty;
 }
 
 export interface SchemaDefinition {

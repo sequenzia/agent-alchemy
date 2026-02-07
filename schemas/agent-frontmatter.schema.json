@@ -1,6 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://github.com/sequenzia/claude-alchemy/schemas/agent-frontmatter.schema.json",
+  "$comment": "Source: https://code.claude.com/docs/en/sub-agents — Last validated: 2026-02-07",
   "title": "Claude Code Agent Frontmatter",
   "description": "Schema for YAML frontmatter in agent .md files — defines agent metadata and capabilities",
   "type": "object",
@@ -12,10 +13,6 @@
     "description": {
       "type": "string",
       "description": "Brief description of when Claude should delegate to this agent"
-    },
-    "when_to_use": {
-      "type": "string",
-      "description": "Detailed guidance on when to use this agent, can include examples"
     },
     "tools": {
       "description": "Tools available to this agent",
@@ -46,7 +43,12 @@
     "permissionMode": {
       "type": "string",
       "description": "Permission mode for the agent",
-      "enum": ["default", "acceptEdits", "dontAsk", "bypassPermissions", "plan"]
+      "enum": ["default", "acceptEdits", "delegate", "dontAsk", "bypassPermissions", "plan"]
+    },
+    "maxTurns": {
+      "type": "integer",
+      "description": "Maximum number of agentic turns before stopping",
+      "minimum": 1
     },
     "skills": {
       "type": "array",
@@ -70,10 +72,12 @@
       "description": "Persistent memory scope for the agent",
       "enum": ["user", "project", "local"]
     },
-    "color": {
-      "type": "string",
-      "description": "Display color for the agent in the UI",
-      "enum": ["blue", "green", "yellow", "red", "purple", "cyan", "orange", "pink"]
+    "mcpServers": {
+      "type": "object",
+      "description": "MCP server configurations scoped to this agent",
+      "additionalProperties": {
+        "type": "object"
+      }
     }
   },
   "additionalProperties": false,
