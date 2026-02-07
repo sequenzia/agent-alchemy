@@ -47,7 +47,13 @@ Execute these phases in order, completing ALL of them:
 **Goal:** Understand the relevant parts of the codebase.
 
 1. **Run deep-analysis workflow:**
-   - Read `${CLAUDE_PLUGIN_ROOT}/skills/deep-analysis/SKILL.md` and follow its complete workflow, using the feature description from Phase 1 as the analysis context
+   - Check if the original `$ARGUMENTS` contains `--teams` flag
+   - If `--teams` is present:
+     - Read `${CLAUDE_PLUGIN_ROOT}/skills/teams-deep-analysis/SKILL.md` and follow its workflow
+     - Remove `--teams` from the analysis context passed to the skill
+   - Otherwise:
+     - Read `${CLAUDE_PLUGIN_ROOT}/skills/deep-analysis/SKILL.md` and follow its workflow (default)
+   - Pass the feature description from Phase 1 as the analysis context
    - This handles exploration (parallel code-explorer agents) and synthesis (codebase-synthesizer agent)
 
 2. Present the synthesized analysis to the user.

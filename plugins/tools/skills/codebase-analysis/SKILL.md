@@ -31,7 +31,13 @@ Execute a structured 3-phase codebase analysis workflow to gather insights.
    - If no arguments, set context to "general codebase understanding"
 
 2. **Run deep-analysis workflow:**
-   - Read `${CLAUDE_PLUGIN_ROOT}/skills/deep-analysis/SKILL.md` and follow its complete workflow, passing the analysis context from step 1
+   - Check if `$ARGUMENTS` contains `--teams` flag
+   - If `--teams` is present:
+     - Read `${CLAUDE_PLUGIN_ROOT}/skills/teams-deep-analysis/SKILL.md` and follow its workflow
+     - Remove `--teams` from the analysis context
+   - Otherwise:
+     - Read `${CLAUDE_PLUGIN_ROOT}/skills/deep-analysis/SKILL.md` and follow its workflow (default)
+   - Pass the analysis context from step 1
    - This handles exploration (parallel code-explorer agents) and synthesis (codebase-synthesizer agent)
 
 3. **Verify results:**
