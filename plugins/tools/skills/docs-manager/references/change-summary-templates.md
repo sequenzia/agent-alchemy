@@ -75,6 +75,8 @@ BREAKING CHANGE: Description of breaking change (if applicable)
 
 ## Format 3: MkDocs Documentation Page
 
+> **Scope:** This format applies only when the documentation target is an MkDocs site. For basic markdown projects, use Format 1 (Markdown Changelog) as the primary change summary output.
+
 A full documentation page suitable for a changelog or release notes section.
 
 ```markdown

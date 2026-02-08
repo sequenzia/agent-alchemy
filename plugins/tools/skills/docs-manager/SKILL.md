@@ -1,7 +1,11 @@
 ---
 name: docs-manager
-description: Documentation management workflow for MkDocs sites — initialize, generate pages, update existing docs, and create change summaries. Use when asked to "create docs", "update documentation", "generate docs site", "manage documentation", or "docs changelog".
-argument-hint: <action-or-description>
+description: >-
+  Documentation management workflow for MkDocs sites and standalone markdown files —
+  initialize, generate, update docs, and create change summaries. Use when asked to
+  "create docs", "write README", "update documentation", "generate docs site",
+  "write CONTRIBUTING", "manage documentation", or "docs changelog".
+argument-hint: <action-or-description> [--teams]
 model: inherit
 user-invocable: true
 disable-model-invocation: false
@@ -10,203 +14,180 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Task, AskUserQuestion
 
 # Documentation Manager Workflow
 
-Execute a structured 5-phase workflow for managing MkDocs documentation sites. Supports four action types: initialize a new docs site, generate documentation pages, update existing docs, and create change summaries.
+Execute a structured 6-phase workflow for managing documentation. Supports two documentation formats (MkDocs sites and standalone markdown files) and three action types (generate, update, change summary).
 
-**CRITICAL: Complete ALL applicable phases.** Phase 2 is conditional (only for initialization). After completing each phase, immediately proceed to the next phase without waiting for user prompts.
+**CRITICAL: Complete ALL applicable phases.** Some phases are conditional. After completing each phase, immediately proceed to the next phase without waiting for user prompts.
 
 ## Phase Overview
 
 Execute these phases in order, completing ALL of them:
 
-1. **Discovery & Detection** — Classify the action, detect existing MkDocs project, load supporting skills
-2. **MkDocs Initialization** — *(Conditional)* Scaffold `mkdocs.yml` and starter pages if no MkDocs project exists
-3. **Codebase Analysis & Planning** — Launch code-explorer agents, produce a doc plan for user approval
-4. **Documentation Generation** — Launch docs-writer agents to generate or update page content
-5. **Integration & Finalization** — Write files, update `mkdocs.yml` nav, validate, and present results
+1. **Interactive Discovery** — Determine documentation type, format, and scope through user interaction
+2. **Project Detection & Setup** — Detect project context, conditionally scaffold MkDocs
+3. **Codebase Analysis** — Deep codebase exploration using the deep-analysis skill
+4. **Documentation Planning** — Translate analysis findings into a concrete plan for user approval
+5. **Documentation Generation** — Launch docs-writer agents to generate content
+6. **Integration & Finalization** — Write files, validate, present results
 
 ---
 
-## Phase 1: Discovery & Detection
+## Phase 1: Interactive Discovery
 
-**Goal:** Determine what the user wants and what already exists.
+**Goal:** Determine through user interaction what documentation to create and in what format.
 
-1. **Parse the request from `$ARGUMENTS`:**
-   Classify the action as one of:
-   - **initialize** — Set up a new MkDocs project (user says "init docs", "set up docs site", "create documentation project")
-   - **generate** — Create new documentation pages (user says "generate docs", "write API docs", "document this project")
-   - **update** — Update existing documentation (user says "update docs", "sync docs with code", "docs are outdated")
-   - **change-summary** — Summarize recent code changes (user says "changelog", "what changed", "release notes", "summarize changes")
+### Step 1 — Infer intent from `$ARGUMENTS`
 
-   If the action is ambiguous, use `AskUserQuestion` to clarify:
-   - "Initialize a new docs site"
-   - "Generate documentation pages"
-   - "Update existing documentation"
-   - "Create a change summary"
+Parse the user's input to pre-fill selections:
+- Keywords like "README", "CONTRIBUTING", "ARCHITECTURE" → infer `basic-markdown`
+- Keywords like "mkdocs", "docs site", "documentation site" → infer `mkdocs`
+- Keywords like "changelog", "release notes", "what changed" → infer `change-summary`
 
-2. **Detect existing MkDocs project:**
-   - Use Glob to check for `mkdocs.yml` or `mkdocs.yaml` in the project root
-   - If found, read it to understand the current site structure (theme, nav, extensions)
-   - If not found and action is not `initialize`, ask the user whether to initialize first or proceed without MkDocs
+If the intent is clear, present a summary for quick confirmation before proceeding (skip to Step 4). If ambiguous, proceed to Step 2.
 
-3. **Detect project metadata:**
-   - Check for `package.json`, `pyproject.toml`, `Cargo.toml`, `go.mod`, `pom.xml`, or similar manifests
-   - Run `git remote get-url origin 2>/dev/null` to detect repository URL
-   - Note the primary language and framework
+### Step 2 — Q1: Documentation type
 
-4. **Check for existing docs:**
-   - Glob for `docs/**/*.md` to find existing documentation pages
-   - Glob for `README.md`, `CONTRIBUTING.md`, `ARCHITECTURE.md` for existing prose
-   - Note which areas already have documentation coverage
+If the documentation type is ambiguous or needs confirmation, use `AskUserQuestion`:
 
-5. **Set action-specific context:**
+```
+What type of documentation would you like to create?
+1. "MkDocs documentation site" — Full docs site with mkdocs.yml, Material theme
+2. "Basic markdown files" — Standalone files like README.md, CONTRIBUTING.md, ARCHITECTURE.md
+3. "Change summary" — Changelog, release notes, commit message
+```
 
-   For **update** actions, determine the update mode:
-   - **git-diff** — Update docs affected by recent code changes (default if user mentions "recent changes" or a branch/tag)
-   - **full-scan** — Compare all source code against all docs for gap analysis (default if user says "full update" or "sync all")
-   - **targeted** — Update specific pages or sections (default if user specifies file paths or page names)
+Store as `DOC_TYPE` = `mkdocs` | `basic-markdown` | `change-summary`.
 
-   For **change-summary** actions, determine the range:
-   - A git tag or version reference (e.g., "since v1.2.0")
-   - A branch comparison (e.g., "main vs develop")
-   - A time range (e.g., "last week")
-   - If unspecified, use `AskUserQuestion` to determine the comparison range
+### Step 3 — Conditional follow-up questions
 
-6. **Summarize detection results to the user:**
-   - Action type and mode
-   - MkDocs project status (found/not found)
-   - Existing documentation coverage
-   - Proposed next steps
+**If `DOC_TYPE = mkdocs`:**
 
----
+Q2: `AskUserQuestion` — Existing project or new setup?
+- "Existing MkDocs project" → `MKDOCS_MODE = existing`
+- "New MkDocs setup" → `MKDOCS_MODE = new`
 
-## Phase 2: MkDocs Initialization
+Q3 (if `existing`): `AskUserQuestion` — What to do?
+- "Generate new pages"
+- "Update existing pages"
+- "Both — generate and update"
+Store as `ACTION`.
 
-**Goal:** Scaffold a new MkDocs project. *(Skip this phase if `mkdocs.yml` already exists AND action is not `initialize`.)*
+Q3 (if `new`): `AskUserQuestion` — Scope?
+- "Full documentation"
+- "Getting started only (minimal init)"
+- "Custom pages"
+Store as `MKDOCS_SCOPE`. If custom, use `AskUserQuestion` for desired pages (free text).
 
-1. **Load the configuration template:**
-   - Read `${CLAUDE_PLUGIN_ROOT}/skills/docs-manager/references/mkdocs-config-template.md`
+**If `DOC_TYPE = basic-markdown`:**
 
-2. **Gather project information:**
-   - Use detected project metadata from Phase 1 (name, description, repo URL)
-   - If metadata is incomplete, use `AskUserQuestion` to fill gaps:
-     - Site name
-     - Site description
+Q2: `AskUserQuestion` (multiSelect) — Which files?
+- "README.md"
+- "CONTRIBUTING.md"
+- "ARCHITECTURE.md"
+- "API documentation"
+Store as `MARKDOWN_FILES`. If "Other" is selected, use `AskUserQuestion` for custom file paths/descriptions.
 
-3. **Generate `mkdocs.yml`:**
-   - Fill the template with project-specific values
-   - Include Material theme with standard features (navigation, search, code copy, dark/light toggle)
-   - Include pymdownx extensions (highlight, superfences, tabbed, details) and Mermaid support
-   - Set up initial nav with Home and Getting Started
+**If `DOC_TYPE = change-summary`:**
 
-4. **Create starter pages:**
-   - Write `docs/index.md` with project overview from README or manifest description
-   - Write `docs/getting-started.md` with installation and basic usage from README or detected package manager
+Q2: `AskUserQuestion` — What range?
+- "Since last tag"
+- "Between two refs"
+- "Recent changes"
+Follow up for specific range details (tag name, ref pair, etc.).
 
-5. **Present the scaffold to the user:**
-   - Show the generated `mkdocs.yml` configuration
-   - List the created starter pages
-   - Confirm before writing files
+### Step 4 — Confirm selections
 
-6. **If action is `initialize` only (not followed by generate/update):**
-   - Skip to Phase 5 for finalization
-   - Otherwise, proceed to Phase 3
+Present a summary of all selections and use `AskUserQuestion`:
+- "Proceed"
+- "Change selections"
+
+If the user wants to change, loop back to the relevant question.
+
+**Immediately proceed to Phase 2.**
 
 ---
 
-## Phase 3: Codebase Analysis & Planning
+## Phase 2: Project Detection & Setup
 
-**Goal:** Analyze the codebase and produce a documentation plan.
+**Goal:** Detect project context automatically, conditionally scaffold MkDocs.
 
-1. **Load skills for this phase:**
-   - Read `${CLAUDE_PLUGIN_ROOT}/skills/project-conventions/SKILL.md` and apply its guidance
+### Step 1 — Detect project metadata (all paths)
 
-2. **Launch code-explorer agents based on action type:**
+- Check manifests: `package.json`, `pyproject.toml`, `Cargo.toml`, `go.mod`, `pom.xml`
+- Run `git remote get-url origin 2>/dev/null`
+- Note primary language and framework
 
-   ### For `generate` (new pages):
-   Launch 2 code-explorer agents in parallel using the Task tool with `subagent_type: "claude-alchemy-tools:code-explorer"`:
+### Step 2 — Check existing documentation (all paths)
 
+- Glob for `docs/**/*.md`, `README.md`, `CONTRIBUTING.md`, `ARCHITECTURE.md`
+- For MkDocs: check for `mkdocs.yml`/`mkdocs.yaml`, read if found
+
+### Step 3 — MkDocs Initialization (only if `DOC_TYPE = mkdocs` AND `MKDOCS_MODE = new`)
+
+1. Load `${CLAUDE_PLUGIN_ROOT}/skills/docs-manager/references/mkdocs-config-template.md`
+2. Fill template with detected metadata (ask via `AskUserQuestion` if incomplete)
+3. Generate `mkdocs.yml`, create `docs/index.md` and `docs/getting-started.md`
+4. Present scaffold for confirmation before writing
+
+If `MKDOCS_SCOPE = minimal` (getting started only): write the scaffold files and skip to Phase 6.
+
+### Step 4 — Set action-specific context (for update/change-summary)
+
+For **update** modes, determine the approach:
+- **git-diff** — Update docs affected by recent code changes (default if user mentions "recent changes" or a branch/tag)
+- **full-scan** — Compare all source code against all docs for gap analysis (default if user says "full update" or "sync all")
+- **targeted** — Update specific pages or sections (default if user specifies file paths or page names)
+
+For **change-summary**, run `git log` and `git diff --stat` for the determined range.
+
+**Immediately proceed to Phase 3.**
+
+---
+
+## Phase 3: Codebase Analysis
+
+**Goal:** Deep codebase exploration using the deep-analysis skill.
+
+**Skip conditions:**
+- Skip for `change-summary` (uses git-based analysis instead — see below)
+- Skip for MkDocs minimal init-only (`MKDOCS_SCOPE = minimal`)
+
+### Step 1 — Build documentation-focused analysis context
+
+Construct a specific context string based on Phase 1 selections:
+
+| Selection | Analysis Context |
+|-----------|-----------------|
+| MkDocs generate | "Documentation generation — find all public APIs, architecture, integration points, and existing documentation..." |
+| MkDocs update | "Documentation update — identify changes to public APIs, outdated references, documentation gaps..." |
+| Basic markdown README | "Project overview — understand purpose, architecture, setup, key features, configuration, and dependencies..." |
+| Basic markdown ARCHITECTURE | "Architecture documentation — map system structure, components, data flow, design decisions, key dependencies..." |
+| Basic markdown API docs | "API documentation — find all public functions, classes, methods, types, their signatures and usage patterns..." |
+| Basic markdown CONTRIBUTING | "Contribution guidelines — find dev workflow, testing setup, code style rules, commit conventions, CI process..." |
+| Multiple files | Combine relevant contexts from above |
+
+### Step 2 — Run deep-analysis (or teams-deep-analysis)
+
+Check if `$ARGUMENTS` contains the `--teams` flag:
+
+- **If `--teams`:** Read `${CLAUDE_PLUGIN_ROOT}/skills/teams-deep-analysis/SKILL.md` and follow its workflow
+- **Otherwise:** Read `${CLAUDE_PLUGIN_ROOT}/skills/deep-analysis/SKILL.md` and follow its workflow
+
+Pass the documentation-focused analysis context from Step 1.
+
+Deep-analysis handles all agent orchestration (code-explorers + codebase-synthesizer). Since docs-manager is the calling skill, deep-analysis returns control without standalone summary.
+
+### Step 3 — Supplemental analysis for update with git-diff mode
+
+After deep-analysis, additionally:
+1. Run `git diff --name-only [base-ref]` for changed files
+2. Use Grep to search existing docs for references to changed files/functions
+3. Cross-reference with synthesis findings
+
+### For change-summary path (instead of deep-analysis)
+
+1. Run `git log --oneline [range]` and `git diff --stat [range]`
+2. Launch 1 code-explorer agent using Task tool with `subagent_type: "claude-alchemy-tools:code-explorer"` to analyze the changed files:
    ```
-   Agent 1 — Public APIs:
-   Path to analyze: [project root]
-   Analysis context: Documentation generation — find public APIs
-   Focus area: Public functions, classes, methods, and types that should be documented.
-   Find exported/public interfaces, their signatures, parameters, return types,
-   and any existing docstrings or JSDoc/pydoc comments.
-   Return a structured report of your findings.
-   ```
-
-   ```
-   Agent 2 — Existing Documentation:
-   Path to analyze: [project root]
-   Analysis context: Documentation generation — find existing docs and docstrings
-   Focus area: Existing documentation files, README content, inline documentation,
-   code comments, and architecture docs. Identify what is already documented
-   and what documentation patterns the project uses.
-   Return a structured report of your findings.
-   ```
-
-   ### For `update` with git-diff mode:
-   Run `git diff --name-only [base-ref]` to get changed files, then launch 1 code-explorer agent:
-
-   ```
-   Agent 1 — Changed Files:
-   Path to analyze: [project root]
-   Analysis context: Documentation update — analyze changed files
-   Focus area: These files have changed since [base-ref]:
-   [list of changed files]
-
-   For each changed file, identify:
-   - What public APIs were added, modified, or removed
-   - What behavior changes occurred
-   - Which existing doc pages reference this code
-   Return a structured report of your findings.
-   ```
-
-   Also use Grep to search existing docs for references to changed files and functions.
-
-   ### For `update` with full-scan mode:
-   Launch 2 code-explorer agents in parallel:
-
-   ```
-   Agent 1 — Source APIs:
-   Path to analyze: [project root]
-   Analysis context: Documentation gap analysis — find all public APIs
-   Focus area: All public functions, classes, methods, and types across the codebase.
-   For each, note whether it appears to be documented (has docstrings, appears in docs/).
-   Return a structured report of your findings.
-   ```
-
-   ```
-   Agent 2 — Existing Doc Pages:
-   Path to analyze: [project root]/docs
-   Analysis context: Documentation gap analysis — audit existing pages
-   Focus area: Read all existing documentation pages. For each page, identify:
-   - What code/APIs it references
-   - Whether the references are current (check if referenced functions still exist)
-   - Sections that appear outdated or incomplete
-   Return a structured report of your findings.
-   ```
-
-   ### For `update` with targeted mode:
-   Launch 1 code-explorer agent on the user-specified paths:
-
-   ```
-   Agent 1 — Targeted Analysis:
-   Path to analyze: [project root]
-   Analysis context: Targeted documentation update
-   Focus area: Analyze these specific files/paths: [user-specified paths]
-
-   For each, identify public APIs, behavior, existing documentation references,
-   and what documentation changes are needed.
-   Return a structured report of your findings.
-   ```
-
-   ### For `change-summary`:
-   Run `git log --oneline [range]` and `git diff --stat [range]` to get change overview, then launch 1 code-explorer agent:
-
-   ```
-   Agent 1 — Change Analysis:
-   Path to analyze: [project root]
    Analysis context: Change summary for [range]
    Focus area: These files changed in the specified range:
    [list from git diff --stat]
@@ -218,106 +199,167 @@ Execute these phases in order, completing ALL of them:
    Return a structured report of your findings.
    ```
 
-3. **Produce a documentation plan:**
-
-   Based on exploration findings, create a plan listing:
-   - Pages to create (with proposed file paths under `docs/`)
-   - Pages to update (with specific sections to change)
-   - Proposed `mkdocs.yml` nav structure updates
-   - For change summaries: which output formats to generate
-
-4. **Present the plan for user approval:**
-   Use `AskUserQuestion` to let the user:
-   - "Approve the plan as-is"
-   - "Modify the plan" (describe changes)
-   - "Reduce scope" (select specific pages only)
+**Immediately proceed to Phase 4.**
 
 ---
 
-## Phase 4: Documentation Generation
+## Phase 4: Documentation Planning
 
-**Goal:** Generate documentation content using docs-writer agents.
+**Goal:** Translate analysis findings into a concrete documentation plan.
 
-1. **Load the change summary templates (if applicable):**
-   - If action is `change-summary`, read `${CLAUDE_PLUGIN_ROOT}/skills/docs-manager/references/change-summary-templates.md`
+### Step 1 — Produce plan based on doc type
 
-2. **Group pages by dependency:**
-   - **Independent pages** — Can be written without referencing other new pages (API reference, standalone guides)
-   - **Dependent pages** — Reference or summarize content from other pages (index pages, overview pages)
+**MkDocs:**
+- Pages to create (with `docs/` paths)
+- Pages to update (with specific sections)
+- Proposed `mkdocs.yml` nav updates
+- Page dependency ordering (independent pages first, then pages that cross-reference them)
 
-3. **Launch docs-writer agents for independent pages:**
+**Basic Markdown:**
+- Files to create/update (with target paths)
+- Proposed structure/outline for each file
+- Content scope per file
 
-   Launch agents in parallel using the Task tool with `subagent_type: "claude-alchemy-tools:docs-writer"` and `model: "opus"`:
+**Change Summary:**
+- Output formats to generate (Format 1: Changelog, Format 2: Commit message, Format 3: MkDocs page — only if MkDocs site exists)
+- Range confirmation
+- Scope of changes
 
-   ```
-   Documentation task: [page type — API reference / architecture / how-to / change summary]
-   Target file: [docs/path/to/page.md]
-   Project: [project name] at [project root]
+### Step 2 — User approval
 
-   MkDocs site context:
-   - Theme: Material for MkDocs
-   - Extensions available: admonitions, code highlighting, tabbed content, Mermaid diagrams
-   - Existing pages: [list of current doc pages]
+Use `AskUserQuestion`:
+- "Approve the plan as-is"
+- "Modify the plan" (describe changes)
+- "Reduce scope" (select specific items only)
 
-   Exploration findings:
-   [Relevant findings from Phase 3 for this page]
-
-   Existing page content (if updating):
-   [Current content of the page, or "New page — no existing content"]
-
-   Generate the complete page content in MkDocs-flavored Markdown.
-   ```
-
-4. **Launch docs-writer agents for dependent pages:**
-
-   After independent pages complete, launch agents for pages that reference them. Include the generated content from independent pages in the prompt context.
-
-5. **Review generated content:**
-   - Verify each page has appropriate structure (title, sections, examples)
-   - Check for placeholder text that was not filled in
-   - Ensure cross-references between pages use correct relative paths
+**Immediately proceed to Phase 5.**
 
 ---
 
-## Phase 5: Integration & Finalization
+## Phase 5: Documentation Generation
 
-**Goal:** Write files, update navigation, validate, and present results.
+**Goal:** Generate content using docs-writer agents.
 
-1. **Write documentation files:**
-   - Write each generated page to its target path under `docs/`
-   - For updates, use the Edit tool to modify existing pages
-   - For new pages, use the Write tool
+### Step 1 — Load templates
 
-2. **Update `mkdocs.yml` navigation:**
-   - Read the current `mkdocs.yml`
-   - Add new pages to the `nav` section in logical positions
-   - Preserve existing nav structure — only add or modify entries for generated pages
-   - Write the updated `mkdocs.yml`
+- If `DOC_TYPE = change-summary`: Read `${CLAUDE_PLUGIN_ROOT}/skills/docs-manager/references/change-summary-templates.md`
+- If `DOC_TYPE = basic-markdown`: Read `${CLAUDE_PLUGIN_ROOT}/skills/docs-manager/references/markdown-file-templates.md`
 
-3. **Validate the documentation:**
-   - Verify all files referenced in `nav` exist on disk using Glob
-   - Check for broken cross-references between pages using Grep
-   - If `mkdocs` CLI is available, run `mkdocs build --strict 2>&1` to check for warnings (non-blocking — report issues but don't fail)
+### Step 2 — Group by dependency
 
-4. **Present results to the user:**
+- **Independent pages/files** — Can be written without referencing other new content (API reference, standalone guides, individual markdown files)
+- **Dependent pages/files** — Reference or summarize content from other pages (index pages, overview pages, README that links to CONTRIBUTING)
 
-   Summarize what was done:
-   - Pages created (with file paths)
-   - Pages updated (with description of changes)
-   - Navigation changes made to `mkdocs.yml`
-   - Any validation warnings
+### Step 3 — Launch docs-writer agents
 
-   For **change-summary** action, present the generated output(s) directly:
-   - Markdown changelog entry — show inline for review
-   - Git commit message — show inline for review
-   - MkDocs page — show the file path where it was written
+Launch agents using Task tool with `subagent_type: "claude-alchemy-tools:docs-writer"` and `model: "opus"`.
 
-5. **Offer next steps:**
-   Use `AskUserQuestion` with relevant options:
-   - "Preview the site" (if `mkdocs serve` is available)
-   - "Commit the changes"
-   - "Generate additional pages"
-   - "Done — no further action"
+Launch independent pages/files in parallel, then sequential for dependent ones (include generated content from independent pages in the prompt context).
+
+**MkDocs prompt template:**
+```
+Documentation task: [page type — API reference / architecture / how-to / change summary]
+Target file: [docs/path/to/page.md]
+Output format: MkDocs
+Project: [project name] at [project root]
+
+MkDocs site context:
+- Theme: Material for MkDocs
+- Extensions available: admonitions, code highlighting, tabbed content, Mermaid diagrams
+- Existing pages: [list of current doc pages]
+
+Exploration findings:
+[Relevant findings from Phase 3 for this page]
+
+Existing page content (if updating):
+[Current content of the page, or "New page — no existing content"]
+
+Generate the complete page content in MkDocs-flavored Markdown.
+```
+
+**Basic Markdown prompt template:**
+```
+Documentation task: [file type — README / CONTRIBUTING / ARCHITECTURE / API docs]
+Target file: [path/to/file.md]
+Output format: Basic Markdown
+Project: [project name] at [project root]
+
+File type guidance:
+[Relevant structural template from markdown-file-templates.md]
+
+Exploration findings:
+[Relevant findings from Phase 3 for this file]
+
+Existing file content (if updating):
+[Current content, or "New file — no existing content"]
+
+Generate the complete file content in standard GitHub-flavored Markdown.
+Do NOT use MkDocs-specific extensions (admonitions, tabbed content, code block titles).
+```
+
+### Step 4 — Review generated content
+
+- Verify structure, check for unfilled placeholders
+- Validate cross-references between pages/files use correct relative paths
+
+**Immediately proceed to Phase 6.**
+
+---
+
+## Phase 6: Integration & Finalization
+
+**Goal:** Write files, validate, present results.
+
+### Step 1 — Write files
+
+**MkDocs:**
+- Write pages under `docs/`
+- Update `mkdocs.yml` nav — read current config, add new pages in logical positions, preserve existing structure
+
+**Basic Markdown:**
+- Write files to their target paths (project root or specified directories)
+- For updates, use the Edit tool to modify existing files
+
+**Change Summary:**
+- Present outputs inline for review
+- Write files as applicable (e.g., append to CHANGELOG.md)
+
+### Step 2 — Validate
+
+**MkDocs:**
+- Verify all files referenced in `nav` exist on disk using Glob
+- Check for broken cross-references between pages using Grep
+- If `mkdocs` CLI is available, run `mkdocs build --strict 2>&1` to check for warnings (non-blocking)
+
+**Basic Markdown:**
+- Validate internal cross-references between files (e.g., README links to CONTRIBUTING)
+- Check that referenced paths exist
+
+### Step 3 — Present results
+
+Summarize what was done:
+- Files created (with paths)
+- Files updated (with description of changes)
+- Navigation changes (if MkDocs)
+- Any validation warnings
+
+For **change-summary**, present generated outputs directly inline.
+
+### Step 4 — Next steps
+
+Use `AskUserQuestion` with relevant options:
+
+**MkDocs:**
+- "Preview the site" (if `mkdocs serve` is available)
+- "Commit the changes"
+- "Generate additional pages"
+- "Done — no further action"
+
+**Basic Markdown:**
+- "Commit the changes"
+- "Generate additional files"
+- "Review a specific file"
+- "Done — no further action"
 
 ---
 
@@ -332,22 +374,24 @@ If any phase fails:
 
 ### Non-Git Projects
 If the project is not a git repository:
-- Skip git remote detection in Phase 1 (omit `repo_url` and `repo_name` from mkdocs.yml)
+- Skip git remote detection in Phase 2 (omit `repo_url` and `repo_name` from mkdocs.yml)
 - The `update` action with git-diff mode is unavailable — fall back to full-scan or targeted mode
 - The `change-summary` action is unavailable — inform the user and suggest alternatives
+
+### Basic Markdown on Non-Git Projects
+- CONTRIBUTING.md is still viable — use project conventions instead of git workflow sections
+- Skip branch naming and PR process sections; focus on code style, testing, and setup
+
+### Phase Failure
+- Explain the error clearly
+- Offer retry/skip/abort options via `AskUserQuestion`
 
 ---
 
 ## Agent Coordination
 
-When launching parallel agents:
-- Give each agent a distinct focus area to minimize overlap
-- Wait for all agents to complete before proceeding
-- Handle agent failures gracefully — continue with partial results
-
-When calling Task tool for agents:
-- Use `model: "opus"` for docs-writer agents (high-quality content generation)
-- Use default model (sonnet) for code-explorer agents (fast exploration)
+- **Phase 3**: Exploration and synthesis handled by the deep-analysis skill (or teams-deep-analysis with `--teams`). Deep-analysis orchestrates its own code-explorer and codebase-synthesizer agents.
+- **Phase 5**: docs-writer agents launched with `model: "opus"` for high-quality content generation. Parallel for independent files, sequential for dependent files.
 
 ---
 
@@ -355,3 +399,4 @@ When calling Task tool for agents:
 
 - For MkDocs configuration template, see [references/mkdocs-config-template.md](references/mkdocs-config-template.md)
 - For change summary formats, see [references/change-summary-templates.md](references/change-summary-templates.md)
+- For standalone markdown file templates, see [references/markdown-file-templates.md](references/markdown-file-templates.md)
