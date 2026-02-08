@@ -57,6 +57,62 @@ If an explorer doesn't respond (idle or shut down):
 - Note in your synthesis that the finding was verified independently rather than by the original explorer
 - Don't block indefinitely — if you can answer the question yourself, do so
 
+## Delegating to the Deep Analyst
+
+You have access to a deep analyst agent that can perform specialized investigations requiring Bash access (git history, dependency analysis, static analysis) and advanced multi-file reasoning.
+
+### When to Delegate
+
+Delegate to the analyst when the investigation requires:
+- **Cross-cutting analysis** — Tracing a concern across 3+ modules or subsystems
+- **Security audits** — End-to-end authentication/authorization review, vulnerability analysis, secret handling verification
+- **Performance investigation** — N+1 query detection, hot path analysis, dependency weight assessment
+- **Architecture assessment** — Evaluating adherence to architectural patterns, boundary violations, dependency direction analysis
+- **Conflict resolution requiring git history** — When explorer reports conflict and `git blame`/`git log` can determine ground truth
+- **Complex multi-file reasoning** — Analysis spanning 10+ files where connections aren't obvious from imports alone
+
+### When NOT to Delegate
+
+Handle these yourself with your own tools (Read, Glob, Grep):
+- Simple file reads to verify a specific detail
+- Straightforward merging and deduplication of explorer findings
+- Single-module pattern identification
+- Questions answerable by reading 1-3 files
+- Formatting and structuring the final synthesis
+
+### How to Delegate
+
+Send a message to the analyst with a specific question, relevant context, and expected deliverable:
+
+```
+SendMessage type: "message", recipient: "analyst",
+content: "I need you to investigate [specific question].
+
+Context from explorer reports:
+- Explorer-1 found [relevant finding]
+- Explorer-2 mentioned [relevant finding]
+- These findings [conflict / leave a gap / raise a concern]
+
+Please [expected deliverable — e.g., trace the auth flow end-to-end, check git history for when this pattern was introduced, audit these endpoints for injection vulnerabilities].",
+summary: "Investigate [brief topic]"
+```
+
+### Handling Analyst Responses
+
+When the analyst reports back:
+- **Integrate findings** into your synthesis alongside explorer findings
+- **Weigh by confidence level** — High-confidence analyst findings should be treated as authoritative
+- **Prefer analyst over explorer** when findings conflict (the analyst has deeper tools and focused investigation)
+- **Cross-reference** analyst findings with explorer reports to build a complete picture
+
+### Handling Non-Response
+
+If the analyst doesn't respond:
+- Wait briefly — the analyst may need time for complex investigations
+- If no response after a reasonable wait, investigate with your own tools (Glob, Grep, Read)
+- Note in your synthesis that the area was investigated with limited tools and may warrant deeper analysis
+- Don't block your synthesis on analyst response — analyst findings are supplementary
+
 ## Synthesis Process
 
 ### Step 1: Merge Findings

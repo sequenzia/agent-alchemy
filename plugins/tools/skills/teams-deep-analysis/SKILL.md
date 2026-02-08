@@ -34,7 +34,7 @@ This skill can be invoked standalone or loaded by other skills as a reusable bui
    - Description: "Collaborative deep analysis of [analysis context]"
 
 4. **Spawn teammates:**
-   Use the Task tool with the `team_name` parameter to spawn 4 teammates:
+   Use the Task tool with the `team_name` parameter to spawn 5 teammates:
 
    - **3 explorers** — `subagent_type: "claude-alchemy-tools:team-code-explorer"`, model: sonnet
      - Named: `explorer-1`, `explorer-2`, `explorer-3`
@@ -43,6 +43,10 @@ This skill can be invoked standalone or loaded by other skills as a reusable bui
    - **1 synthesizer** — `subagent_type: "claude-alchemy-tools:team-codebase-synthesizer"`, model: opus
      - Named: `synthesizer`
      - Prompt with: "You are the synthesizer for a deep analysis team. Wait for your task assignment. The codebase is at: [PATH]. Analysis context: [context]"
+
+   - **1 analyst** — `subagent_type: "claude-alchemy-tools:team-deep-analyst"`, model: opus
+     - Named: `analyst`
+     - Prompt with: "You are the deep analyst for a deep analysis team. You have no pre-assigned task. Wait for analysis requests from the synthesizer. The codebase is at: [PATH]. Analysis context: [context]"
 
 5. **Determine focus areas:**
    - For feature-focused analysis:
@@ -117,6 +121,8 @@ This is a structural check, not a quality assessment:
 
    The explorers are: explorer-1, explorer-2, explorer-3. You can message them with follow-up questions if you find conflicts or gaps in their findings.
 
+   The deep analyst is: analyst. You can delegate complex investigations to it when you need deeper analysis — it has Bash access for git history, dependency trees, and static analysis. Use it for cross-cutting concerns, security audits, performance analysis, or when explorer reports conflict and you need ground truth from git history.
+
    Read the completed exploration tasks via TaskGet to access their reports, then synthesize into a unified analysis.",
    summary: "Synthesis task assigned, begin work"
    ```
@@ -137,12 +143,13 @@ This is a structural check, not a quality assessment:
    - **Loaded by another skill:** The synthesis is complete. Control returns to the calling workflow — do not present a standalone summary.
 
 3. **Shutdown teammates:**
-   Send shutdown requests to all 4 teammates:
+   Send shutdown requests to all 5 teammates:
    ```
    SendMessage type: "shutdown_request", recipient: "explorer-1", content: "Analysis complete"
    SendMessage type: "shutdown_request", recipient: "explorer-2", content: "Analysis complete"
    SendMessage type: "shutdown_request", recipient: "explorer-3", content: "Analysis complete"
    SendMessage type: "shutdown_request", recipient: "synthesizer", content: "Analysis complete"
+   SendMessage type: "shutdown_request", recipient: "analyst", content: "Analysis complete"
    ```
 
 4. **Cleanup team:**
@@ -156,6 +163,11 @@ This is a structural check, not a quality assessment:
 - If one explorer fails: create a follow-up task targeting the missed focus area, assign to an idle explorer, add to synthesis `blockedBy`
 - If two explorers fail: attempt follow-ups, but if they also fail, instruct the synthesizer to work with partial results
 - If all explorers fail: inform the user and offer to retry or abort
+
+### Analyst Failure
+- If the analyst fails or doesn't respond: the synthesizer falls back to its own tools (Read, Glob, Grep)
+- Analyst findings are supplementary — synthesis should never block on analyst response
+- Note in the final output if analyst-dependent areas have reduced depth
 
 ### Synthesizer Failure
 - If the synthesizer fails: present the raw exploration results to the user directly
@@ -176,10 +188,11 @@ If any phase fails:
 - Give each explorer a distinct focus area to minimize overlap
 - Explorers collaborate by sharing notable discoveries via `SendMessage`
 - The synthesizer can ask explorers follow-up questions to resolve conflicts
+- The deep analyst activates on demand from the synthesizer for complex investigations
 - Wait for task dependencies to resolve before proceeding
 - Handle agent failures gracefully — continue with partial results
 
 When calling Task tool for teammates:
-- Use `model: "opus"` for the synthesizer
+- Use `model: "opus"` for the synthesizer and analyst
 - Use default model (sonnet) for explorers
 - Always include `team_name` parameter to join the team
