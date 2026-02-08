@@ -53,3 +53,5 @@ next-env.d.ts
 
 # Local Claude settings
 .claude/settings.local.json
+
+site/
