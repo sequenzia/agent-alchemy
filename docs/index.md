@@ -5,22 +5,7 @@ A toolkit for AI-assisted software development using [Claude Code](https://docs.
 
 ---
 
-## The Three Subsystems
-
-```mermaid
-graph LR
-    subgraph Monorepo
-        TM["Task Manager<br/><small>apps/task-manager/</small>"]
-        TP["Tools Plugin<br/><small>plugins/tools/</small>"]
-        SP["SDD Plugin<br/><small>plugins/sdd/</small>"]
-    end
-    FS[("~/.claude/tasks/<br/>Filesystem")]
-    SP -- "writes tasks & progress" --> FS
-    FS -- "watches for changes" --> TM
-    TP -- "commits, docs, analysis" --> Monorepo
-```
-
-### :material-view-dashboard: Task Manager
+## :material-view-dashboard: Task Manager
 
 A real-time Kanban board for monitoring Claude AI task execution. Server Components fetch task data from `~/.claude/tasks/`, Chokidar watches for changes, and SSE pushes updates to the browser — all without polling.
 
@@ -30,7 +15,7 @@ A real-time Kanban board for monitoring Claude AI task execution. Server Compone
 
 [Task Manager docs :material-arrow-right:](task-manager/overview.md){ .md-button }
 
-### :material-tools: Tools Plugin
+## :material-tools: Tools Plugin
 
 Developer tools for feature development, codebase analysis, documentation generation, code review, and git workflows. Invoked from Claude Code with `/tools:{skill-name}`.
 

@@ -168,4 +168,5 @@ Now that you have the project running, explore these pages to go deeper:
 - **[Task Manager](task-manager/overview.md)** -- Learn about the real-time Kanban board, its components, and the SSE-based update system
 - **[Plugin System](plugins/overview.md)** -- Explore skills, agents, hooks, and how the plugin architecture works
 - **[SDD Workflow](plugins/sdd-workflow.md)** -- Deep dive into the spec-driven development lifecycle
+- **[VS Code Extension](vscode-extension/overview.md)** -- Schema validation, autocomplete, and hover docs for plugin files
 - **[Development Setup](development/setup.md)** -- Full development environment details for contributing to the project

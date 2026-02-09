@@ -79,6 +79,7 @@ nav:
     - Tools Plugin: plugins/tools-plugin.md
     - SDD Plugin: plugins/sdd-plugin.md
     - SDD Workflow: plugins/sdd-workflow.md
+  - VS Code Extension: vscode-extension/overview.md
   - Development:
     - Setup: development/setup.md
     - Conventions: development/conventions.md

@@ -10,33 +10,35 @@ This page provides a high-level tour of the monorepo structure, the relationship
 ```mermaid
 graph TB
     subgraph Monorepo["Claude Alchemy Monorepo"]
-        subgraph Plugins["Claude Code Plugins (markdown-only, no build step)"]
-            Tools["claude-alchemy-tools v0.2.2\n10 agents · 13 skills"]
-            SDD["claude-alchemy-sdd v0.2.6\n2 agents · 4 skills"]
+        direction TB
+
+        subgraph Plugins["Plugins · markdown-only · no build step"]
+            Tools["Tools Plugin\nv0.2.2"]
+            SDD["SDD Plugin\nv0.2.6"]
         end
 
-        subgraph Apps["pnpm Workspace (apps/*)"]
-            TM["Task Manager\nNext.js 16.1.4 · port 3030"]
+        subgraph Apps["Apps · pnpm workspace"]
+            TM["Task Manager\nNext.js 16"]
         end
 
-        subgraph Extensions["Editor Extensions (npm, separate)"]
-            VSCode["VS Code Extension\nPlugin file schema validation"]
+        subgraph Extensions["Extensions · npm · separate"]
+            VSCode["VS Code Extension"]
         end
     end
 
-    subgraph FS["Filesystem (message bus)"]
-        Tasks["~/.claude/tasks/\nTask JSON files"]
-        Sessions[".claude/sessions/\nExecution artifacts"]
-        Pointer["execution_pointer.md\nSession path reference"]
+    subgraph FS["Filesystem · message bus"]
+        Tasks["~/.claude/tasks/"]
+        Sessions[".claude/sessions/"]
+        Pointer["execution_pointer.md"]
     end
 
     SDD -- "writes tasks" --> Tasks
-    SDD -- "writes execution artifacts" --> Sessions
+    SDD -- "writes artifacts" --> Sessions
     SDD -- "writes pointer" --> Pointer
     TM -- "reads tasks" --> Tasks
-    TM -- "reads artifacts via pointer" --> Pointer
-    TM -- "watches for changes" --> Tasks
-    Tools -- "analyzes & documents" --> Monorepo
+    TM -- "reads via pointer" --> Pointer
+    TM -- "watches changes" --> Tasks
+    Tools -- "analyzes" --> Monorepo
     VSCode -- "validates" --> Plugins
 ```
 
@@ -119,7 +121,7 @@ A development-time editor extension that validates Claude Code plugin files (SKI
 - **Completions**: Autocomplete for frontmatter keys and enum values
 - **Hover info**: Documentation tooltips for frontmatter fields
 
-The extension is not part of the pnpm workspace and manages its own dependencies via npm.
+The extension is not part of the pnpm workspace and manages its own dependencies via npm. For full details, see the [VS Code Extension](../vscode-extension/overview.md) page.
 
 ## Filesystem as Message Bus
 
