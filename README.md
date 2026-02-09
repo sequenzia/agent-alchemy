@@ -58,7 +58,7 @@ The plugin system uses a "markdown-as-code" design — all workflow logic lives 
 
 *Plus 5 supporting skills loaded internally by workflows.*
 
-**SDD Plugin (`claude-alchemy-sdd` v0.2.7):**
+**SDD Plugin (`claude-alchemy-sdd` v0.2.8):**
 - `/create-spec` — Adaptive interview to generate specifications
 - `/analyze-spec` — Spec quality analysis
 - `/create-tasks` — Decompose specs into Claude Code Tasks with dependency inference
