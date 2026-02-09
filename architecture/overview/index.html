@@ -324,6 +324,25 @@
   
   
   
+    <li class="md-tabs__item">
+      <a href="../../vscode-extension/overview/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  VS Code Extension
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
     
     
       <li class="md-tabs__item">
@@ -1246,6 +1265,33 @@
   
   
   
+    <li class="md-nav__item">
+      <a href="../../vscode-extension/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    VS Code Extension
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
     
     
     
@@ -1262,10 +1308,10 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
         
           
-          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
             
   
   
@@ -1283,8 +1329,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1671,33 +1717,35 @@
 <h2 id="system-architecture">System Architecture<a class="headerlink" href="#system-architecture" title="Permanent link">&para;</a></h2>
 <pre class="mermaid"><code>graph TB
     subgraph Monorepo["Claude Alchemy Monorepo"]
-        subgraph Plugins["Claude Code Plugins (markdown-only, no build step)"]
-            Tools["claude-alchemy-tools v0.2.2\n10 agents · 13 skills"]
-            SDD["claude-alchemy-sdd v0.2.6\n2 agents · 4 skills"]
+        direction TB
+
+        subgraph Plugins["Plugins · markdown-only · no build step"]
+            Tools["Tools Plugin\nv0.2.2"]
+            SDD["SDD Plugin\nv0.2.6"]
         end
 
-        subgraph Apps["pnpm Workspace (apps/*)"]
-            TM["Task Manager\nNext.js 16.1.4 · port 3030"]
+        subgraph Apps["Apps · pnpm workspace"]
+            TM["Task Manager\nNext.js 16"]
         end
 
-        subgraph Extensions["Editor Extensions (npm, separate)"]
-            VSCode["VS Code Extension\nPlugin file schema validation"]
+        subgraph Extensions["Extensions · npm · separate"]
+            VSCode["VS Code Extension"]
         end
     end
 
-    subgraph FS["Filesystem (message bus)"]
-        Tasks["~/.claude/tasks/\nTask JSON files"]
-        Sessions[".claude/sessions/\nExecution artifacts"]
-        Pointer["execution_pointer.md\nSession path reference"]
+    subgraph FS["Filesystem · message bus"]
+        Tasks["~/.claude/tasks/"]
+        Sessions[".claude/sessions/"]
+        Pointer["execution_pointer.md"]
     end
 
     SDD -- "writes tasks" --&gt; Tasks
-    SDD -- "writes execution artifacts" --&gt; Sessions
+    SDD -- "writes artifacts" --&gt; Sessions
     SDD -- "writes pointer" --&gt; Pointer
     TM -- "reads tasks" --&gt; Tasks
-    TM -- "reads artifacts via pointer" --&gt; Pointer
-    TM -- "watches for changes" --&gt; Tasks
-    Tools -- "analyzes &amp; documents" --&gt; Monorepo
+    TM -- "reads via pointer" --&gt; Pointer
+    TM -- "watches changes" --&gt; Tasks
+    Tools -- "analyzes" --&gt; Monorepo
     VSCode -- "validates" --&gt; Plugins</code></pre>
 <h2 id="monorepo-structure">Monorepo Structure<a class="headerlink" href="#monorepo-structure" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>claude-alchemy/
@@ -1824,7 +1872,7 @@
 <li><strong>Completions</strong>: Autocomplete for frontmatter keys and enum values</li>
 <li><strong>Hover info</strong>: Documentation tooltips for frontmatter fields</li>
 </ul>
-<p>The extension is not part of the pnpm workspace and manages its own dependencies via npm.</p>
+<p>The extension is not part of the pnpm workspace and manages its own dependencies via npm. For full details, see the <a href="../../vscode-extension/overview/">VS Code Extension</a> page.</p>
 <h2 id="filesystem-as-message-bus">Filesystem as Message Bus<a class="headerlink" href="#filesystem-as-message-bus" title="Permanent link">&para;</a></h2>
 <p>The defining architectural pattern of Claude Alchemy is the use of the filesystem as the sole communication channel between subsystems. No subsystem imports code from another, calls an API on another, or shares a database.</p>
 <pre class="mermaid"><code>sequenceDiagram
