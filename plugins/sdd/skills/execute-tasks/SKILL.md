@@ -108,7 +108,7 @@ Then ask the user to confirm before proceeding with execution. If the user cance
 Read `.claude/sessions/__live_session__/execution_context.md` (created in Step 5). If a prior execution context exists, look in `.claude/sessions/` for the most recent timestamped subfolder and merge relevant learnings into the new one.
 
 ### Step 8: Execute Loop
-Execute tasks in waves. For each wave: snapshot `execution_context.md`, mark wave tasks `in_progress`, update `progress.md` with all active tasks, launch up to `max_parallel` agents simultaneously via **parallel Task tool calls in a single turn**. Each agent writes to `context-task-{id}.md` instead of the shared context file. As agents return: calculate duration, capture token usage, log to `task_log.md`, update `progress.md`. Failed tasks with retries remaining are re-launched immediately within the wave. After all wave agents complete: merge per-task context files into `execution_context.md`, delete per-task files, archive completed task JSONs, refresh TaskList for newly unblocked tasks, form next wave, repeat.
+Execute tasks in waves. For each wave: snapshot `execution_context.md`, mark wave tasks `in_progress`, update `progress.md` with all active tasks, launch up to `max_parallel` agents simultaneously via **parallel Task tool calls in a single turn**. Solo tasks use the `task-executor` agent; team tasks (review/research/full) use the `team-task-executor` agent, which manages the full team lifecycle independently (creates its own team, spawns role agents, handles degradation, cleans up). Each agent writes to `context-task-{id}.md` instead of the shared context file. As agents return: calculate duration, capture token usage, log to `task_log.md`, update `progress.md`. Failed tasks with retries remaining are re-launched immediately within the wave. After all wave agents complete: merge per-task context files into `execution_context.md`, delete per-task files, archive completed task JSONs, refresh TaskList for newly unblocked tasks, form next wave, repeat.
 
 ### Step 9: Session Summary
 Display execution results with pass/fail counts, total execution time, failed task list, newly unblocked tasks, and token usage summary (captured from Task tool responses if available). Save `session_summary.md` to `.claude/sessions/__live_session__/`. Archive the session by moving all contents from `__live_session__/` to `.claude/sessions/{task_execution_id}/`, leaving `__live_session__/` as an empty directory. `execution_pointer.md` stays pointing to `__live_session__/`.
@@ -132,7 +132,7 @@ If none match -> **General task** (use inferred verification)
 
 ## 4-Phase Workflow
 
-Each task is executed by the `claude-alchemy-sdd:task-executor` agent through these phases:
+Each solo task is executed by the `claude-alchemy-sdd:task-executor` agent through these phases. Team tasks (review/research/full) are executed by the `claude-alchemy-sdd:team-task-executor` agent, which coordinates role agents through the same workflow:
 
 ### Phase 1: Understand
 
@@ -200,10 +200,10 @@ This enables later tasks to benefit from earlier discoveries and retry attempts 
 
 - **Autonomous execution loop**: After the user confirms the execution plan, no further prompts occur between tasks. The loop runs without interruption once started.
 - **Wave-based parallelism**: Tasks at the same dependency level run simultaneously, up to `max_parallel` concurrent agents per wave. Tasks in later waves wait until their dependencies in earlier waves complete.
-- **One agent per task, multiple per wave**: Each task gets a fresh agent invocation with isolated context, but multiple agents run concurrently within a wave.
+- **One agent per task, multiple per wave**: Each task gets a fresh agent invocation (`task-executor` for solo, `team-task-executor` for team strategies) with isolated context, but multiple agents run concurrently within a wave.
 - **Per-task context isolation**: During concurrent execution, each agent writes to `context-task-{id}.md`. The orchestrator merges these after each wave to prevent write contention.
 - **Within-wave retry**: Failed tasks with retries remaining are re-launched immediately as agent slots free up within the current wave, maximizing throughput.
-- **Configurable team strategy**: Default `solo` (single agent per task), configurable via `--team-strategy` argument, `.claude/claude-alchemy.local.md` settings, or per-task `metadata.team_strategy`. Strategies: `solo`, `review`, `research`, `full`.
+- **Configurable team strategy**: Default `solo` (single agent per task), configurable via `--team-strategy` argument, `.claude/claude-alchemy.local.md` settings, or per-task `metadata.team_strategy`. Strategies: `solo`, `review`, `research`, `full`. Team strategies are delegated to `team-task-executor` agents that manage their own teams concurrently.
 - **Configurable parallelism**: Default 5 concurrent tasks, configurable via `--max-parallel` argument or `.claude/claude-alchemy.local.md` settings. Set to 1 for sequential execution.
 - **Configurable retries**: Default 3 attempts per task, configurable via `retries` argument.
 - **Retry with context**: Each retry includes the previous attempt's failure details so the agent can try a different approach.

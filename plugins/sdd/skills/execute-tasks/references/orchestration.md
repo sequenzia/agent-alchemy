@@ -363,9 +363,9 @@ Read `.claude/sessions/__live_session__/execution_context.md` and hold it as the
    ```
 4. Launch all wave agents simultaneously using **parallel Task tool calls in a single message turn**:
 
-For each task in the wave, look up the task's `resolved_strategy` from Step 4.5d. If the strategy is `solo`, use the standard task-executor agent. For team strategies (`review`, `research`, `full`), use the team orchestration flow defined in `references/team-strategies.md`.
+For each task in the wave, look up the task's `resolved_strategy` from Step 4.5d. If the strategy is `solo`, use the `task-executor` agent. For team strategies (`review`, `research`, `full`), use the `team-task-executor` agent. Both agent types are launched via parallel Task tool calls in the same message turn.
 
-**Solo strategy** -- use the Task tool:
+**Solo strategy** -- use the Task tool with `task-executor`:
 
 ```
 Task:
@@ -420,520 +420,191 @@ Task:
     9. Report any token/usage information available from your session
 ```
 
-**Team strategies** (`review`, `research`, `full`) -- the orchestrator manages the full team lifecycle for each task. Multiple tasks in the same wave may each have their own independent team running concurrently. File naming prevents collisions: each team writes to `team_activity_task-{id}.md`.
+**Team strategies** (`review`, `research`, `full`) -- use the Task tool with `team-task-executor`:
+
+Each team task is delegated to a `team-task-executor` agent that manages the full team lifecycle independently. The orchestrator does NOT call TeamCreate, TeamDelete, or SendMessage -- these are handled internally by each `team-task-executor` instance.
+
+```
+Task:
+  subagent_type: claude-alchemy-sdd:team-task-executor
+  prompt: |
+    Execute task [{id}] using the {strategy} team strategy.
+
+    Task ID: {id}
+    Task Subject: {subject}
+    Task Description:
+    ---
+    {full description}
+    ---
+
+    Task Metadata:
+    - Priority: {priority}
+    - Complexity: {complexity}
+    - Source Section: {source_section}
+    - Spec Path: {spec_path}
+    - Feature: {feature_name}
+
+    Team Strategy: {review|research|full}
+
+    CONCURRENT EXECUTION MODE
+    Context Write Path: .claude/sessions/__live_session__/context-task-{id}.md
+    Team Activity Path: .claude/sessions/__live_session__/team_activity_task-{id}.md
+    Do NOT write to execution_context.md directly.
+    Do NOT update progress.md -- the orchestrator manages it.
+
+    Execution Context Snapshot:
+    ---
+    {snapshot content}
+    ---
+
+    {If retry attempt:}
+    RETRY ATTEMPT {n} of {max_retries}
+    Previous attempt failed with:
+    ---
+    {previous verification report}
+    ---
+
+    {If degradation history from previous attempts:}
+    DEGRADATION HISTORY:
+    {degradation history entries}
+
+    Instructions:
+    1. Read the execute-tasks skill and team-strategies reference
+    2. Create a team and coordinate the {strategy} workflow
+    3. Handle degradation if agents fail (Full -> Review -> Solo)
+    4. Write team activity updates to .claude/sessions/__live_session__/team_activity_task-{id}.md
+    5. Write learnings to .claude/sessions/__live_session__/context-task-{id}.md
+    6. Clean up the team (TeamDelete) on all exit paths
+    7. Return a structured verification report
+```
 
 **Solo tasks do not create any team infrastructure** -- no TeamCreate, no team_activity file, zero overhead compared to existing behavior.
 
-#### Team Lifecycle
+#### Delegation Architecture
 
-For each task with a non-solo strategy, the orchestrator executes the following lifecycle. All steps happen within the scope of a single task's execution slot in the wave.
+The orchestrator delegates all team management to `team-task-executor` agents. Each `team-task-executor` instance is a separate agent process that:
 
-##### 1. Create Team
+- Creates its own team via `TeamCreate` (the one-team-per-leader constraint applies per agent, not globally)
+- Spawns role agents (`team-explorer`, `team-implementer`, `team-reviewer`) into its team
+- Coordinates the sequential workflow (explorer -> implementer -> reviewer) via `SendMessage`
+- Handles strategy degradation internally (Full -> Review -> Solo)
+- Writes `team_activity_task-{id}.md` to the session directory
+- Falls back to direct implementation when degradation reaches Solo (it has Write/Edit tools)
+- Cleans up via `TeamDelete` on all exit paths
+- Returns a structured verification report in the same format as `task-executor`
 
-```
-TeamCreate:
-  name: task-team-{task-id}-{timestamp}
-  description: "{Strategy} team for task [{task-id}]: {subject}"
-```
+This delegation solves the concurrent team execution problem: the orchestrator is no longer the team leader for all teams, so multiple teams can run simultaneously without hitting the "one team per leader" constraint.
 
-Where `{timestamp}` is Unix epoch seconds at creation time. This ensures unique team names even when the same task is retried.
-
-Immediately after TeamCreate, write the initial `team_activity_task-{id}.md` file to `.claude/sessions/__live_session__/` (see `team-strategies.md` for the full format specification):
-
-```markdown
-# Team Activity: Task {task-id}
-
-Team: task-team-{task-id}-{timestamp}
-Strategy: {review|research|full}
-Status: active
-Created: {ISO 8601 timestamp}
-Updated: {ISO 8601 timestamp}
-
-## Team Members
-
-- [{role}] {agent-name} — spawning — Initializing
-- [{role}] {agent-name} — waiting — Pending {previous-role}
-{additional roles per strategy}
-
-## Activity Log
-
-{ISO 8601 timestamp} | orchestrator | Team created with strategy: {strategy}
-```
-
-Update `progress.md` active task entry to reflect team creation:
-```markdown
-- [{id}] {subject} -- Team: {strategy} (members spawning)
-```
-
-##### 2. Spawn Agents
-
-Spawn agents into the team based on the resolved strategy. Agents are spawned sequentially (not all at once) because the team workflow is sequential -- each agent depends on the previous agent's output.
-
-**Review strategy** -- spawn 2 agents:
-
-| Order | Role | Agent Type | Model |
-|-------|------|-----------|-------|
-| 1 | implementer | `claude-alchemy-sdd:team-implementer` | sonnet |
-| 2 | reviewer | `claude-alchemy-sdd:team-reviewer` | opus |
-
-**Research strategy** -- spawn 2 agents:
-
-| Order | Role | Agent Type | Model |
-|-------|------|-----------|-------|
-| 1 | explorer | `claude-alchemy-sdd:team-explorer` | sonnet |
-| 2 | implementer | `claude-alchemy-sdd:team-implementer` | sonnet |
-
-**Full strategy** -- spawn 3 agents:
-
-| Order | Role | Agent Type | Model |
-|-------|------|-----------|-------|
-| 1 | explorer | `claude-alchemy-sdd:team-explorer` | sonnet |
-| 2 | implementer | `claude-alchemy-sdd:team-implementer` | sonnet |
-| 3 | reviewer | `claude-alchemy-sdd:team-reviewer` | opus |
-
-**Agent spawn failure**: If any agent fails to spawn, log the error to `team_activity_task-{id}.md` and trigger strategy degradation (see Error Handling below). Do not leave a partially-spawned team running.
-
-##### 3. Coordinate Sequential Workflow
-
-The orchestrator drives the sequential workflow within the team. Agents do not communicate directly with each other -- all coordination flows through the orchestrator acting as team lead.
-
-**Review strategy coordination flow:**
-
-```
-1. Launch implementer with task requirements + execution context snapshot
-2. Wait for implementer to complete (10-minute timeout)
-3. Receive implementer's summary via SendMessage (files modified, approach, tests, limitations)
-4. Update team_activity: implementer -> completed
-5. Update progress.md: Team: review (implementer: completed, reviewer: active)
-6. Prepare reviewer handoff context: task description, acceptance criteria, list of changed
-   files, implementation summary, execution context snapshot
-7. Launch reviewer with full handoff context
-8. Reviewer reads changed files directly from filesystem (read-only, no Write/Edit tools)
-9. Reviewer verifies each acceptance criterion independently
-10. Reviewer runs full test suite and linter
-11. Reviewer checks for regressions, security issues, convention violations
-12. Wait for reviewer to complete (5-minute timeout)
-13. Update team_activity: reviewer -> completed
-14. Collect reviewer's structured review report (verdict: PASS | ISSUES_FOUND | FAIL)
-15. Translate verdict: PASS -> PASS, ISSUES_FOUND -> PARTIAL, FAIL -> FAIL
-```
-
-**Review edge cases:**
-- Reviewer finds no issues: fast PASS path -- mark task completed immediately
-- Implementer produces no code changes: reviewer still verifies correctness of no-op outcome
-- Reviewer reports FAIL: include detailed issue list in retry context
-
-See `references/team-strategies.md` Strategy 2 for full details on reviewer handoff context, review report format, result translation rules, and edge case handling.
-
-**Research strategy coordination flow:**
-
-```
-1. Launch explorer with task requirements + execution context snapshot
-2. Wait for explorer to complete (5-minute timeout)
-3. Validate explorer findings report (structured format: relevant files, patterns,
-   dependencies, challenges, recommended approach -- see team-strategies.md for full format)
-4. Update team_activity: explorer -> completed
-5. Update progress.md: Team: research (explorer: completed, implementer: active)
-6. Forward explorer's structured findings report to implementer via SendMessage
-7. Launch implementer with task requirements + explorer's findings
-8. Implementer uses explorer's file map and patterns to accelerate Phase 1 (Understand)
-9. Implementer executes Implement phase using explorer's recommended approach
-10. Implementer self-verifies against acceptance criteria (no reviewer in Research strategy)
-11. Wait for implementer to complete (10-minute timeout)
-12. Update team_activity: implementer -> completed
-13. Collect implementer's self-verification report
-14. Translate implementer status directly: PASS -> PASS, PARTIAL -> PARTIAL, FAIL -> FAIL
-```
-
-**Research edge cases:**
-- Explorer finds nothing relevant: implementer proceeds with own exploration; not a failure
-- Explorer times out: degrade to Solo (see team-strategies.md for details)
-- SendMessage fails: log warning, implementer proceeds without findings
-
-See `references/team-strategies.md` Strategy 3 for full details on explorer findings format, handoff protocol, self-verification approach, and edge case handling.
-
-**Full strategy coordination flow:**
-
-```
-1. Launch explorer with task requirements + execution context snapshot
-2. Wait for explorer to complete
-3. Update team_activity: explorer -> completed
-4. Update progress.md: Team: full (explorer: completed, implementer: active, reviewer: spawning)
-5. Send explorer's research report to implementer via SendMessage
-6. Launch implementer with task requirements + explorer's findings
-7. Wait for implementer to complete
-8. Update team_activity: implementer -> completed
-9. Update progress.md: Team: full (explorer: completed, implementer: completed, reviewer: active)
-10. Send both explorer's report and implementer's report to reviewer via SendMessage
-11. Launch reviewer with task requirements + both reports
-12. Wait for reviewer to complete
-13. Update team_activity: reviewer -> completed
-14. Collect reviewer's verification report
-```
-
-At each agent phase transition, update `team_activity_task-{id}.md`:
-- Change the member's status from `active` to `completed` (or `failed`)
-- Add an activity log entry with timestamp: `[{ISO 8601}] {role}: {activity description}`
-- Update the file's `Updated:` timestamp and `Status:` field
-
-**Agent timeouts**: Set reasonable timeouts per role:
-- Explorer: 5 minutes (exploration should be fast, read-only)
-- Implementer: 10 minutes (code changes take longer)
-- Reviewer: 5 minutes (review is read-only analysis)
-
-If an agent exceeds its timeout, treat it as a failure and trigger degradation.
-
-**Communication failure**: If SendMessage fails when forwarding one agent's output to the next, log the error and attempt to continue with whatever context is available. If the implementer cannot receive explorer findings, proceed without them (effectively degrading Research/Full toward Review/Solo behavior).
-
-##### 4. Collect and Translate Results
-
-After the final agent in the workflow completes, translate the team's results into the standard pass/partial/fail status used by the rest of the orchestration loop.
-
-**When a reviewer is present** (Review and Full strategies):
-
-| Reviewer Verdict | Translated Status | Notes |
-|-----------------|-------------------|-------|
-| PASS | PASS | All functional criteria verified, tests pass |
-| ISSUES_FOUND | PARTIAL | Functional criteria pass but edge/error/performance issues found |
-| FAIL | FAIL | Functional criteria or tests failed |
-
-**When no reviewer is present** (Research strategy):
-
-Use the implementer's self-reported status directly:
-- Implementer reports COMPLETED with passing tests -> PASS
-- Implementer reports PARTIAL -> PARTIAL
-- Implementer reports FAILED -> FAIL
-
-**Mixed completion states**: If the team is still partially active when a failure triggers early termination (e.g., implementer fails so reviewer never runs), the orchestrator:
-1. Records the failure status immediately
-2. Sends `shutdown_request` to any still-active agents
-3. Proceeds to cleanup
-
-Update `team_activity_task-{id}.md` with the final status:
-```markdown
-Status: completed  (or: failed)
-```
-
-And a final activity log entry:
-```
-[{ISO 8601}] Team result: {PASS|PARTIAL|FAIL}
-```
-
-##### 5. Cleanup
-
-After collecting results (or after a failure/degradation), clean up the team:
-
-1. Send `shutdown_request` to all team agents that are still active
-2. Call `TeamDelete` to remove the team
-3. Update `team_activity_task-{id}.md`:
-   - Set `Status:` to `completed` or `failed`
-   - Add activity log entry: `[{ISO 8601}] Team deleted`
-   - Set all member statuses to their final state
-
-**Cleanup is mandatory on all exit paths**: success, failure, degradation, and timeout. No team should be left orphaned. The orchestrator must ensure TeamDelete is called even if intermediate steps fail.
+**The orchestrator never calls**: `TeamCreate`, `TeamDelete`, or `SendMessage`. These tools are used exclusively by `team-task-executor` agents.
 
 #### Graceful Degradation
 
-When a team agent fails, the orchestrator attempts simpler strategies before failing the task. This section defines the complete degradation system: chains, triggers, per-strategy partial failure rules, logging, result recording, and retry interaction.
+Degradation is handled entirely within each `team-task-executor` agent. The orchestrator does not need to manage degradation -- it simply receives the final result (PASS/PARTIAL/FAIL) and the degradation history from the agent's report.
 
-##### Degradation Chains
-
-Each non-solo strategy has a defined degradation chain that the orchestrator follows on failure:
+Each `team-task-executor` follows these degradation chains internally:
 
 | Starting Strategy | Chain | Terminal Fallback |
 |-------------------|-------|-------------------|
-| **Full** | Full -> Review -> Solo | Normal retry flow (Step 7e) |
-| **Review** | Review -> Solo | Normal retry flow (Step 7e) |
-| **Research** | Research -> Solo | Normal retry flow (Step 7e) |
-| **Solo** | N/A | Normal retry flow (Step 7e) |
+| **Full** | Full -> Review -> Solo | Returns FAIL to orchestrator |
+| **Review** | Review -> Solo | Returns FAIL to orchestrator |
+| **Research** | Research -> Solo | Returns FAIL to orchestrator |
 
-The orchestrator walks the chain one step at a time. Each step is a fresh attempt with a simpler strategy. If a degraded strategy also fails, the orchestrator continues down the chain until Solo is reached. If Solo fails, the task enters the normal retry flow.
+**Degradation does not count against the task retry limit.** If a `team-task-executor` exhausts all degradation options and reaches Solo, it attempts Solo execution directly (using its own Read/Write/Edit tools). If Solo also fails, it returns a FAIL result to the orchestrator. The orchestrator then handles retries using the standard retry flow (Step 7e).
 
-##### Degradation Triggers
+**Retry interaction:** When retrying a task that previously degraded, the orchestrator includes the degradation history in the retry prompt. All retries after initial degradation use `task-executor` (solo) -- team strategies are not re-attempted during retries.
 
-Degradation is triggered by any of the following conditions:
-
-| Trigger | Description | Detection |
-|---------|-------------|-----------|
-| **Agent spawn failure** | TeamCreate succeeds but agent spawn fails, or TeamCreate itself fails | Task tool returns error; agent never starts executing |
-| **Agent timeout** | Agent does not complete within its role timeout (Explorer: 5min, Implementer: 10min, Reviewer: 5min) | Orchestrator timeout exceeded; no response received |
-| **Agent crash** | Agent sends an error response instead of a valid result | Task tool returns error status or malformed response |
-| **Team coordination failure** | SendMessage fails when forwarding output between agents | SendMessage API returns error; message not delivered |
-
-When any trigger fires, the orchestrator evaluates whether the failure is recoverable (partial team failure with an acceptable result) or requires degradation to a simpler strategy.
-
-##### Partial Failure Rules by Strategy
-
-Not all agent failures require full degradation. The action depends on which role failed and which strategy is active.
-
-**Full strategy** (explorer + implementer + reviewer):
-
-| Role Failed | Action | Rationale |
-|------------|--------|-----------|
-| Explorer fails | Degrade to **Review** -- implementer + reviewer proceed without exploration findings | Exploration is helpful but not essential; implementation can still succeed |
-| Implementer fails | Degrade to **Solo** -- skip Review, start over with solo agent | Implementer is the critical role; without implementation, review is meaningless |
-| Reviewer fails (implementer succeeded) | **Accept implementer's result as PARTIAL** -- log that review was skipped | Implementation is complete; lack of independent review reduces confidence but does not invalidate the work |
-| Explorer + implementer fail | Degrade to **Solo** -- skip Review entirely since implementation already failed | No point attempting Review when the implementation role is the one that failed |
-| All three fail | Degrade to **Solo** | Terminal degradation step |
-
-**Review strategy** (implementer + reviewer):
-
-| Role Failed | Action | Rationale |
-|------------|--------|-----------|
-| Implementer fails | Degrade to **Solo** -- fall back to single task-executor agent | Critical role; without implementation there is nothing to review |
-| Reviewer fails (implementer succeeded) | **Accept implementer's result as PARTIAL** -- log that review was skipped | Implementation is complete; marking PARTIAL signals reduced verification confidence |
-| Both fail | Degrade to **Solo** | Terminal degradation step |
-
-**Research strategy** (explorer + implementer):
-
-| Role Failed | Action | Rationale |
-|------------|--------|-----------|
-| Explorer fails | Degrade to **Solo** -- solo agent handles exploration internally as part of Phase 1 | Exploration is built into the solo workflow's Understand phase |
-| Implementer fails (explorer succeeded) | Retry implementer once with explorer's findings still available; if retry fails, degrade to **Solo** | Explorer's research is valuable context; worth one retry before discarding it |
-| Both fail | Degrade to **Solo** | Terminal degradation step |
-
-##### Degradation Procedure
-
-When a degradation trigger fires, the orchestrator executes the following steps:
-
-1. **Log the failure** to `team_activity_task-{id}.md`:
-   ```
-   [{ISO 8601}] {role}: Failed -- {failure description}
-   [{ISO 8601}] Degradation triggered
-   Degraded: {original_strategy} -> {new_strategy}
-   Reason: {failure description}
-   Timestamp: {ISO 8601}
-   ```
-
-2. **Clean up the failed team** before attempting the simpler strategy:
-   - Send `shutdown_request` to all agents that are still active in the current team
-   - Wait briefly (up to 5 seconds) for agents to acknowledge shutdown
-   - Call `TeamDelete` to remove the team
-   - Verify the team is fully cleaned up -- no orphaned agents
-   - If `TeamDelete` fails, log a warning and proceed -- the team will eventually time out on its own
-
-3. **Log degradation** to `task_log.md`:
-   ```markdown
-   | {id} | {subject} | DEGRADED | {original_strategy} -> {new_strategy} | {reason} | {ISO 8601 timestamp} |
-   ```
-
-4. **Update the task's resolved strategy** to the degraded strategy. Append the degradation event to the task's degradation history (kept in memory by the orchestrator for the duration of the session).
-
-5. **Re-execute the task** with the degraded strategy:
-   - If degrading to another team strategy (e.g., Full -> Review): create a new team and run the team lifecycle from step 1 (Create Team)
-   - If degrading to Solo: launch a standard task-executor agent as defined in the Solo strategy section
-
-6. **If the degraded strategy also fails**: continue down the degradation chain (e.g., Full -> Review failed -> now try Solo). Repeat from step 1.
-
-7. **If Solo is reached and fails**: the task exits the degradation system and enters the normal retry flow (Step 7e). Solo is used for all subsequent retry attempts -- the orchestrator does not re-attempt team strategies during retries.
-
-##### Recording the Final Strategy
-
-After a task completes (whether through the original strategy or a degraded one), the orchestrator records the final strategy used:
-
-1. **In the task result metadata**: Store the strategy that ultimately produced the result:
-   ```
-   final_strategy: {solo|review|research|full}
-   original_strategy: {solo|review|research|full}
-   degradation_count: {number of degradation steps taken}
-   ```
-
-2. **In `task_log.md`**: The final PASS/PARTIAL/FAIL row includes the strategy:
-   ```markdown
-   | {id} | {subject} | {PASS/PARTIAL/FAIL} | {attempt}/{max} [{final_strategy}] | {duration} | {token_usage} |
-   ```
-
-3. **In the session summary** (Step 8): Degradation counts are aggregated in the `Team Strategies:` section:
-   ```
-   Degradations: {count} (e.g., Full -> Review: {n}, Review -> Solo: {n}, Research -> Solo: {n})
-   ```
-
-##### Degradation Logging
-
-Degradation events are logged in two places to support both real-time monitoring and post-session debugging:
-
-**`team_activity_task-{id}.md`** (real-time, per-team):
-```
-[{ISO 8601}] {role}: Failed -- {failure description}
-[{ISO 8601}] Degradation triggered
-Degraded: {original_strategy} -> {new_strategy}
-Reason: {failure description}
-Timestamp: {ISO 8601}
+**Recording the final strategy:** The `team-task-executor` includes the final strategy, original strategy, and degradation count in its verification report. The orchestrator records these in `task_log.md`:
+```markdown
+| {id} | {subject} | {PASS/PARTIAL/FAIL} | {attempt}/{max} [{final_strategy}] | {duration} | {token_usage} |
 ```
 
-The `team_activity_task-{id}.md` file's `Status:` field is set to `degraded` when degradation occurs. If the task succeeds after degradation with a new team strategy, a new `team_activity_task-{id}.md` file is created for the degraded strategy's team. The original degraded file is preserved for debugging (renamed to `team_activity_task-{id}-degraded-{n}.md` where `{n}` is the degradation step number).
-
-**`task_log.md`** (session-level):
-Each degradation event gets its own row:
+Degradation events are also logged by the `team-task-executor` to `task_log.md` if they have write access, or included in the verification report for the orchestrator to log:
 ```markdown
 | {id} | {subject} | DEGRADED | {original} -> {new} | {reason} | {timestamp} |
 ```
 
-The final outcome also gets a row (PASS/PARTIAL/FAIL) showing the strategy that produced the result.
-
-##### Degradation History
-
-The orchestrator maintains a degradation history for each task in memory during the session. This history is:
-
-1. **Included in retry context**: If a task exhausts all degradation options and enters the retry flow, the retry prompt includes the degradation history so the solo agent knows what was already attempted:
-   ```
-   DEGRADATION HISTORY:
-   1. Strategy: full -- Explorer timed out after 300s
-   2. Strategy: review -- Implementer crashed with error: {message}
-   3. Strategy: solo -- (current retry attempt)
-   ```
-
-2. **Written to `context-task-{id}.md`**: After a task completes (success or failure), the degradation history is included in the per-task context file so it is preserved in the execution context for future reference.
-
-3. **Included in the session summary**: The Step 8 summary includes aggregate degradation statistics in the `Team Strategies:` section.
-
-##### Retry Interaction
-
-Degradation and retries are separate systems with distinct counters:
-
-- **Degradation** walks down the strategy chain (Full -> Review -> Solo). Each step is a fresh attempt with a simpler strategy. Degradation does **not** count against the task retry limit.
-- **Retries** re-attempt the task with the same strategy (Solo) after all degradation options are exhausted. Retries decrement the retry counter.
-
-**Interaction rules:**
-
-1. A task starts with its resolved strategy and full retry budget (e.g., 3 retries)
-2. If the strategy fails, degradation occurs (retry counter unchanged)
-3. Degradation continues until Solo is reached or the task succeeds
-4. If Solo fails after degradation, the task enters the normal retry flow with its full retry budget intact
-5. All retries after degradation use Solo strategy -- team strategies are not re-attempted
-6. If retries are also exhausted, the task remains `in_progress` for manual review
-
-**Example flow** for a Full strategy task with 3 retries:
-```
-Full -> fails (explorer timeout)
-  Degradation 1: Review -> fails (implementer crash)
-    Degradation 2: Solo -> fails (test failures)
-      Retry 1/3: Solo -> fails (different test failure)
-        Retry 2/3: Solo -> PASS
-```
-Total degradations: 2, total retries used: 2/3, final strategy: solo.
-
-##### Degradation Edge Cases
-
-**All strategies fail for a task:**
-When degradation reaches Solo and Solo also fails, the task enters the normal retry flow (Step 7e). All retries use Solo strategy. If retries are exhausted, the task remains `in_progress`. The degradation history is preserved in `context-task-{id}.md` and included in the session summary.
-
-**Degradation during concurrent wave execution:**
-Degradation happens within a single task's execution slot. Other tasks in the same wave are not affected by one task's degradation. Each task manages its own degradation chain independently. The wave completes when all tasks (including those undergoing degradation) have finished or exhausted their options.
-
-**Cleanup guarantees:**
-Each degradation step performs a full team cleanup (shutdown agents, TeamDelete) before attempting the next strategy. No team or agent is left orphaned. If TeamDelete fails during cleanup, the orchestrator logs a warning and proceeds -- the team will eventually time out on its own.
-
-**Multiple degradations for the same task:**
-A task can degrade multiple times (e.g., Full -> Review -> Solo). Each degradation creates its own log entries and cleanup cycle. The `team_activity_task-{id}.md` file from the original strategy is preserved; new team strategies create new team activity files with the same task ID but different team names (the timestamp component ensures uniqueness).
-
 #### Concurrent Teams
 
-Multiple tasks in the same wave may each spawn their own independent team. The orchestrator manages all teams concurrently:
+Multiple `team-task-executor` instances run in parallel within a wave, each creating its own independent team. Since each `team-task-executor` is a separate agent process acting as its own team leader, there is no "one team per leader" constraint violation.
 
+- Each `team-task-executor` creates its own team with a unique name: `task-team-{task-id}-{timestamp}`
 - Each team has its own `team_activity_task-{id}.md` file -- no file write contention
-- Each team has a unique team name: `task-team-{task-id}-{timestamp}`
 - Teams do not interact with each other
-- The orchestrator tracks each team's lifecycle independently
-- A wave completes when ALL tasks (both solo and team) have finished
+- The orchestrator tracks results as they return from each `team-task-executor`
+- A wave completes when ALL Task tool calls (both `task-executor` and `team-task-executor`) have returned
 
 Example: A wave with 3 tasks might look like:
 ```
-- [15] Fix typo in README -- Solo (task-executor agent)
-- [42] Add user authentication -- Team: review (implementer + reviewer)
-- [99] Implement payment flow -- Team: full (explorer + implementer + reviewer)
+Parallel Task tool calls:
+- [15] Fix typo in README -- task-executor (solo)
+- [42] Add user authentication -- team-task-executor (review strategy)
+- [99] Implement payment flow -- team-task-executor (full strategy)
 ```
 
-All three execute concurrently. Task 15 finishes first (simple solo task). Tasks 42 and 99 each run their team workflows independently.
+All three launch concurrently as parallel Task tool calls in a single message turn. Task 15 returns first (simple solo task). Tasks 42 and 99 each manage their own team lifecycle independently and return when complete.
 
 **Important**: When `max_parallel` is 1, omit the `CONCURRENT EXECUTION MODE` section from the solo agent prompt. The agent will write directly to `execution_context.md` as in the original sequential behavior. Team tasks always use `team_activity_task-{id}.md` regardless of `max_parallel`.
 
 #### Cross-Task Team Groups
 
-When tasks share a `metadata.team_group` value (detected in Step 7a.1), they are assigned to a shared team rather than each getting their own team. This allows agents to maintain context (explored files, patterns, codebase understanding) across task boundaries.
+When tasks share a `metadata.team_group` value (detected in Step 7a.1), they are assigned to a single `team-task-executor` instance that executes them sequentially within one team. This allows agents to maintain context (explored files, patterns, codebase understanding) across task boundaries.
 
-##### Shared Team Lifecycle
+##### Group Execution via team-task-executor
 
-The shared team lifecycle differs from per-task teams in several ways:
+When a group of tasks is detected in a wave, the orchestrator launches a single `team-task-executor` with all group task details:
 
-1. **Team creation**: ONE team is created for the entire group, not per task. The team is created when the first task in the group is launched:
-   ```
-   TeamCreate:
-     name: group-team-{team_group}-{timestamp}
-     description: "{Strategy} team for group '{team_group}' ({n} tasks)"
-   ```
-
-2. **Sequential execution within group**: Tasks in the same group execute sequentially on the shared team (not concurrently), even if they appear in the same wave. This maintains context continuity -- agents do not need to re-read the full codebase between tasks.
-
-3. **Team activity file**: The group shares a single `team_activity_group-{team_group}.md` file instead of per-task files. The format follows the same conventions as per-task `team_activity_task-{id}.md` files (see `team-strategies.md` for the full format specification), with additional group-specific fields:
-   ```markdown
-   # Team Activity: Group {team_group}
-
-   Team: group-team-{team_group}-{timestamp}
-   Strategy: {resolved group strategy}
-   Status: active
-   Created: {ISO 8601 timestamp}
-   Updated: {ISO 8601 timestamp}
-   Group Tasks: [{id_1}], [{id_2}], [{id_3}]
-   Current Task: [{id}] {subject}
-   Completed Tasks: [{id}] PASS, [{id}] PASS
-
-   ## Team Members
-
-   - [{role}] {agent-name} — {status} — {current-phase}
-   - [{role}] {agent-name} — {status} — {current-phase}
-
-   ## Activity Log
-
-   {ISO 8601 timestamp} | orchestrator | Team created for group: {team_group}
-   {ISO 8601 timestamp} | orchestrator | Starting task [{id}]: {subject}
-   {ISO 8601 timestamp} | {role} | {activity description}
-   ...
-   {ISO 8601 timestamp} | orchestrator | Task [{id}] completed: PASS
-   {ISO 8601 timestamp} | orchestrator | Starting task [{id_2}]: {subject_2}
-   ...
-   ```
-
-4. **Context persistence between tasks**: When one task in the group completes and the next begins, agents retain their codebase understanding. The orchestrator passes the previous task's results and learnings to the agents for the next task without re-spawning the team. If the strategy includes an explorer, the explorer runs only for the first task in the group -- subsequent tasks reuse the exploration findings.
-
-5. **Team cleanup**: The team is cleaned up ONLY after ALL tasks in the group have completed (or after all remaining tasks have exhausted retries). The team is NOT cleaned up between tasks within the group.
-
-##### Cross-Wave Group Persistence
-
-If a group's tasks span multiple waves (because some tasks depend on tasks outside the group), the team persists across wave boundaries:
-
-1. At the end of a wave, check each active group: if the group has remaining tasks in later waves, do NOT clean up the team
-2. The group's `status` remains `active` in the group registry
-3. When the next wave begins and includes tasks from the group (Step 7a.2), they are assigned to the existing team
-4. The `team_activity_group-{team_group}.md` file continues accumulating entries across waves
-5. `team_activity_group-{team_group}.md` files for active cross-wave groups are NOT deleted during the 7f context merge -- they persist until the group completes
-
-**Wave boundary logging**: When a group spans a wave boundary, log:
 ```
-[{ISO 8601}] Wave {n} ended -- team persists ({m} tasks remaining in group)
+Task:
+  subagent_type: claude-alchemy-sdd:team-task-executor
+  prompt: |
+    Execute the following group of tasks using the {strategy} team strategy.
+
+    Group: {team_group}
+    Tasks:
+    ---
+    Task [{id_1}]: {subject_1}
+    {description_1}
+    ---
+    Task [{id_2}]: {subject_2}
+    {description_2}
+    ---
+    ...
+
+    Team Strategy: {resolved group strategy}
+
+    CONCURRENT EXECUTION MODE
+    Context Write Path prefix: .claude/sessions/__live_session__/context-task-
+    Team Activity Path: .claude/sessions/__live_session__/team_activity_group-{team_group}.md
+    ...
 ```
 
-##### Group Task Failure Handling
+The `team-task-executor` handles the group lifecycle internally:
+1. Creates one team for the entire group
+2. Runs the explorer (if applicable) only for the first task
+3. Executes tasks sequentially within the team, reusing agent context
+4. Writes a shared `team_activity_group-{team_group}.md` file
+5. Writes per-task `context-task-{id}.md` files for each completed task
+6. Cleans up the team after all group tasks complete
+7. Returns a combined report covering all group tasks
 
-When a task within a group fails:
+##### Cross-Wave Group Handling
 
-1. **Team continues**: The failure affects only the current task, not the entire group. The team moves on to the next task in the group.
-2. **Failed task enters retry**: The failed task is handled by the standard retry flow (Step 7e). On retry, it is re-assigned to the group's shared team (if the team is still active).
-3. **Retry within team context**: When the failed task retries on the shared team, it benefits from the team's accumulated context -- the agents still have codebase knowledge from prior group tasks.
-4. **All tasks fail**: If all tasks in the group fail and exhaust retries, the team is cleaned up and all tasks remain as `in_progress`.
-5. **Logging**: Group task failures include group context in the log:
-   ```
-   [{ISO 8601}] Task [{id}] failed in group "{team_group}" -- {failure reason}
-   [{ISO 8601}] Team continues with {n} remaining tasks in group
-   ```
+Groups whose tasks span multiple waves are handled with fresh `team-task-executor` instances per wave:
+
+1. Each wave's group tasks are launched in a new `team-task-executor` (team recreated each wave)
+2. Group context continuity comes from `execution_context.md` merge between waves -- the orchestrator merges all `context-task-{id}.md` files from the previous wave before launching the next wave
+3. The new `team-task-executor` receives the merged execution context snapshot, which includes learnings from the group's previous wave
+4. No persistent background team slots or complex lifecycle management required
+
+**Wave boundary note**: The `team_activity_group-{team_group}.md` file from the previous wave is preserved (not deleted during merge). The new wave's `team-task-executor` creates a new activity file with a different timestamp if needed, or continues the existing one.
 
 ##### Wave Slot Accounting for Groups
 
-Since grouped tasks execute sequentially on their shared team, they occupy a single concurrent slot in the wave (not one slot per task). This means:
+Since grouped tasks are sent to a single `team-task-executor` instance, they occupy a single concurrent slot in the wave (not one slot per task):
 
 - A group of 3 tasks counts as 1 slot against `max_parallel`
-- Other solo tasks and independent teams can run concurrently alongside the group
-- The group finishes its sequential execution independently of other wave tasks
+- Other solo tasks and independent team tasks can run concurrently alongside the group
+- The group `team-task-executor` finishes when all its tasks complete
 
 ##### progress.md Display for Groups
 
@@ -943,12 +614,12 @@ Active groups are displayed in `progress.md` with group context:
 ## Active Tasks
 - [Group: {team_group}] Team: {strategy} -- Task [{id}] {subject} (2/4 tasks complete)
 - [15] Fix typo in README -- Solo
-- [42] Add user authentication -- Team: review (implementer: active, reviewer: spawning)
+- [42] Add user authentication -- Team: review (executing)
 ```
 
 ### 7d: Process Results
 
-As each task completes (whether via solo agent return or team lifecycle completion):
+As each task completes (whether via `task-executor` return or `team-task-executor` return):
 
 1. Calculate `duration = current_time - task_start_time`. Format: <60s = `{s}s`, <60m = `{m}m {s}s`, >=60m = `{h}h {m}m {s}s`
 2. Capture token usage from the Task tool response if available, otherwise `N/A`
@@ -956,7 +627,7 @@ As each task completes (whether via solo agent return or team lifecycle completi
    ```markdown
    | {id} | {subject} | {PASS/PARTIAL/FAIL} | {attempt_number}/{max_retries} | {duration} | {token_usage or N/A} |
    ```
-   For team tasks, duration includes the full team lifecycle (all agent phases). Token usage is the sum across all agents in the team if available.
+   For team tasks, duration includes the full `team-task-executor` lifecycle (all agent phases). Token usage is the sum across all agents in the team if available (reported by the `team-task-executor` in its verification report).
 4. Log a brief status line: `[{id}] {subject}: {PASS|PARTIAL|FAIL}`
    For team tasks, append the strategy: `[{id}] {subject}: {PASS|PARTIAL|FAIL} (strategy: {strategy})`
 5. Update `progress.md` -- move the task from Active Tasks to Completed This Session:
@@ -972,9 +643,9 @@ As each task completes (whether via solo agent return or team lifecycle completi
    ```
    Solo tasks show the standard format. Team tasks include the strategy name.
 
-**Context append fallback**: If a solo agent's report contains a `LEARNINGS:` section (indicating the agent failed to write to its context file), manually write those learnings to `.claude/sessions/__live_session__/context-task-{id}.md`.
+**Context append fallback**: If an agent's report contains a `LEARNINGS:` section (indicating the agent failed to write to its context file), manually write those learnings to `.claude/sessions/__live_session__/context-task-{id}.md`.
 
-**Team context**: For team tasks, the orchestrator writes learnings to `context-task-{id}.md` on behalf of the team. This includes a summary of the team workflow, files modified by the implementer, and any findings from the explorer or reviewer.
+**Team context**: For team tasks, the `team-task-executor` writes learnings to `context-task-{id}.md` directly. The orchestrator does not need to extract team learnings -- they are already in the per-task context file when the `team-task-executor` returns.
 
 ### 7e: Within-Wave Retry
 
@@ -997,7 +668,7 @@ After ALL tasks in the current wave have completed (including retries and team l
 1. Read all `context-task-{id}.md` files from `.claude/sessions/__live_session__/`
 2. Append their contents to `.claude/sessions/__live_session__/execution_context.md` in task ID order
 3. Delete the `context-task-{id}.md` files
-4. For team tasks: include relevant team activity data in the context merge. Extract key learnings from `team_activity_task-{id}.md` files (exploration findings, implementation patterns, reviewer feedback) and append them alongside the per-task context
+4. For team tasks: the `team-task-executor` already wrote learnings to `context-task-{id}.md`, so no special extraction from `team_activity_task-{id}.md` files is needed
 
 **Skip merge when `max_parallel` is 1** -- agents already wrote directly to `execution_context.md`.
 
@@ -1008,7 +679,7 @@ After ALL tasks in the current wave have completed (including retries and team l
 ### 7g: Rebuild Next Wave and Archive
 
 1. Archive completed task files: for each PASS task in this wave, copy the task's JSON from `~/.claude/tasks/{CLAUDE_CODE_TASK_LIST_ID}/` to `.claude/sessions/__live_session__/tasks/`
-2. **Clean up completed team groups**: For each team group that completed all its tasks during this wave (all tasks PASS or all retries exhausted), run team cleanup: send `shutdown_request` to remaining agents, call `TeamDelete`, update the group's `team_activity_group-{team_group}.md` with final status
+2. **Team group cleanup**: Team groups are cleaned up internally by their `team-task-executor` instances. The orchestrator does not need to call TeamDelete for groups -- the `team-task-executor` handles this before returning
 3. Use `TaskList` to refresh the full task state
 4. Check if any previously blocked tasks are now unblocked
 5. If newly unblocked tasks found, form the next wave using priority sort from Step 3d
@@ -1075,7 +746,7 @@ The `Team Strategies:` section is only included when at least one task used a no
 
 After displaying the summary:
 1. Save `session_summary.md` to `.claude/sessions/__live_session__/` with the full summary content
-2. **Archive the session**: Create `.claude/sessions/{task_execution_id}/` and move all contents from `__live_session__/` to the archival folder. The `.lock` file is moved to the archive along with all other session files (including `team_activity_task-*.md` and `team_activity_group-*.md` files), releasing the concurrency guard. **Important**: Before archiving, ensure all cross-task team groups have been cleaned up. If any group teams are still active (this should not happen if the execute loop completed normally), force-cleanup them before archiving.
+2. **Archive the session**: Create `.claude/sessions/{task_execution_id}/` and move all contents from `__live_session__/` to the archival folder. The `.lock` file is moved to the archive along with all other session files (including `team_activity_task-*.md` and `team_activity_group-*.md` files), releasing the concurrency guard. All team cleanup is handled by `team-task-executor` agents before they return, so no team cleanup is needed at archival time.
 3. `__live_session__/` is left as an empty directory (not deleted)
 4. `execution_pointer.md` stays pointing to `__live_session__/` (no update needed -- it will be empty until the next execution)
 
@@ -1105,7 +776,7 @@ Process:
 ## Notes
 
 - Tasks are executed using Claude Code's native task system (TaskGet/TaskUpdate/TaskList)
-- Each task is handled by the `claude-alchemy-sdd:task-executor` agent in isolation (Solo strategy) or by a coordinated team of agents (Review, Research, Full strategies)
+- Each task is handled by the `claude-alchemy-sdd:task-executor` agent (Solo strategy) or by the `claude-alchemy-sdd:team-task-executor` agent (Review, Research, Full strategies)
 - The execution context file enables knowledge sharing across task boundaries
 - Failed tasks remain as `in_progress` for manual review or re-execution
 - Run the execute-tasks skill again to pick up where you left off -- it will execute any remaining unblocked tasks

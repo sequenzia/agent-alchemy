@@ -81,7 +81,7 @@ Solo is the existing single-agent behavior. No team is created. A single `task-e
 
 ### Spawn Configuration
 
-Standard Task tool invocation as defined in `orchestration.md` Step 7c. No `TeamCreate`, no `team_name` parameter.
+Standard Task tool invocation as defined in `orchestration.md` Step 7c. The orchestrator launches `task-executor` directly via the Task tool. No `TeamCreate`, no `team_name` parameter.
 
 ### Coordination Flow
 
@@ -114,6 +114,8 @@ Standard retry behavior as defined in `orchestration.md` Step 7e. Failed tasks a
 
 Review adds an independent code reviewer after implementation. Two agents work sequentially: the implementer writes the code, then the reviewer independently verifies correctness and quality.
 
+The `team-task-executor` agent manages the full team lifecycle for Review tasks: it creates the team, spawns agents, coordinates the workflow, handles degradation, and cleans up.
+
 ### Agent Roles
 
 | Role | Agent Type | Count |
@@ -123,12 +125,14 @@ Review adds an independent code reviewer after implementation. Two agents work s
 
 ### Spawn Configuration
 
+The `team-task-executor` creates the team and spawns agents:
+
 ```
-TeamCreate:
+TeamCreate (by team-task-executor):
   name: task-team-{task-id}-{timestamp}
   description: "Review team for task [{task-id}]: {subject}"
 
-Task (implementer):
+Task (implementer, spawned by team-task-executor):
   subagent_type: claude-alchemy-sdd:team-implementer
   model: sonnet
   team_name: task-team-{task-id}-{timestamp}
@@ -138,7 +142,7 @@ Task (implementer):
     A reviewer will independently verify your work after you finish.
     {task description and context}
 
-Task (reviewer):
+Task (reviewer, spawned by team-task-executor):
   subagent_type: claude-alchemy-sdd:team-reviewer
   model: opus
   team_name: task-team-{task-id}-{timestamp}
@@ -166,13 +170,13 @@ Task (reviewer):
 
 ### Detailed Coordination Flow
 
-The Review strategy uses a two-agent sequential pipeline. The orchestrator acts as team lead, driving all coordination -- agents never communicate directly.
+The Review strategy uses a two-agent sequential pipeline. The `team-task-executor` acts as team lead, driving all coordination -- agents never communicate directly with each other.
 
 #### Step-by-Step Flow
 
 ```
-1. Orchestrator creates team: task-team-{task-id}-{timestamp}
-2. Orchestrator spawns implementer (Sonnet) into the team
+1. team-task-executor creates team: task-team-{task-id}-{timestamp}
+2. team-task-executor spawns implementer (Sonnet) into the team
 3. Implementer receives:
    - Task requirements (subject, description, acceptance criteria)
    - Execution context snapshot (learnings from prior tasks)
@@ -185,10 +189,9 @@ The Review strategy uses a two-agent sequential pipeline. The orchestrator acts 
    - Approach taken and key decisions
    - Tests written and their results
    - Known limitations or trade-offs
-8. Orchestrator receives implementation summary
-9. Orchestrator updates team_activity: implementer -> completed
-10. Orchestrator updates progress.md: Team: review (implementer: completed, reviewer: active)
-11. Orchestrator spawns reviewer (Opus) into the team with handoff context
+8. team-task-executor receives implementation summary
+9. team-task-executor updates team_activity: implementer -> completed
+10. team-task-executor spawns reviewer (Opus) into the team with handoff context
 12. Reviewer receives handoff context (see Reviewer Handoff Context below)
 13. Reviewer independently reads all changed files from the filesystem
 14. Reviewer verifies implementation against each acceptance criterion
@@ -196,15 +199,15 @@ The Review strategy uses a two-agent sequential pipeline. The orchestrator acts 
 16. Reviewer runs the project linter
 17. Reviewer checks for regressions, security issues, and convention violations
 18. Reviewer sends structured review report to team lead via SendMessage
-19. Orchestrator receives review report
-20. Orchestrator updates team_activity: reviewer -> completed
-21. Orchestrator translates reviewer verdict to pass/partial/fail (see Result Translation)
-22. Orchestrator cleans up team (shutdown_request to both agents, TeamDelete)
+19. team-task-executor receives review report
+20. team-task-executor updates team_activity: reviewer -> completed
+21. team-task-executor translates reviewer verdict to pass/partial/fail (see Result Translation)
+22. team-task-executor cleans up team (shutdown_request to both agents, TeamDelete)
 ```
 
 #### Reviewer Handoff Context
 
-When the orchestrator launches the reviewer, it provides the following context in the reviewer's prompt. This is the critical coordination point in the Review strategy.
+When the `team-task-executor` launches the reviewer, it provides the following context in the reviewer's prompt. This is the critical coordination point in the Review strategy.
 
 | Context Item | Source | Purpose |
 |-------------|--------|---------|
@@ -220,7 +223,7 @@ When the orchestrator launches the reviewer, it provides the following context i
 
 #### Review Report Format
 
-The reviewer sends a structured report to the team lead via SendMessage. The report uses a consistent format that the orchestrator can parse to determine the task outcome.
+The reviewer sends a structured report to the team lead via SendMessage. The report uses a consistent format that the `team-task-executor` can parse to determine the task outcome.
 
 **Verdict values:**
 
@@ -283,9 +286,9 @@ _Performance:_ ({passed}/{total} or N/A)
 
 #### Result Translation
 
-The orchestrator translates the reviewer's verdict into the standard pass/partial/fail status used by the rest of the execution loop.
+The `team-task-executor` translates the reviewer's verdict into the standard pass/partial/fail status used by the rest of the execution loop.
 
-| Reviewer Verdict | Translated Status | Orchestrator Action |
+| Reviewer Verdict | Translated Status | Action |
 |-----------------|-------------------|---------------------|
 | **PASS** | **PASS** | Mark task as `completed`; log success |
 | **ISSUES_FOUND** | **PARTIAL** | Leave task as `in_progress`; log non-blocking issues; task may enter retry flow |
@@ -304,19 +307,21 @@ The orchestrator translates the reviewer's verdict into the standard pass/partia
 #### Edge Case Handling
 
 **Reviewer finds no issues (fast PASS path)**:
-When the reviewer verifies all criteria pass and all tests pass with no additional findings, it sends a PASS verdict immediately. The orchestrator translates this to PASS and marks the task as completed. No retry is needed. The review report still includes the full criteria results for the record, but the Summary section can be brief (e.g., "All criteria verified, tests pass, implementation is clean.").
+When the reviewer verifies all criteria pass and all tests pass with no additional findings, it sends a PASS verdict immediately. The `team-task-executor` translates this to PASS and marks the task as completed. No retry is needed. The review report still includes the full criteria results for the record, but the Summary section can be brief (e.g., "All criteria verified, tests pass, implementation is clean.").
 
 **Implementer produces no code changes**:
-If the implementer reports completion but lists no files modified (e.g., the task was a no-op, or the implementer determined no changes were needed), the orchestrator still launches the reviewer. The reviewer reads the implementer's summary, verifies that no changes were indeed the correct outcome for the task, and sends an early report. If the task genuinely required no code changes, the reviewer reports PASS. If the task required changes but none were made, the reviewer reports FAIL with a clear explanation that the implementation is missing.
+If the implementer reports completion but lists no files modified (e.g., the task was a no-op, or the implementer determined no changes were needed), the `team-task-executor` still launches the reviewer. The reviewer reads the implementer's summary, verifies that no changes were indeed the correct outcome for the task, and sends an early report. If the task genuinely required no code changes, the reviewer reports PASS. If the task required changes but none were made, the reviewer reports FAIL with a clear explanation that the implementation is missing.
 
 ### Lifecycle
+
+All lifecycle steps are managed by the `team-task-executor` agent:
 
 1. **Create**: `TeamCreate` with team name `task-team-{task-id}-{timestamp}`
 2. **Spawn**: Launch implementer (Sonnet) and reviewer (Opus) into the team
 3. **Coordinate**:
    - Implementer executes: Understand, Implement phases
    - Implementer reports completion with files modified and changes summary
-   - Orchestrator sends implementation report to reviewer with full handoff context
+   - `team-task-executor` sends implementation report to reviewer with full handoff context
    - Reviewer executes: independent Verify phase (reads code, runs tests, checks criteria)
    - Reviewer reports verification results via structured review report
 4. **Collect**: Translate reviewer's verdict into pass/partial/fail using the result translation table
@@ -330,13 +335,15 @@ See [team_activity.md Format Specification](#team_activitymd-format-specificatio
 
 Review fails -> **Solo**
 
+Degradation is handled internally by the `team-task-executor`. It walks the chain and falls back to direct execution (using its own Read/Write/Edit tools) when degrading to Solo.
+
 ### Failure Handling
 
 | Failure Scenario | Action |
 |-----------------|--------|
-| Implementer fails | Degrade to Solo strategy (retry the entire task with a solo agent) |
-| Reviewer fails but implementer succeeded | Accept implementer's result as-is; log that review was skipped; mark as PARTIAL if reviewer was needed for verification |
-| Both fail | Degrade to Solo strategy |
+| Implementer fails | Degrade to Solo (team-task-executor executes directly) |
+| Reviewer fails but implementer succeeded | Accept implementer's result as-is; log that review was skipped; mark as PARTIAL |
+| Both fail | Degrade to Solo |
 | Reviewer reports FAIL | Include reviewer's detailed issue list in the retry context; task enters retry flow with full diagnostic information |
 
 ---
@@ -347,6 +354,8 @@ Review fails -> **Solo**
 
 Research adds an exploration phase before implementation. Two agents work sequentially: the explorer investigates the codebase and requirements, then the implementer uses those findings to write code.
 
+The `team-task-executor` agent manages the full team lifecycle for Research tasks.
+
 ### Agent Roles
 
 | Role | Agent Type | Count |
@@ -356,12 +365,14 @@ Research adds an exploration phase before implementation. Two agents work sequen
 
 ### Spawn Configuration
 
+The `team-task-executor` creates the team and spawns agents:
+
 ```
-TeamCreate:
+TeamCreate (by team-task-executor):
   name: task-team-{task-id}-{timestamp}
   description: "Research team for task [{task-id}]: {subject}"
 
-Task (explorer):
+Task (explorer, spawned by team-task-executor):
   subagent_type: claude-alchemy-sdd:team-explorer
   model: sonnet
   team_name: task-team-{task-id}-{timestamp}
@@ -372,7 +383,7 @@ Task (explorer):
     implementer will use to write the code.
     {task description and context}
 
-Task (implementer):
+Task (implementer, spawned by team-task-executor):
   subagent_type: claude-alchemy-sdd:team-implementer
   model: sonnet
   team_name: task-team-{task-id}-{timestamp}
@@ -400,12 +411,14 @@ Task (implementer):
 
 ### Lifecycle
 
+All lifecycle steps are managed by the `team-task-executor` agent:
+
 1. **Create**: `TeamCreate` with team name `task-team-{task-id}-{timestamp}`
 2. **Spawn**: Launch explorer (Sonnet) and implementer (Sonnet) into the team
 3. **Coordinate**:
    - Explorer executes: codebase investigation, file mapping, pattern identification
    - Explorer reports findings with key files, patterns, integration points, recommendations
-   - Orchestrator sends exploration report to implementer
+   - `team-task-executor` sends exploration report to implementer
    - Implementer executes: Understand (using research), Implement, Verify, Complete phases
    - Implementer reports verification results
 4. **Collect**: Translate implementer's verification into pass/partial/fail
@@ -419,15 +432,17 @@ See [team_activity.md Format Specification](#team_activitymd-format-specificatio
 
 Research fails -> **Solo**
 
+Degradation is handled internally by the `team-task-executor`.
+
 ### Detailed Coordination Flow
 
-The Research strategy uses a two-agent sequential pipeline. The orchestrator acts as team lead, driving all coordination -- agents never communicate directly.
+The Research strategy uses a two-agent sequential pipeline. The `team-task-executor` acts as team lead, driving all coordination -- agents never communicate directly.
 
 #### Step-by-Step Flow
 
 ```
-1. Orchestrator creates team: task-team-{task-id}-{timestamp}
-2. Orchestrator spawns explorer (Sonnet) into the team
+1. team-task-executor creates team: task-team-{task-id}-{timestamp}
+2. team-task-executor spawns explorer (Sonnet) into the team
 3. Explorer receives:
    - Task requirements (subject, description, acceptance criteria)
    - Execution context snapshot (learnings from prior tasks)
@@ -439,24 +454,23 @@ The Research strategy uses a two-agent sequential pipeline. The orchestrator act
    - Identifies existing patterns the implementer should follow
    - Notes potential challenges, conflicts, or pitfalls
 5. Explorer sends structured findings report to team lead via SendMessage
-6. Orchestrator updates team_activity: explorer -> completed
-7. Orchestrator updates progress.md: Team: research (explorer: completed, implementer: active)
-8. Orchestrator forwards explorer findings to implementer via SendMessage
-9. Orchestrator spawns implementer (Sonnet) into the team
-10. Implementer receives:
+6. team-task-executor updates team_activity: explorer -> completed
+7. team-task-executor forwards explorer findings to implementer via SendMessage
+8. team-task-executor spawns implementer (Sonnet) into the team
+9. Implementer receives:
     - Task requirements (subject, description, acceptance criteria)
     - Execution context snapshot (learnings from prior tasks)
     - Explorer's structured findings report (as additional context)
-11. Implementer executes implementation using explorer's insights:
+10. Implementer executes implementation using explorer's insights:
     - Understand phase: uses explorer's file map and patterns instead of re-exploring
     - Implement phase: follows explorer's recommended approach and identified patterns
     - Verify phase: self-verifies against acceptance criteria (runs tests, checks criteria)
     - Complete phase: determines PASS/PARTIAL/FAIL status
-12. Implementer sends completion report to team lead via SendMessage
-13. Orchestrator updates team_activity: implementer -> completed
-14. Orchestrator collects implementer's verification report
-15. Orchestrator translates result to pass/partial/fail (see Result Translation)
-16. Orchestrator cleans up team (shutdown agents, TeamDelete)
+11. Implementer sends completion report to team lead via SendMessage
+12. team-task-executor updates team_activity: implementer -> completed
+13. team-task-executor collects implementer's verification report
+14. team-task-executor translates result to pass/partial/fail (see Result Translation)
+15. team-task-executor cleans up team (shutdown agents, TeamDelete)
 ```
 
 #### Explorer Findings Format
@@ -496,7 +510,7 @@ Not all sections need content -- if the explorer finds nothing for a section (e.
 
 #### Explorer-to-Implementer Handoff
 
-The handoff is the critical coordination point in the Research strategy. The orchestrator mediates all communication.
+The handoff is the critical coordination point in the Research strategy. The `team-task-executor` mediates all communication.
 
 **What gets passed to the implementer:**
 1. The original task requirements (subject, description, acceptance criteria) -- always included, independent of explorer
@@ -544,18 +558,18 @@ Since there is no reviewer, the implementer's self-reported status maps directly
 #### Edge Case Handling
 
 **Explorer finds nothing relevant:**
-The explorer reports a findings report with "None identified" in most sections. The implementer proceeds normally using its own exploration capabilities. The orchestrator logs this in `team_activity_task-{id}.md`:
+The explorer reports a findings report with "None identified" in most sections. The implementer proceeds normally using its own exploration capabilities. The `team-task-executor` logs this in `team_activity_task-{id}.md`:
 ```
 [{ISO 8601}] explorer: Completed -- minimal findings (no relevant files/patterns identified)
 ```
 The task continues without degradation -- the explorer completing with minimal findings is not a failure.
 
 **Explorer times out (exceeds 5-minute timeout):**
-Treat as an explorer failure and degrade to Solo strategy:
+Treat as an explorer failure and degrade to Solo:
 1. Log to `team_activity_task-{id}.md`: `[{ISO 8601}] explorer: Failed -- agent timeout`
 2. Record degradation: `Degraded: research -> solo`
 3. Clean up the Research team (TeamDelete)
-4. Re-execute the task with Solo strategy (task-executor handles everything)
+4. Execute the task directly using solo fallback (team-task-executor has Write/Edit tools)
 5. Degradation does not count against the retry limit
 
 **SendMessage fails when forwarding findings:**
@@ -569,11 +583,11 @@ This effectively degrades the Research strategy to Solo-like behavior without fo
 
 | Failure Scenario | Action |
 |-----------------|--------|
-| Explorer fails | Degrade to Solo strategy (solo agent handles exploration internally as part of Phase 1) |
-| Explorer times out | Degrade to Solo strategy (see Edge Case Handling above) |
+| Explorer fails | Degrade to Solo (team-task-executor executes directly) |
+| Explorer times out | Degrade to Solo (see Edge Case Handling above) |
 | Explorer finds nothing | Not a failure -- implementer proceeds with own exploration |
 | Implementer fails but explorer succeeded | Retry implementer with explorer's findings still available; if retry fails, degrade to Solo |
-| Both fail | Degrade to Solo strategy |
+| Both fail | Degrade to Solo |
 | SendMessage fails (findings handoff) | Log warning; implementer proceeds without findings; no formal degradation |
 
 ---
@@ -583,6 +597,8 @@ This effectively degrades the Research strategy to Solo-like behavior without fo
 ### Overview
 
 Full is the complete three-agent pipeline: explore, implement, then review. An explorer investigates the codebase, an implementer uses those findings to write code, and a reviewer independently verifies the result.
+
+The `team-task-executor` agent manages the full team lifecycle for Full tasks.
 
 ### Agent Roles
 
@@ -594,12 +610,14 @@ Full is the complete three-agent pipeline: explore, implement, then review. An e
 
 ### Spawn Configuration
 
+The `team-task-executor` creates the team and spawns agents:
+
 ```
-TeamCreate:
+TeamCreate (by team-task-executor):
   name: task-team-{task-id}-{timestamp}
   description: "Full team for task [{task-id}]: {subject}"
 
-Task (explorer):
+Task (explorer, spawned by team-task-executor):
   subagent_type: claude-alchemy-sdd:team-explorer
   model: sonnet
   team_name: task-team-{task-id}-{timestamp}
@@ -610,7 +628,7 @@ Task (explorer):
     implementer will use to write the code.
     {task description and context}
 
-Task (implementer):
+Task (implementer, spawned by team-task-executor):
   subagent_type: claude-alchemy-sdd:team-implementer
   model: sonnet
   team_name: task-team-{task-id}-{timestamp}
@@ -621,7 +639,7 @@ Task (implementer):
     A reviewer will independently verify your work after you finish.
     {task description and context}
 
-Task (reviewer):
+Task (reviewer, spawned by team-task-executor):
   subagent_type: claude-alchemy-sdd:team-reviewer
   model: opus
   team_name: task-team-{task-id}-{timestamp}
@@ -653,15 +671,17 @@ Task (reviewer):
 
 ### Lifecycle
 
+All lifecycle steps are managed by the `team-task-executor` agent:
+
 1. **Create**: `TeamCreate` with team name `task-team-{task-id}-{timestamp}`
 2. **Spawn**: Launch explorer (Sonnet), implementer (Sonnet), and reviewer (Opus) into the team
 3. **Coordinate**:
    - Explorer executes: codebase investigation, file mapping, pattern identification
    - Explorer reports findings with key files, patterns, integration points, recommendations
-   - Orchestrator sends exploration report to implementer
+   - `team-task-executor` sends exploration report to implementer
    - Implementer executes: Understand (using research), Implement phases
    - Implementer reports completion with files modified and changes summary
-   - Orchestrator sends both exploration report and implementation report to reviewer
+   - `team-task-executor` sends both exploration report and implementation report to reviewer
    - Reviewer executes: independent Verify phase (reads code, runs tests, checks criteria)
    - Reviewer reports verification results
 4. **Collect**: Translate reviewer's verification into pass/partial/fail
@@ -675,27 +695,27 @@ See [team_activity.md Format Specification](#team_activitymd-format-specificatio
 
 Full fails -> **Review** -> **Solo**
 
-The degradation chain is:
+The degradation chain is handled internally by the `team-task-executor`:
 1. If the Full team fails, attempt the Review strategy (skip exploration, go straight to implement + review)
-2. If Review also fails, attempt Solo strategy
-3. If Solo fails, the task enters the normal retry flow
+2. If Review also fails, attempt Solo fallback (team-task-executor executes directly)
+3. If Solo fails, the `team-task-executor` returns FAIL to the orchestrator for the normal retry flow
 
 ### Failure Handling
 
 | Failure Scenario | Action |
 |-----------------|--------|
-| Explorer fails | Degrade to Review strategy (implementer and reviewer proceed without research) |
+| Explorer fails | Degrade to Review (implementer and reviewer proceed without research) |
 | Implementer fails but explorer succeeded | Retry implementer with explorer's findings; if retry fails, degrade to Review then Solo |
 | Reviewer fails but implementer succeeded | Accept implementer's result; log that review was skipped; mark as PARTIAL |
-| Explorer + implementer fail | Degrade to Solo strategy (skip Review since implementation already failed) |
-| All three fail | Degrade to Solo strategy |
+| Explorer + implementer fail | Degrade to Solo (skip Review since implementation already failed) |
+| All three fail | Degrade to Solo |
 | Reviewer finds issues | Report reviewer findings as FAIL with detailed issue list; task enters retry flow |
 
 ---
 
 ## Degradation Summary
 
-Strategy degradation does not count against the task retry limit. The orchestrator tracks degradation separately.
+Strategy degradation does not count against the task retry limit. Each `team-task-executor` tracks degradation internally and reports the final result to the orchestrator.
 
 | Starting Strategy | Degradation Chain | Terminal Fallback |
 |-------------------|-------------------|-------------------|
@@ -724,7 +744,7 @@ Timestamp: {ISO 8601}
 
 ## team_activity.md Format Specification
 
-Each active team writes a `team_activity_task-{id}.md` file in `.claude/sessions/__live_session__/`. The orchestrator is the sole writer -- agents report via task completion and SendMessage, never through direct file writes. This single-writer constraint prevents concurrent write contention and ensures format consistency.
+Each active team writes a `team_activity_task-{id}.md` file in `.claude/sessions/__live_session__/`. The `team-task-executor` is the sole writer for each team's activity file -- role agents (explorer, implementer, reviewer) report via task completion and SendMessage, never through direct file writes. This single-writer constraint prevents concurrent write contention and ensures format consistency.
 
 ### File Location
 
@@ -986,7 +1006,7 @@ This block appears between normal activity log entries and is parseable with the
 
 ### File Lifecycle
 
-1. **Creation**: Written by the orchestrator immediately after `TeamCreate` in Step 7c
+1. **Creation**: Written by the `team-task-executor` immediately after `TeamCreate`
 2. **Updates**: Updated at each agent phase transition (spawn, active, completed, failed) and on activity log events
 3. **Finalization**: Status set to `completed`, `failed`, or `degraded` when team lifecycle ends
 4. **Archival**: Moved to `.claude/sessions/{task_execution_id}/` along with all other session files in Step 8
@@ -994,26 +1014,26 @@ This block appears between normal activity log entries and is parseable with the
 
 ### File Creation Failure Handling
 
-If the orchestrator fails to create or write `team_activity_task-{id}.md`:
+If the `team-task-executor` fails to create or write `team_activity_task-{id}.md`:
 
 1. **Log a warning**: `WARNING: Failed to write team_activity_task-{id}.md -- {error message}`
-2. **Do not block execution**: Team execution continues without the activity file. The orchestrator tracks team state internally and still coordinates agents correctly.
-3. **Fallback visibility**: `progress.md` still receives team summary updates (it is written separately). Users monitoring the Task Manager see team status via `progress.md` even if the detailed activity file is unavailable.
-4. **Retry on next update**: On the next team state change, the orchestrator attempts to write the file again. If the file system issue was transient, subsequent writes may succeed and the file will contain the current state (activity log entries from before the failure are lost, but the current member statuses will be accurate).
+2. **Do not block execution**: Team execution continues without the activity file. The `team-task-executor` tracks team state internally and still coordinates agents correctly.
+3. **Fallback visibility**: `progress.md` still receives team summary updates (written by the orchestrator). Users monitoring the Task Manager see team status via `progress.md` even if the detailed activity file is unavailable.
+4. **Retry on next update**: On the next team state change, the `team-task-executor` attempts to write the file again. If the file system issue was transient, subsequent writes may succeed and the file will contain the current state (activity log entries from before the failure are lost, but the current member statuses will be accurate).
 
 ### Concurrent Write Prevention
 
-The orchestrator is the sole writer to `team_activity_task-{id}.md`. This is enforced by design:
+Each `team-task-executor` is the sole writer to its own `team_activity_task-{id}.md` file. This is enforced by design:
 
-- **Agents do not write to this file**. Agents report their status via task completion (return value) and `SendMessage` to the orchestrator. The orchestrator translates these events into file updates.
-- **One orchestrator per session**. The `.lock` file in `__live_session__/` prevents concurrent orchestrator instances, so there is never more than one writer.
-- **One file per task**. Even when multiple teams run concurrently in a wave, each team writes to a different file (`team_activity_task-{id}.md` where `{id}` is unique per task). There is no shared activity file across teams.
+- **Role agents do not write to this file**. Role agents (explorer, implementer, reviewer) report their status via task completion (return value) and `SendMessage` to the `team-task-executor`. The `team-task-executor` translates these events into file updates.
+- **One writer per file**. Each `team-task-executor` manages a single task (or task group) and writes to a unique activity file. Multiple `team-task-executor` instances in the same wave each write to different files (`team_activity_task-{id}.md` where `{id}` is unique per task).
+- **One file per task**. Even when multiple teams run concurrently in a wave, each team writes to a different file. There is no shared activity file across teams.
 
 ---
 
 ## progress.md Team Summary Extension
 
-When teams are active, the orchestrator adds a team summary section to `progress.md`:
+When teams are active, the orchestrator's `progress.md` includes team summary entries:
 
 ```markdown
 ## Active Tasks
@@ -1035,6 +1055,7 @@ The team summary in `progress.md` is intentionally brief. Detailed team activity
 - Strategy degradation is transparent to the user watching the Task Manager — the `team_activity.md` file records the degradation event and the UI reflects it
 - Solo strategy creates no team infrastructure and has zero overhead compared to existing behavior
 - All team agents within a single task execute sequentially (not in parallel) — parallelism happens across tasks, not within a team
-- The orchestrator is the sole writer to `team_activity_task-{id}.md` — agents communicate results through task completion and SendMessage
+- Each `team-task-executor` is the sole writer to its `team_activity_task-{id}.md` — role agents communicate results through task completion and SendMessage
+- The orchestrator never calls TeamCreate, TeamDelete, or SendMessage — team management is fully delegated to `team-task-executor` agents
+- Multiple `team-task-executor` instances can run concurrently (one per team task in a wave), each managing its own independent team
 - Team activity files are archived along with all other session files when the session completes
-- Multiple teams can be active simultaneously (one per concurrent task in a wave), each with its own `team_activity_task-{id}.md` file
