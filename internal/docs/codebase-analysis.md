@@ -1,6 +1,6 @@
 # Codebase Analysis Report
 
-**Analysis Context**: General codebase understanding
+**Analysis Context**: General codebase understanding of the Agent Alchemy monorepo
 **Codebase Path**: `/Users/sequenzia/dev/repos/agent-alchemy`
 **Date**: 2026-02-15
 
@@ -8,17 +8,23 @@
 
 ## Executive Summary
 
-Agent Alchemy is a well-architected monorepo that extends Claude Code into a structured development platform through three interconnected subsystems — a markdown-as-code plugin system (9 agents, 15 skills), a real-time Next.js 16 Kanban board, and a VS Code validation extension — all connected through Claude's filesystem-based task system (`~/.claude/tasks/`). The most significant finding is the **absence of any test framework** across the entire repository, which poses risk as the execution orchestration and real-time streaming logic grow in complexity.
+Agent Alchemy is a **"markdown-as-code" development platform** that extends Claude Code with structured workflows through 4 plugin groups (15 skills, 9 agents), a real-time task dashboard, and a VS Code extension. The key architectural insight is that all AI agent behaviors are defined as composable Markdown documents — simultaneously human-readable documentation, LLM-consumable prompts, and version-controllable code. The primary risk is zero test coverage across all TypeScript components, and the primary recommendation is to populate the near-empty project `CLAUDE.md` with the architectural knowledge discovered here.
 
 ---
 
 ## Architecture Overview
 
-Agent Alchemy follows a **markdown-as-code** philosophy where the core plugin content (agents, skills, hooks) are plain markdown files with YAML frontmatter loaded directly by Claude Code — no build step required. The compiled artifacts (Task Manager app, VS Code extension) serve as auxiliary tooling for this plugin ecosystem.
+Agent Alchemy is a **pnpm monorepo** with three major components and two supporting areas:
 
-The monorepo uses pnpm workspaces, though only `apps/` is a workspace package. The three subsystems connect through a shared data contract: Claude Code's native task system writes JSON files to `~/.claude/tasks/<list>/`, consumed by both the plugin's skill workflows (via Claude's TaskCreate/TaskUpdate tools) and the Task Manager app (via filesystem watching). The schemas in `schemas/` are consumed by the VS Code extension and serve as documentation for plugin authors.
+**The Plugin System** (`claude/`) is the project's core — 4 plugin groups (`core-tools`, `dev-tools`, `sdd-tools`, `git-tools`) that define AI workflows entirely in Markdown with YAML frontmatter. Skills orchestrate multi-step workflows (from interactive spec interviews to autonomous task execution), agents define specialized AI workers with model-tier selection (Opus for synthesis/review, Sonnet for exploration), and skills compose by loading other skills at runtime via `${CLAUDE_PLUGIN_ROOT}` references. A `marketplace.json` registry makes all 4 groups installable as independent plugins.
 
-Key technologies: **TypeScript** throughout compiled code, **Next.js 16** (App Router, React 19, TanStack Query v5) for the task manager, **esbuild** for the VS Code extension, **Chokidar v5** for filesystem watching, **AJV** for schema validation, and **Tailwind v4 + shadcn/ui** for the UI layer.
+**The Task Manager** (`apps/task-manager/`) is a Next.js 16 real-time Kanban dashboard that bridges the plugin system to the user. It watches `~/.claude/tasks/` via Chokidar, pushes updates through SSE (Server-Sent Events), and uses TanStack Query for client-side cache invalidation — creating a live view of autonomous task execution as it happens.
+
+**The VS Code Extension** (`extensions/vscode/`) provides schema-driven developer tooling for plugin authoring: YAML frontmatter validation, autocompletion, and hover documentation, all powered by 7 JSON Schemas that define the plugin system's contracts.
+
+Supporting areas include **JSON Schemas** (`schemas/` — 7 schema files defining the plugin system's contracts) and a **documentation site** (`site/` — MkDocs-generated static site).
+
+The design philosophy is **composability through markdown**: complex workflows are built by orchestrating teams of agents with different specializations, not by writing imperative code.
 
 ---
 
@@ -26,139 +32,87 @@ Key technologies: **TypeScript** throughout compiled code, **Next.js 16** (App R
 
 | File | Purpose | Relevance |
 |------|---------|-----------|
-| `core/skills/deep-analysis/SKILL.md` | Hub-and-spoke team orchestration workflow | High |
-| `core/skills/execute-tasks/SKILL.md` | Wave-based concurrent task execution | High |
-| `core/agents/task-executor.md` | 4-phase autonomous task execution agent | High |
-| `core/agents/code-explorer.md` | Codebase exploration with team communication | High |
-| `core/agents/code-synthesizer.md` | Finding merger with Bash deep investigation | High |
-| `apps/task-manager/src/lib/taskService.ts` | Server-side task file reading & parsing | High |
-| `apps/task-manager/src/lib/fileWatcher.ts` | Chokidar filesystem watcher singleton | High |
-| `apps/task-manager/src/app/api/events/route.ts` | SSE endpoint for real-time updates | High |
-| `extensions/vscode/src/frontmatter/validator.ts` | AJV-based YAML frontmatter validation | High |
-| `core/hooks/auto-approve-session.sh` | PreToolUse hook for autonomous execution | High |
+| `claude/.claude-plugin/marketplace.json` | Plugin registry for all 4 groups | High |
+| `claude/core-tools/skills/deep-analysis/SKILL.md` | Hub-and-spoke team analysis (350 lines) | High |
+| `claude/sdd-tools/skills/create-spec/SKILL.md` | Adaptive spec interview (665 lines) | High |
+| `claude/sdd-tools/skills/execute-tasks/SKILL.md` | Wave-based task execution orchestrator | High |
+| `claude/dev-tools/skills/feature-dev/SKILL.md` | 7-phase feature development (272 lines) | High |
+| `claude/sdd-tools/skills/create-tasks/SKILL.md` | Spec-to-tasks decomposition (654 lines) | High |
+| `claude/core-tools/agents/code-explorer.md` | Sonnet exploration worker agent | High |
+| `claude/core-tools/agents/code-synthesizer.md` | Opus synthesis agent with Bash access | High |
+| `apps/task-manager/src/lib/taskService.ts` | Server-side task file reader (313 lines) | High |
+| `apps/task-manager/src/lib/fileWatcher.ts` | Chokidar singleton watcher (187 lines) | High |
+| `apps/task-manager/src/app/api/events/route.ts` | SSE endpoint via ReadableStream | High |
+| `extensions/vscode/src/frontmatter/validator.ts` | Ajv-based frontmatter validator | High |
+| `schemas/skill-frontmatter.schema.json` | Skill YAML frontmatter contract | High |
+| `schemas/plugin.schema.json` | Plugin manifest contract | High |
 
 ### File Details
 
-#### `core/skills/deep-analysis/SKILL.md`
-- **Key exports**: Reusable team coordination workflow
-- **Core logic**: Reconnaissance -> dynamic focus areas -> 3 explorers (sonnet) + 1 synthesizer (opus) -> completion check -> synthesis -> cleanup
-- **Connections**: Composed by feature-dev, codebase-analysis, docs-manager, create-spec
+#### `claude/core-tools/skills/deep-analysis/SKILL.md`
+- **Key exports**: Reusable analysis building block loaded by feature-dev, codebase-analysis, docs-manager, create-spec
+- **Core logic**: 6-phase workflow — Settings Check -> Reconnaissance -> Planning -> Team Assembly -> Exploration -> Synthesis. Dynamically generates focus areas based on actual codebase structure
+- **Connections**: Spawns `code-explorer` (sonnet) and `code-synthesizer` (opus) agents. Configurable approval via `.claude/agent-alchemy.local.md`
 
-#### `core/skills/execute-tasks/SKILL.md`
-- **Key exports**: Task execution orchestration with wave-based parallelism
-- **Core logic**: Dependency graph -> topological sort into waves -> launch up to `max_parallel` task-executors per wave -> merge context between waves -> archive
-- **Connections**: Uses task-executor agents, auto-approve hook, `~/.claude/sessions/__live_session__/` for state
-
-#### `apps/task-manager/src/lib/taskService.ts`
-- **Key exports**: `getTaskLists()`, `getTasks()`, `getExecutionContext()`, `parseProgressMd()`
-- **Core logic**: Reads/parses `~/.claude/tasks/` JSON files, resolves execution pointer -> session artifacts
-- **Connections**: Used by all API routes and Server Components
+#### `claude/sdd-tools/skills/create-spec/SKILL.md`
+- **Key exports**: The SDD pipeline entry point — turns ideas into structured specifications
+- **Core logic**: Depth-adaptive interview (high-level: 2-3 rounds, detailed: 3-4, full-tech: 4-5) with proactive recommendation detection, optional codebase exploration, and template-based compilation
+- **Connections**: Loads `deep-analysis` for "new feature" specs. Spawns `researcher` agent for technical research. Outputs spec files read by `create-tasks`
 
 #### `apps/task-manager/src/lib/fileWatcher.ts`
-- **Key exports**: `FileWatcher` singleton class
-- **Core logic**: Chokidar v5 with polling (300ms, depth 2), global singleton via `globalThis`, emits `taskEvent` and `executionEvent`
-- **Connections**: Feeds SSE route; dynamically watches execution directories
-
-#### `extensions/vscode/src/frontmatter/validator.ts`
-- **Key exports**: `validateDocument()`, compiled AJV validators
-- **Core logic**: Extracts YAML frontmatter via regex, validates against agent/skill schemas, maps AJV errors to VS Code diagnostics with approximate line numbers
-- **Connections**: Consumes schemas from `schemas/`, pushes diagnostics to VS Code
+- **Key exports**: `getFileWatcher()` singleton, `watchExecutionDir()` dynamic watcher
+- **Core logic**: Chokidar watcher using polling mode (300ms) on `~/.claude/tasks/`. Emits typed events (`task:created`, `task:updated`, `task:deleted`, `execution:updated`). Uses `globalThis` to survive Next.js HMR
+- **Connections**: Consumed by SSE route handler -> pushes to `useSSE` hook -> invalidates TanStack Query
 
 ---
 
 ## Patterns & Conventions
 
 ### Code Patterns
-- **Filesystem-as-message-bus**: All cross-system communication via file reads/writes to `~/.claude/tasks/` and `~/.claude/sessions/`. No database, no IPC.
-- **Model Tiering**: Sonnet for exploration/procedural (2 agents), Opus for synthesis/architecture/review (7 agents), Haiku for simple tasks. Declared in agent frontmatter `model:` field.
-- **Hub-and-Spoke Topology**: Lead creates team -> spawns workers -> workers explore independently -> synthesizer merges. No cross-worker messaging.
-- **Skill Composition**: Skills load other skills at runtime via `${CLAUDE_PLUGIN_ROOT}/skills/*/SKILL.md`. Deep-analysis is the most composed — used by 4 other skills as a building block.
-- **Agent Tool Access Tiers**: Read-only (architect, reviewer), read-write (task-executor, docs-writer), web-capable (researcher), interactive (spec-analyzer, changelog).
-- **Server Component -> Client Hydration**: RSC fetches initial data -> passes to client component -> TanStack Query takes over with `initialData` + SSE for real-time updates.
-- **SSE-driven dual invalidation**: Events invalidate both TanStack Query cache (`queryClient.invalidateQueries`) and Server Component data (`router.refresh()`).
-- **Reference Material System**: `references/` subdirectories with templates, criteria, and examples loaded at runtime for progressive disclosure.
-- **PreToolUse hooks for autonomy**: Auto-approve scoped file operations to enable hands-off execution.
-- **Markdown-as-Code**: All plugin logic in markdown files with YAML frontmatter; no build step required.
+
+- **Markdown-as-Code**: All AI behaviors defined in `.md` files with YAML frontmatter — simultaneously docs, prompts, and code
+- **Skill Composition**: Skills load other skills at runtime via `Read ${CLAUDE_PLUGIN_ROOT}/skills/{name}/SKILL.md`
+- **Model Tiering**: Opus for synthesis/architecture/review, Sonnet for exploration/workers, Haiku for simple tasks
+- **Hub-and-Spoke Coordination**: Central lead spawns workers + synthesizer; workers don't peer-communicate
+- **References Pattern**: Complex skills use `references/` subdirectories for domain knowledge (question banks, templates, criteria)
+- **AskUserQuestion Mandate**: Interactive skills enforce structured input via `AskUserQuestion` tool — never plain text questions
+- **Configurable Approval Gates**: `.claude/agent-alchemy.local.md` controls approval behavior per invocation context
 
 ### Naming Conventions
-- **Agents**: Prefixed `agent-alchemy-` (e.g., `code-explorer`), kebab-case
-- **Skills**: kebab-case directories (e.g., `deep-analysis`, `execute-tasks`) with `SKILL.md` (all caps)
-- **Commits**: Conventional format `type(scope): description`
-- **Reference Materials**: Stored in `references/` subdirectories within skills
+
+- **Skills**: `SKILL.md` in `skills/{skill-name}/` directories
+- **Agents**: `{agent-name}.md` in `agents/` directories
+- **Plugin groups**: `{group-name}/` under `claude/` with `README.md`
+- **Git commits**: Conventional Commits format (`type(scope): description`)
 
 ### Project Structure
-```
-agent-alchemy/
-├── apps/task-manager/          # Next.js 16 app (pnpm workspace)
-│   └── src/
-│       ├── app/                # App Router pages and API routes
-│       ├── components/         # React components (UI + domain)
-│       ├── hooks/              # Custom React hooks
-│       ├── lib/                # Server-side services (taskService, fileWatcher)
-│       └── types/              # TypeScript type definitions
-├── core/                       # Claude Code plugin (markdown-as-code)
-│   ├── agents/                 # 9 agent definitions (.md with YAML frontmatter)
-│   ├── skills/                 # 15 skill workflows (SKILL.md + references/)
-│   └── hooks/                  # PreToolUse hooks for autonomous execution
-├── extensions/vscode/          # VS Code extension for schema validation
-│   └── src/
-│       ├── extension.ts        # Entry point, JSON schema registration
-│       └── frontmatter/        # YAML frontmatter validation subsystem
-├── schemas/                    # 7 JSON schemas for plugin file formats
-├── scripts/                    # Utility scripts (deploy-docs.sh)
-├── internal/docs/              # Internal project documentation
-└── .claude/                    # Claude Code settings
-```
+
+- **Monorepo**: pnpm workspace with `apps/*` as packages
+- **Plugin system**: `claude/` top-level with 4 independently installable groups
+- **Schemas**: Root `schemas/` as source of truth, duplicated in `extensions/vscode/schemas/` for VSIX bundling
 
 ---
 
 ## Relationship Map
 
-### Cross-System Integration
-```
-Plugin System (core/)
-│
-├── Skills orchestrate Agents:
-│   deep-analysis -> code-explorer (x3, sonnet) + code-synthesizer (x1, opus)
-│   feature-dev -> deep-analysis -> code-architect -> code-reviewer
-│   execute-tasks -> task-executor (xN, opus)
-│   docs-manager -> deep-analysis -> docs-writer
-│   codebase-analysis -> deep-analysis [composition]
-│   create-spec -> researcher [optional]
-│
-├── Knowledge skills preloaded by agents:
-│   code-explorer loads: project-conventions, language-patterns
-│   code-synthesizer loads: project-conventions, language-patterns
-│   task-executor loads: execute-tasks skill
-│
-├── Hook enables autonomous execution:
-│   auto-approve-session.sh -> PreToolUse for Write|Edit|Bash
-│   Approves: .claude/sessions/*, execution_pointer.md
-│
-└── Shared data: ~/.claude/tasks/<list>/*.json
-    |
-Task Manager (apps/task-manager/)
-│
-├── Server: taskService.ts reads task JSON files
-│   -> page.tsx (RSC) fetches initial data -> API routes
-│
-├── Real-time: fileWatcher.ts (Chokidar) -> SSE -> useSSE -> TanStack Query
-│
-└── UI: TaskBoardClient -> KanbanBoard + TaskDetail + ExecutionDialog
+**SDD Pipeline (end-to-end):**
 
-VS Code Extension (extensions/vscode/)
-│
-├── validator.ts -> AJV against agent/skill frontmatter schemas
-├── completions.ts -> autocomplete for frontmatter keys/values
-├── hover.ts -> documentation on hover
-└── extension.ts -> JSON validation for plugin.json, hooks.json, .mcp.json, .lsp.json
-```
+`create-spec` -> spec file -> `analyze-spec` -> quality report -> `create-tasks` -> task JSON -> `execute-tasks` -> implementation
 
-### Task Manager Data Flow
-```
-~/.claude/tasks/*.json -> Chokidar watcher -> SSE route -> useSSE hook -> TanStack Query invalidation -> KanbanBoard
-Server Component (initial) -> taskService.ts -> parallel fetch -> TaskBoardClient props -> initialData for TanStack Query
-```
+**Plugin Composition:**
+
+- `feature-dev` -> loads -> `deep-analysis` -> spawns -> `code-explorer` x N + `code-synthesizer` x 1
+- `feature-dev` -> spawns -> `code-architect` x 2-3 (parallel design) -> `code-reviewer` x 3 (parallel review)
+- `feature-dev` -> loads -> `architecture-patterns`, `language-patterns`, `code-quality`, `changelog-format`
+
+**Real-time Integration:**
+
+- `execute-tasks` writes task JSON to `~/.claude/tasks/` -> `fileWatcher` detects -> SSE -> `useSSE` invalidates -> TanStack Query refetches -> KanbanBoard re-renders
+- `execute-tasks` writes `execution_pointer.md` -> task manager reads pointer -> watches execution dir -> ExecutionDialog + ExecutionProgressBar update
+
+**Schema Chain:**
+
+- `schemas/` (source of truth) -> duplicated to `extensions/vscode/schemas/` -> consumed by `validator.ts` via Ajv -> real-time diagnostics in VS Code
 
 ---
 
@@ -166,28 +120,28 @@ Server Component (initial) -> taskService.ts -> parallel fetch -> TaskBoardClien
 
 | Challenge | Severity | Impact |
 |-----------|----------|--------|
-| No test framework | High | Zero automated tests in the entire repo. Logic in taskService, fileWatcher, execution orchestration, and schema validation is untested. Risk of regressions during refactoring. |
-| Schema synchronization is manual | Medium | Schemas exist in both `/schemas/` and `/extensions/vscode/schemas/`. Manual sync creates drift risk — VS Code extension could validate against stale schemas. |
-| Chokidar polling performance | Medium | 300ms polling interval with depth 2 is CPU-intensive for large task lists with many concurrent executors. |
-| Execution context file contention | Medium | Multiple task-executor agents writing per-task context files during wave execution. Merge failures could lose cross-task learnings. |
-| Plugin discovery is implicit | Medium | No `plugin.json` manifest found. Relies on Claude Code's auto-discovery, making the plugin boundary unclear. |
-| Docs site content deleted | Low | Commit `6a22653` removed entire MkDocs docs/ directory (~6000 lines). `site/` still referenced in CLAUDE.md but content is gone. |
-| Recent rapid renaming | Low | Last 5 commits show agent renames and restructuring. Skills referencing agents by name would break if names change again. |
+| No automated tests | High | Zero test files across the entire monorepo. Task manager parsing logic, VS Code extension validation, and schema contracts are untested. Regressions can go unnoticed. |
+| Plugin system depends on Claude Code internals | Medium | Skills reference `$ARGUMENTS`, `$CLAUDE_PLUGIN_ROOT`, Claude Code Task/Team tools — recently-introduced features with potentially unstable API surfaces. |
+| Deep skill loading chains | Medium | `feature-dev` -> `deep-analysis` -> agents -> agents load skills. Multiple levels of indirection consume context window and make debugging difficult. |
+| execute-tasks state machine complexity | Medium | Wave-based parallelism, session recovery, context isolation described entirely in markdown with no programmatic enforcement. |
+| Near-empty project CLAUDE.md | Low | No conventions, setup instructions, or architecture docs for AI tools and contributors. |
+| Schema duplication without sync | Low | `schemas/` and `extensions/vscode/schemas/` are identical but manually synced. No build step enforces consistency. |
+| Chokidar polling mode | Low | `usePolling: true` with 300ms interval is reliable but resource-intensive compared to native OS watchers. |
 
 ---
 
 ## Recommendations
 
-1. **Add a test framework**: Start with Vitest for the task manager (`taskService.ts` parsing, `parseProgressMd`, SSE route). This is the highest-impact gap.
-2. **Automate schema synchronization**: Add a script or build step that copies `schemas/*.json` -> `extensions/vscode/schemas/` to prevent drift.
-3. **Add an explicit plugin manifest**: Create a `plugin.json` to make the plugin boundary explicit and enable the extension's own validation.
-4. **Consider native filesystem events**: Chokidar supports FSEvents on macOS (`usePolling: false`) for lower CPU overhead.
-5. **Document the execution system**: The execute-tasks skill is the most complex piece. An architecture doc tracing the full flow would aid maintainability.
+1. **Populate project CLAUDE.md**: Add project structure, development commands, architectural conventions, and skill composition chain.
+2. **Add tests for TypeScript components**: Priority: `taskService.ts`, `fileWatcher.ts`, `validator.ts`, SSE endpoint.
+3. **Document skill composition chain**: Visual map of which skills load which skills and which agents they spawn.
+4. **Automate schema synchronization**: Build step or CI check to keep `schemas/` and `extensions/vscode/schemas/` in sync.
+5. **Unify monorepo tooling**: Add `extensions/*` to pnpm workspace for consistency.
 
 ---
 
 ## Analysis Methodology
 
-- **Exploration agents**: 3 agents with focus areas: Core Plugin System, Task Manager App, VS Code Extension + Schemas
-- **Synthesis**: Findings merged by Opus-tier synthesizer with git history analysis, dependency tree inspection, and cross-reference validation
-- **Scope**: All source files read in depth for critical paths (deep-analysis -> feature-dev -> execute-tasks, filesystem -> SSE -> UI, frontmatter validation pipeline). Spec-related skills read at summary level.
+- **Exploration agents**: 3 agents with focus areas: Claude plugin system, Task Manager app, VS Code extension & schemas
+- **Synthesis**: Findings merged by Opus-powered synthesizer with git history and dependency analysis
+- **Scope**: All source files excluding `node_modules/`, `.venv/`, `.next/`, `site/` (generated docs)
