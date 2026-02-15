@@ -1,6 +1,7 @@
 ---
 name: agent-alchemy-code-synthesizer
 description: Synthesizes exploration findings into unified analysis with deep investigation capabilities (Bash, git history, dependency analysis) and completeness evaluation
+model: opus
 tools:
   - Read
   - Glob

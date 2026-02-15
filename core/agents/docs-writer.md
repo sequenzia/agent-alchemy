@@ -1,6 +1,7 @@
 ---
 name: agent-alchemy-docs-writer
 description: Generates MkDocs-flavored or standard GitHub-flavored Markdown documentation from codebase analysis findings including API references, architecture guides, standalone markdown files, and change summaries
+model: opus
 tools:
   - Read
   - Glob

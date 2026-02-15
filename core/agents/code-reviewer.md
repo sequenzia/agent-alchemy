@@ -1,6 +1,7 @@
 ---
 name: agent-alchemy-code-reviewer
 description: Reviews code implementations for correctness, security, maintainability with confidence-scored findings
+model: opus
 tools:
   - Read
   - Glob

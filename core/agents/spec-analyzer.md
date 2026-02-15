@@ -1,6 +1,7 @@
 ---
 name: agent-alchemy-spec-analyzer
 description: Performs comprehensive analysis of specs to identify inconsistencies, missing information, ambiguities, and structure issues. Use this agent to analyze an existing spec for quality issues and guide users through resolving findings interactively.
+model: opus
 skills:
   - analyze-spec
 tools:

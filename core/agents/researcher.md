@@ -34,6 +34,7 @@ description: |
   assistant: Uses research-agent to explore inventory management challenges
   <commentary>Problem domain exploration</commentary>
   </example>
+model: opus
 tools:
   - WebSearch
   - WebFetch

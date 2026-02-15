@@ -1,6 +1,7 @@
 ---
 name: agent-alchemy-code-explorer
 description: Explores codebases to find relevant files, trace execution paths, and map architecture with team communication capabilities for collaborative analysis
+model: sonnet
 tools:
   - Read
   - Glob
@@ -10,7 +11,6 @@ tools:
   - TaskUpdate
   - TaskGet
   - TaskList
-model: sonnet
 skills:
   - project-conventions
   - language-patterns

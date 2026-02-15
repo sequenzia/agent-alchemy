@@ -2,7 +2,6 @@
 name: codebase-analysis
 description: Execute a structured codebase exploration workflow to gather insights. Use when asked to "analyze codebase", "explore codebase", "understand this codebase", or "map the codebase".
 argument-hint: <analysis-context or feature-description>
-model: inherit
 user-invocable: true
 disable-model-invocation: false
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Task, AskUserQuestion, TeamCreate, TeamDelete, TaskCreate, TaskUpdate, TaskList, TaskGet, SendMessage
@@ -164,7 +163,7 @@ Execute a structured 3-phase codebase analysis workflow to gather insights.
 
    2. **Plan the fix:**
       - Simple: Read the target file, propose changes directly
-      - Complex (architectural): Launch `agent-alchemy-tools:code-architect` agent with `model: "opus"` to design the fix
+      - Complex (architectural): Launch `agent-alchemy-tools:code-architect` agent to design the fix
       - Complex (needs investigation): Launch `agent-alchemy-tools:code-explorer` agent to investigate before proposing
 
    3. **Present proposal:** Show files to modify, specific changes, and rationale

@@ -1,7 +1,7 @@
 ---
 name: language-patterns
 description: Provides language-specific patterns for TypeScript, Python, and React including idioms, best practices, and common patterns. Use when implementing features in these languages.
-model: inherit
+
 user-invocable: false
 disable-model-invocation: false
 ---
