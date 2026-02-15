@@ -1,0 +1,40 @@
+{
+  "name": "agnet-alchemy",
+  "description": "Custom plugins for Agnet Alchemy",
+  "owner": {
+    "name": "Stephen Sequenzia",
+    "email": "sequenzia@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "core",
+      "description": "General Developer Skills & Agents for Agnet Alchemy",
+      "version": "0.1.0",
+      "author": {
+        "name": "Stephen Sequenzia",
+        "email": "sequenzia@gmail.com"
+      },
+      "source": "./",
+      "category": "development",
+      "homepage": "https://github.com/sequenzia/agnet-alchemy",
+      "skills": ["./skills/core"],
+      "agents": ["./agents/core/code-explorer.md"],
+      "hooks": []
+    },
+    {
+      "name": "dev-tools",
+      "description": "General Developer Skills & Agents for Agnet Alchemy",
+      "version": "0.1.0",
+      "author": {
+        "name": "Stephen Sequenzia",
+        "email": "sequenzia@gmail.com"
+      },
+      "source": "./",
+      "category": "development",
+      "homepage": "https://github.com/sequenzia/agnet-alchemy",
+      "skills": ["./skills/dev-tools"],
+      "agents": ["./agents/dev-tools/changelog-agent.md"],
+      "hooks": []
+    }
+  ]
+}
