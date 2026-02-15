@@ -39,4 +39,4 @@ npm run watch
 
 ## Schemas
 
-JSON Schema files live at `schemas/` in the monorepo root and are bundled with the extension. They can also be used independently for CI validation or other tools.
+JSON Schema files live at `extensions/vscode/schemas/` and are bundled with the extension.

@@ -22,7 +22,7 @@ Agent Alchemy is a **pnpm monorepo** with three major components and two support
 
 **The VS Code Extension** (`extensions/vscode/`) provides schema-driven developer tooling for plugin authoring: YAML frontmatter validation, autocompletion, and hover documentation, all powered by 7 JSON Schemas that define the plugin system's contracts.
 
-Supporting areas include **JSON Schemas** (`schemas/` — 7 schema files defining the plugin system's contracts) and a **documentation site** (`site/` — MkDocs-generated static site).
+Supporting areas include a **documentation site** (`site/` — MkDocs-generated static site). JSON Schemas defining the plugin system's contracts live in `extensions/vscode/schemas/`.
 
 The design philosophy is **composability through markdown**: complex workflows are built by orchestrating teams of agents with different specializations, not by writing imperative code.
 
@@ -44,8 +44,8 @@ The design philosophy is **composability through markdown**: complex workflows a
 | `apps/task-manager/src/lib/fileWatcher.ts` | Chokidar singleton watcher (187 lines) | High |
 | `apps/task-manager/src/app/api/events/route.ts` | SSE endpoint via ReadableStream | High |
 | `extensions/vscode/src/frontmatter/validator.ts` | Ajv-based frontmatter validator | High |
-| `schemas/skill-frontmatter.schema.json` | Skill YAML frontmatter contract | High |
-| `schemas/plugin.schema.json` | Plugin manifest contract | High |
+| `extensions/vscode/schemas/skill-frontmatter.schema.json` | Skill YAML frontmatter contract | High |
+| `extensions/vscode/schemas/plugin.schema.json` | Plugin manifest contract | High |
 
 ### File Details
 
@@ -89,7 +89,7 @@ The design philosophy is **composability through markdown**: complex workflows a
 
 - **Monorepo**: pnpm workspace with `apps/*` as packages
 - **Plugin system**: `claude/` top-level with 4 independently installable groups
-- **Schemas**: Root `schemas/` as source of truth, duplicated in `extensions/vscode/schemas/` for VSIX bundling
+- **Schemas**: `extensions/vscode/schemas/` contains 7 JSON schemas bundled with the VS Code extension
 
 ---
 
@@ -112,7 +112,7 @@ The design philosophy is **composability through markdown**: complex workflows a
 
 **Schema Chain:**
 
-- `schemas/` (source of truth) -> duplicated to `extensions/vscode/schemas/` -> consumed by `validator.ts` via Ajv -> real-time diagnostics in VS Code
+- `extensions/vscode/schemas/` -> consumed by `validator.ts` via Ajv -> real-time diagnostics in VS Code
 
 ---
 
@@ -125,7 +125,6 @@ The design philosophy is **composability through markdown**: complex workflows a
 | Deep skill loading chains | Medium | `feature-dev` -> `deep-analysis` -> agents -> agents load skills. Multiple levels of indirection consume context window and make debugging difficult. |
 | execute-tasks state machine complexity | Medium | Wave-based parallelism, session recovery, context isolation described entirely in markdown with no programmatic enforcement. |
 | Near-empty project CLAUDE.md | Low | No conventions, setup instructions, or architecture docs for AI tools and contributors. |
-| Schema duplication without sync | Low | `schemas/` and `extensions/vscode/schemas/` are identical but manually synced. No build step enforces consistency. |
 | Chokidar polling mode | Low | `usePolling: true` with 300ms interval is reliable but resource-intensive compared to native OS watchers. |
 
 ---
@@ -135,8 +134,7 @@ The design philosophy is **composability through markdown**: complex workflows a
 1. **Populate project CLAUDE.md**: Add project structure, development commands, architectural conventions, and skill composition chain.
 2. **Add tests for TypeScript components**: Priority: `taskService.ts`, `fileWatcher.ts`, `validator.ts`, SSE endpoint.
 3. **Document skill composition chain**: Visual map of which skills load which skills and which agents they spawn.
-4. **Automate schema synchronization**: Build step or CI check to keep `schemas/` and `extensions/vscode/schemas/` in sync.
-5. **Unify monorepo tooling**: Add `extensions/*` to pnpm workspace for consistency.
+4. **Unify monorepo tooling**: Add `extensions/*` to pnpm workspace for consistency.
 
 ---
 

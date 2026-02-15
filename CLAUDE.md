@@ -18,7 +18,6 @@ agent-alchemy/
 │   └── task-manager/          # Next.js 16 real-time Kanban dashboard
 ├── extensions/
 │   └── vscode/                # VS Code extension for plugin authoring
-├── schemas/                   # JSON Schemas (source of truth for plugin contracts)
 ├── internal/docs/             # Internal documentation and analysis
 └── site/                      # MkDocs documentation site (generated)
 ```
@@ -87,7 +86,7 @@ execute-tasks -> task-executor agent x N per wave -> writes execution context
 - **Git**: Conventional Commits (`type(scope): description`)
 - **TypeScript**: Strict mode, functional patterns preferred
 - **Styling**: Tailwind CSS v4 with shadcn/ui components (task manager)
-- **Schemas**: `schemas/` is source of truth; `extensions/vscode/schemas/` is a copy for VSIX bundling
+- **Schemas**: JSON schemas live in `extensions/vscode/schemas/` (bundled with the VS Code extension)
 
 ## Plugin Inventory
 

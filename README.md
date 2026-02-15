@@ -82,9 +82,7 @@ apps/task-manager/               # Real-time dashboard
 
 extensions/vscode/               # Developer tooling
 ├── src/frontmatter/             # YAML validation
-└── schemas/                     # JSON Schemas
-
-schemas/                         # Source of truth for plugin contracts
+└── schemas/                     # JSON Schemas for plugin contracts
 ```
 
 ## License
