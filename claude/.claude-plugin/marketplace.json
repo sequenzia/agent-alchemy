@@ -1,40 +1,48 @@
 {
-  "name": "agnet-alchemy",
-  "description": "Custom plugins for Agnet Alchemy",
+  "name": "agent-alchemy",
+  "metadata": {
+    "description": "Custom Skills, Agents, MCP Servers & Hooks for Agent Alchemy"
+  },
   "owner": {
     "name": "Stephen Sequenzia",
     "email": "sequenzia@gmail.com"
   },
   "plugins": [
     {
-      "name": "core",
-      "description": "General Developer Skills & Agents for Agnet Alchemy",
+      "name": "agent-alchemy-core-tools",
       "version": "0.1.0",
-      "author": {
-        "name": "Stephen Sequenzia",
-        "email": "sequenzia@gmail.com"
-      },
-      "source": "./",
-      "category": "development",
-      "homepage": "https://github.com/sequenzia/agnet-alchemy",
-      "skills": ["./skills/core"],
-      "agents": ["./agents/core/code-explorer.md"],
-      "hooks": []
+      "description": "Core tools for Agent Alchemy",
+      "source": "./core-tools",
+      "homepage": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/core-tools",
+      "repository": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/core-tools",
+      "license": "MIT"
     },
     {
-      "name": "dev-tools",
-      "description": "General Developer Skills & Agents for Agnet Alchemy",
+      "name": "agent-alchemy-dev-tools",
       "version": "0.1.0",
-      "author": {
-        "name": "Stephen Sequenzia",
-        "email": "sequenzia@gmail.com"
-      },
-      "source": "./",
-      "category": "development",
-      "homepage": "https://github.com/sequenzia/agnet-alchemy",
-      "skills": ["./skills/dev-tools"],
-      "agents": ["./agents/dev-tools/changelog-agent.md"],
-      "hooks": []
+      "description": "Dev tools for Agent Alchemy",
+      "source": "./dev-tools",
+      "homepage": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/dev-tools",
+      "repository": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/dev-tools",
+      "license": "MIT"
+    },
+    {
+      "name": "agent-alchemy-git-tools",
+      "version": "0.1.0",
+      "description": "Git tools for Agent Alchemy",
+      "source": "./git-tools",
+      "homepage": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/git-tools",
+      "repository": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/git-tools",
+      "license": "MIT"
+    },
+    {
+      "name": "agent-alchemy-sdd-tools",
+      "version": "0.1.0",
+      "description": "SDD tools for Agent Alchemy",
+      "source": "./sdd-tools",
+      "homepage": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/sdd-tools",
+      "repository": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/sdd-tools",
+      "license": "MIT"
     }
   ]
 }

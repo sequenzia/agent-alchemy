@@ -81,7 +81,7 @@ Key technologies: **TypeScript** throughout compiled code, **Next.js 16** (App R
 - **Markdown-as-Code**: All plugin logic in markdown files with YAML frontmatter; no build step required.
 
 ### Naming Conventions
-- **Agents**: Prefixed `agent-alchemy-` (e.g., `agent-alchemy-code-explorer`), kebab-case
+- **Agents**: Prefixed `agent-alchemy-` (e.g., `code-explorer`), kebab-case
 - **Skills**: kebab-case directories (e.g., `deep-analysis`, `execute-tasks`) with `SKILL.md` (all caps)
 - **Commits**: Conventional format `type(scope): description`
 - **Reference Materials**: Stored in `references/` subdirectories within skills
