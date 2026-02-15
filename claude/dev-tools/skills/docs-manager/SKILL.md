@@ -170,7 +170,7 @@ Read `${CLAUDE_PLUGIN_ROOT}/skills/deep-analysis/SKILL.md` and follow its workfl
 
 Pass the documentation-focused analysis context from Step 1.
 
-Deep-analysis handles all agent orchestration (team creation, code-explorers + code-synthesizer). Since docs-manager is the calling skill, deep-analysis returns control without standalone summary.
+Deep-analysis handles all agent orchestration (reconnaissance, team planning, approval — auto-approved when skill-invoked — team creation, code-explorers + code-synthesizer). Since docs-manager is the calling skill, deep-analysis returns control without standalone summary.
 
 ### Step 3 — Supplemental analysis for update with git-diff mode
 
@@ -386,7 +386,7 @@ If the project is not a git repository:
 
 ## Agent Coordination
 
-- **Phase 3**: Exploration and synthesis handled by the deep-analysis skill, which uses Agent Teams with hub-and-spoke coordination. Deep-analysis orchestrates its own code-explorer and code-synthesizer agents.
+- **Phase 3**: Exploration and synthesis handled by the deep-analysis skill, which uses Agent Teams with hub-and-spoke coordination. Deep-analysis performs reconnaissance, composes a team plan (auto-approved when invoked by another skill), assembles the team, and orchestrates its own code-explorer and code-synthesizer agents.
 - **Phase 5**: docs-writer agents launched with `model: "opus"` for high-quality content generation. Parallel for independent files, sequential for dependent files.
 
 ---

@@ -32,7 +32,7 @@ Execute a structured 3-phase codebase analysis workflow to gather insights.
 2. **Run deep-analysis workflow:**
    - Read `${CLAUDE_PLUGIN_ROOT}/skills/deep-analysis/SKILL.md` and follow its workflow
    - Pass the analysis context from step 1
-   - This handles team creation, parallel exploration (code-explorer agents), and synthesis (code-synthesizer agent)
+   - This handles reconnaissance, team planning, approval (auto-approved when skill-invoked), team creation, parallel exploration (code-explorer agents), and synthesis (code-synthesizer agent)
 
 3. **Verify results:**
    - Ensure the synthesis covers the analysis context adequately
@@ -198,7 +198,7 @@ If any phase fails:
 
 ## Agent Coordination
 
-Exploration and synthesis agent coordination is handled by the `deep-analysis` skill in Phase 1, which uses Agent Teams with hub-and-spoke coordination. See that skill for team setup, agent model tiers, and failure handling details.
+Exploration and synthesis agent coordination is handled by the `deep-analysis` skill in Phase 1, which uses Agent Teams with hub-and-spoke coordination. Deep-analysis performs reconnaissance, composes a team plan (auto-approved when invoked by another skill), assembles the team, and manages the exploration/synthesis lifecycle. See that skill for team setup, approval flow, agent model tiers, and failure handling details.
 
 ---
 
