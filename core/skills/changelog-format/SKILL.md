@@ -1,7 +1,6 @@
 ---
 name: changelog-format
 description: Keep a Changelog format guidelines and entry writing best practices. Use when writing changelog entries, updating CHANGELOG.md, or following Keep a Changelog specification.
-
 user-invocable: false
 disable-model-invocation: false
 ---

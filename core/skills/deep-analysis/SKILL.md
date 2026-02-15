@@ -2,7 +2,6 @@
 name: deep-analysis
 description: Deep exploration and synthesis workflow using Agent Teams with dynamic planning and hub-and-spoke coordination. Use when asked for "deep analysis", "deep understanding", "analyze codebase", "explore and analyze", or "investigate codebase".
 argument-hint: <analysis-context or focus-area>
-
 user-invocable: true
 disable-model-invocation: false
 allowed-tools: Read, Glob, Grep, Bash, Task, TeamCreate, TeamDelete, TaskCreate, TaskUpdate, TaskList, TaskGet, SendMessage, AskUserQuestion

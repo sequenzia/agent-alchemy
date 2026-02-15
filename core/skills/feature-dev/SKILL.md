@@ -2,7 +2,6 @@
 name: feature-dev
 description: Feature development workflow with exploration, architecture, implementation, and review phases. Use for implementing new features or significant changes.
 argument-hint: <feature-description>
-
 user-invocable: true
 disable-model-invocation: false
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Task, AskUserQuestion, TeamCreate, TeamDelete, TaskCreate, TaskUpdate, TaskList, TaskGet, SendMessage

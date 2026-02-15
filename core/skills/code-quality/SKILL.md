@@ -1,7 +1,6 @@
 ---
 name: code-quality
 description: Provides code quality principles including SOLID, DRY, testing strategies, and best practices for implementation review. Use when reviewing code or applying quality standards.
-
 user-invocable: false
 disable-model-invocation: false
 ---

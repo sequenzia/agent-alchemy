@@ -6,7 +6,6 @@ description: >-
   "create docs", "write README", "update documentation", "generate docs site",
   "write CONTRIBUTING", "manage documentation", or "docs changelog".
 argument-hint: <action-or-description>
-
 user-invocable: true
 disable-model-invocation: false
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Task, AskUserQuestion, TeamCreate, TeamDelete, TaskCreate, TaskUpdate, TaskList, TaskGet, SendMessage
