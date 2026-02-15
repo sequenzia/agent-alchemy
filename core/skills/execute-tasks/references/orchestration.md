@@ -269,7 +269,7 @@ For each task in the wave, use the Task tool:
 
 ```
 Task:
-  subagent_type: agent-alchemy-sdd:task-executor
+  subagent_type: agent-alchemy-task-executor
   prompt: |
     Execute the following task.
 

@@ -1,4 +1,5 @@
 ---
+name: agent-alchemy-team-deep-synthesizer
 description: Synthesizes exploration findings into unified analysis with deep investigation capabilities (Bash, git history, dependency analysis) and completeness evaluation
 tools:
   - Read
@@ -9,7 +10,6 @@ tools:
   - TaskUpdate
   - TaskGet
   - TaskList
-model: inherit
 skills:
   - project-conventions
   - language-patterns

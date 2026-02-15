@@ -1,10 +1,10 @@
 ---
+name: agent-alchemy-code-reviewer
 description: Reviews code implementations for correctness, security, maintainability with confidence-scored findings
 tools:
   - Read
   - Glob
   - Grep
-model: inherit
 ---
 
 # Code Reviewer Agent

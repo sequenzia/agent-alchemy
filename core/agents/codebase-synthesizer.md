@@ -1,10 +1,10 @@
 ---
+name: agent-alchemy-codebase-synthesizer
 description: Synthesizes raw exploration findings from multiple code-explorer agents into unified analysis
 tools:
   - Read
   - Glob
   - Grep
-model: inherit
 ---
 
 # Codebase Synthesizer Agent

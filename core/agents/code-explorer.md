@@ -1,4 +1,5 @@
 ---
+name: agent-alchemy-code-explorer
 description: Explores codebases to find relevant files, trace execution paths, and map architecture for feature development
 tools:
   - Read

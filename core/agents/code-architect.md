@@ -1,10 +1,10 @@
 ---
+name: agent-alchemy-code-architect
 description: Designs implementation blueprints for features using exploration findings and architectural best practices
 tools:
   - Read
   - Glob
   - Grep
-model: inherit
 ---
 
 # Code Architect Agent

@@ -1,5 +1,5 @@
 ---
-name: researcher
+name: agent-alchemy-researcher
 description: |
   Researches technical documentation, domain knowledge, competitive landscape, and general topics to inform spec requirements. Use when you need current information about technologies, industry practices, or the problem space.
 
@@ -34,7 +34,6 @@ description: |
   assistant: Uses research-agent to explore inventory management challenges
   <commentary>Problem domain exploration</commentary>
   </example>
-model: inherit
 tools:
   - WebSearch
   - WebFetch
