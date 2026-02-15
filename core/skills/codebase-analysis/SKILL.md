@@ -33,7 +33,7 @@ Execute a structured 3-phase codebase analysis workflow to gather insights.
 2. **Run deep-analysis workflow:**
    - Read `${CLAUDE_PLUGIN_ROOT}/skills/deep-analysis/SKILL.md` and follow its workflow
    - Pass the analysis context from step 1
-   - This handles team creation, parallel exploration (code-explorer agents), and synthesis (deep-synthesizer agent)
+   - This handles team creation, parallel exploration (code-explorer agents), and synthesis (code-synthesizer agent)
 
 3. **Verify results:**
    - Ensure the synthesis covers the analysis context adequately

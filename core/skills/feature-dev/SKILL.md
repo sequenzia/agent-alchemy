@@ -49,7 +49,7 @@ Execute these phases in order, completing ALL of them:
 1. **Run deep-analysis workflow:**
    - Read `${CLAUDE_PLUGIN_ROOT}/skills/deep-analysis/SKILL.md` and follow its workflow
    - Pass the feature description from Phase 1 as the analysis context
-   - This handles team creation, parallel exploration (code-explorer agents), and synthesis (deep-synthesizer agent)
+   - This handles team creation, parallel exploration (code-explorer agents), and synthesis (code-synthesizer agent)
 
 2. Present the synthesized analysis to the user.
 
@@ -264,7 +264,7 @@ When launching other parallel agents (code-architect, code-reviewer):
 
 When calling Task tool for agents:
 - Use `model: "opus"` for code-architect and code-reviewer agents
-- Code-explorer and deep-synthesizer models are managed by deep-analysis
+- Code-explorer and code-synthesizer models are managed by deep-analysis
 
 ## Additional Resources
 

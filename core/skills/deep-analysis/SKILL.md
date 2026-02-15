@@ -99,7 +99,7 @@ This skill can be invoked standalone or loaded by other skills as a reusable bui
      - Named: `explorer-1`, `explorer-2`, `explorer-3`
      - Prompt each with: "You are part of a deep analysis team. Wait for your task assignment. The codebase is at: [PATH]. Analysis context: [context]"
 
-   - **1 synthesizer** — `subagent_type: "agent-alchemy-deep-synthesizer"`, model: opus
+   - **1 synthesizer** — `subagent_type: "agent-alchemy-code-synthesizer"`, model: opus
      - Named: `synthesizer`
      - Prompt with: "You are the synthesizer for a deep analysis team. You have Bash access for git history, dependency analysis, and static analysis. Wait for your task assignment. The codebase is at: [PATH]. Analysis context: [context]"
 
