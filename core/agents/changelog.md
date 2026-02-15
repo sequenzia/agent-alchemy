@@ -1,5 +1,5 @@
 ---
-name: agent-alchemy-changelog-agent
+name: agent-alchemy-changelog
 description: Reviews git history and updates CHANGELOG.md with entries for [Unreleased] section
 tools:
   - Bash

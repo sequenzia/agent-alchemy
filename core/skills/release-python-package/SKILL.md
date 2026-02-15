@@ -108,7 +108,7 @@ Options:
 **If user selects "Yes":**
 
 Use the Task tool to spawn the changelog-agent:
-- subagent_type: `agent-alchemy-changelog-agent`
+- subagent_type: `agent-alchemy-changelog`
 - prompt: "Analyze commits since the last release and update the CHANGELOG.md [Unreleased] section"
 - The agent will analyze commits, suggest entries, and update CHANGELOG.md after user approval
 - Wait for the agent to complete before proceeding
