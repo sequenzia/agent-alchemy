@@ -5,7 +5,7 @@
 #   - $HOME/.claude/tasks/*/execution_pointer.md
 #   - */.claude/sessions/* (session files within any project)
 #
-# Approves Bash commands containing mkdir or mv targeting .claude/sessions/
+# Approves Bash commands targeting .claude/sessions/
 #
 # All other operations: exit 0 with no output (no opinion, normal permission flow).
 
@@ -32,8 +32,8 @@ case "$tool_name" in
       approve
     fi
 
-    # Match any file inside .claude/sessions/
-    if [[ "$file_path" == */.claude/sessions/* ]]; then
+    # Match any file inside .claude/sessions/ (absolute or relative paths)
+    if [[ "$file_path" == */.claude/sessions/* ]] || [[ "$file_path" == .claude/sessions/* ]]; then
       approve
     fi
     ;;
@@ -42,11 +42,9 @@ case "$tool_name" in
     command=$(echo "$input" | jq -r '.tool_input.command // empty')
     [ -z "$command" ] && exit 0
 
-    # Match mkdir or mv targeting .claude/sessions/
+    # Match any bash command targeting .claude/sessions/
     if [[ "$command" == *".claude/sessions/"* ]]; then
-      if [[ "$command" == *mkdir* ]] || [[ "$command" == *mv* ]]; then
-        approve
-      fi
+      approve
     fi
     ;;
 esac

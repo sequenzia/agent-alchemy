@@ -270,6 +270,7 @@ For each task in the wave, use the Task tool:
 ```
 Task:
   subagent_type: task-executor
+  mode: bypassPermissions
   prompt: |
     Execute the following task.
 
@@ -463,4 +464,4 @@ Process:
 - The execution context file enables knowledge sharing across task boundaries
 - Failed tasks remain as `in_progress` for manual review or re-execution
 - Run the execute-tasks skill again to pick up where you left off — it will execute any remaining unblocked tasks
-- All file operations within `.claude/sessions/` (including `__live_session__/` and archival folders) and `execution_pointer.md` are auto-approved by the `auto-approve-session.sh` PreToolUse hook and should never prompt for user confirmation
+- All file operations within `.claude/sessions/` (including `__live_session__/` and archival folders) and `execution_pointer.md` are auto-approved by the `auto-approve-session.sh` PreToolUse hook. Task-executor agents are spawned with `mode: bypassPermissions` to enable fully autonomous execution. No user prompts should occur after the initial execution plan confirmation
