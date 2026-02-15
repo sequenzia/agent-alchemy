@@ -64,6 +64,39 @@ npm run build
 npm run package
 ```
 
+## Configuration
+
+Plugin behavior is configured via `.claude/agent-alchemy.local.md` — a markdown file with nested key-value pairs using `key: value` syntax. This file is not committed to version control.
+
+### File Format
+
+```markdown
+- deep-analysis:
+  - direct-invocation-approval: true
+  - invocation-by-skill-approval: false
+- execute-tasks:
+  - max_parallel: 5
+- author: Your Name
+- spec-output-path: specs/
+```
+
+### Settings Reference
+
+| Setting | Plugin | Default | Description |
+|---------|--------|---------|-------------|
+| `deep-analysis.direct-invocation-approval` | core-tools | `true` | Require user approval of the team plan when invoking `/deep-analysis` directly |
+| `deep-analysis.invocation-by-skill-approval` | core-tools | `false` | Require approval when deep-analysis is loaded by another skill (e.g., `/feature-dev`, `/codebase-analysis`) |
+| `execute-tasks.max_parallel` | sdd-tools | `5` | Maximum concurrent task-executor agents per wave. CLI `--max-parallel` takes precedence. Set to `1` for sequential execution |
+| `author` | sdd-tools | — | Author name for spec attribution and task metadata |
+| `spec-output-path` | sdd-tools | `specs/` | Default directory for spec file output |
+
+### Precedence
+
+Settings follow this precedence order (highest to lowest):
+1. CLI arguments (e.g., `--max-parallel`)
+2. `.claude/agent-alchemy.local.md` settings
+3. Built-in defaults
+
 ## Architecture
 
 Agent Alchemy follows a **markdown-as-code** philosophy where AI agent behaviors, workflows, and domain knowledge are defined entirely in Markdown with YAML frontmatter. Skills compose by loading other skills at runtime, and complex workflows orchestrate teams of specialized agents with different model tiers (Opus for synthesis, Sonnet for exploration).
