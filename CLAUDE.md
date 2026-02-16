@@ -10,7 +10,7 @@ Agent Alchemy is a monorepo that extends Claude Code into a structured developme
 agent-alchemy/
 ├── claude/                    # Claude Code plugins (markdown-as-code)
 │   ├── .claude-plugin/        # Plugin marketplace registry
-│   ├── core-tools/            # Codebase analysis, deep exploration, language patterns
+│   ├── core-tools/            # Codebase analysis, deep exploration, language patterns (includes hooks/)
 │   ├── dev-tools/             # Feature dev, code review, docs, changelog
 │   ├── sdd-tools/             # Spec-Driven Development pipeline
 │   ├── tdd-tools/             # TDD workflows: test generation, RED-GREEN-REFACTOR, coverage
@@ -68,7 +68,7 @@ pnpm lint                      # Lint all packages
 - `docs-manager` (dev-tools) — loads for codebase understanding before doc generation
 - `create-spec` (sdd-tools) — optionally loads for "new feature" type specs
 
-These cross-plugin references resolve via `${CLAUDE_PLUGIN_ROOT}` — the resolution mechanism is implicit.
+**Cross-plugin reference convention:** Always use `${CLAUDE_PLUGIN_ROOT}/../{source-dir-name}/` for cross-plugin references, where `{source-dir-name}` is the directory name under `claude/` (e.g., `core-tools`, `tdd-tools`). Same-plugin references use `${CLAUDE_PLUGIN_ROOT}/` directly. Never use full marketplace names (e.g., `agent-alchemy-core-tools`) in path references — use the short source directory name.
 
 ### Model Tiering
 
@@ -103,8 +103,10 @@ execute-tdd-tasks -> tdd-executor for TDD tasks, task-executor for non-TDD tasks
 ### VS Code Extension (extensions/vscode/)
 
 - Ajv-based YAML frontmatter validation for skills and agents
-- JSON schema validation for plugin.json, hooks.json, .mcp.json
+- JSON schema validation for plugin.json, hooks.json, .mcp.json, .lsp.json, marketplace.json
+- 7 JSON schemas total in `extensions/vscode/schemas/` (skill-frontmatter, agent-frontmatter, plugin, hooks, mcp, lsp, marketplace)
 - Schema-driven autocompletion and hover documentation
+- Auto-activates on workspaces containing `.claude-plugin/plugin.json`
 
 ## Conventions
 
@@ -117,9 +119,9 @@ execute-tdd-tasks -> tdd-executor for TDD tasks, task-executor for non-TDD tasks
 
 | Group | Skills | Agents | Version |
 |-------|--------|--------|---------|
-| core-tools | deep-analysis, codebase-analysis, language-patterns, project-conventions | code-explorer, code-synthesizer | 0.1.0 |
-| dev-tools | feature-dev, architecture-patterns, code-quality, changelog-format, docs-manager, release-python-package | code-architect, code-reviewer, changelog-manager, docs-writer | 0.1.0 |
-| sdd-tools | create-spec, analyze-spec, create-tasks, execute-tasks, create-tdd-tasks, execute-tdd-tasks | researcher, spec-analyzer, task-executor | 0.1.0 |
+| core-tools | deep-analysis, codebase-analysis, language-patterns, project-conventions | code-explorer, code-synthesizer | 0.1.1 |
+| dev-tools | feature-dev, architecture-patterns, code-quality, changelog-format, docs-manager, release-python-package | code-architect, code-reviewer, changelog-manager, docs-writer | 0.1.1 |
+| sdd-tools | create-spec, analyze-spec, create-tasks, execute-tasks, create-tdd-tasks, execute-tdd-tasks | researcher, spec-analyzer, task-executor | 0.1.2 |
 | tdd-tools | generate-tests, tdd-cycle, analyze-coverage | test-writer, tdd-executor, test-reviewer | 0.1.0 |
 | git-tools | git-commit | — | 0.1.0 |
 
@@ -127,7 +129,7 @@ execute-tdd-tasks -> tdd-executor for TDD tasks, task-executor for non-TDD tasks
 
 | File | Lines | Role |
 |------|-------|------|
-| `claude/core-tools/skills/deep-analysis/SKILL.md` | 350 | Keystone skill — hub-and-spoke team engine loaded by 4 other skills |
+| `claude/core-tools/skills/deep-analysis/SKILL.md` | 521 | Keystone skill — hub-and-spoke team engine loaded by 4 other skills |
 | `claude/sdd-tools/skills/create-spec/SKILL.md` | 664 | Largest skill — adaptive interview with depth-aware questioning |
 | `claude/sdd-tools/skills/create-tasks/SKILL.md` | 653 | Spec-to-task decomposition with `task_uid` merge mode |
 | `claude/sdd-tools/skills/execute-tasks/SKILL.md` | 262 | Wave-based parallel execution with session management |
@@ -137,11 +139,23 @@ execute-tdd-tasks -> tdd-executor for TDD tasks, task-executor for non-TDD tasks
 | `claude/sdd-tools/skills/create-tdd-tasks/SKILL.md` | 687 | SDD-to-TDD task pair transformation |
 | `claude/sdd-tools/skills/execute-tdd-tasks/SKILL.md` | 630 | TDD-aware wave execution with agent routing |
 
+## Known Challenges
+
+| Challenge | Severity | Notes |
+|-----------|----------|-------|
+| Cross-plugin `${CLAUDE_PLUGIN_ROOT}` inconsistency | Resolved | Standardized to `/../{source-dir-name}/` pattern. Convention documented above in Cross-Plugin Dependencies. |
+| Zero test coverage for VS Code extension | High | Validator is the most critical component — Ajv compilation, path detection, and line-number mapping are all untested. |
+| Schema drift risk | Medium | JSON schemas manually maintained. No CI validation ensures schemas match actual plugin frontmatter usage. |
+| Large reference files | Medium | Largest reference (776 lines) + skill (718 lines) can exceed 1,500 lines before codebase context is added. |
+
 ## Settings
 
 User preferences are stored in `.claude/agent-alchemy.local.md` (not committed):
 - `deep-analysis.direct-invocation-approval`: Whether to require plan approval when user invokes directly (default: true)
 - `deep-analysis.invocation-by-skill-approval`: Whether to require approval when loaded by another skill (default: false)
+- `deep-analysis.cache-ttl-hours`: Hours before exploration cache expires; 0 disables caching (default: 24)
+- `deep-analysis.enable-checkpointing`: Write session checkpoints at phase boundaries for recovery (default: true)
+- `deep-analysis.enable-progress-indicators`: Display `[Phase N/6]` progress messages during execution (default: true)
 - `tdd.framework`: Override test framework auto-detection (`auto` | `pytest` | `jest` | `vitest`, default: `auto`)
 - `tdd.coverage-threshold`: Target coverage percentage for analyze-coverage (0-100, default: `80`)
 - `tdd.strictness`: RED phase enforcement level (`strict` | `normal` | `relaxed`, default: `normal`)

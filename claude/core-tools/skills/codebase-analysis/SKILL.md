@@ -33,6 +33,7 @@ Execute a structured 3-phase codebase analysis workflow to gather insights.
    - Read `${CLAUDE_PLUGIN_ROOT}/skills/deep-analysis/SKILL.md` and follow its workflow
    - Pass the analysis context from step 1
    - This handles reconnaissance, team planning, approval (auto-approved when skill-invoked), team creation, parallel exploration (code-explorer agents), and synthesis (code-synthesizer agent)
+   - **Note:** Deep-analysis may return cached results if a valid exploration cache exists. In skill-invoked mode, cache hits are auto-accepted — this is expected behavior that avoids redundant exploration.
 
 3. **Verify results:**
    - Ensure the synthesis covers the analysis context adequately

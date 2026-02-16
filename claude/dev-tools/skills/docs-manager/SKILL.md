@@ -166,11 +166,13 @@ Construct a specific context string based on Phase 1 selections:
 
 ### Step 2 — Run deep-analysis
 
-Read `${CLAUDE_PLUGIN_ROOT}/skills/deep-analysis/SKILL.md` and follow its workflow.
+Read `${CLAUDE_PLUGIN_ROOT}/../core-tools/skills/deep-analysis/SKILL.md` and follow its workflow.
 
 Pass the documentation-focused analysis context from Step 1.
 
 Deep-analysis handles all agent orchestration (reconnaissance, team planning, approval — auto-approved when skill-invoked — team creation, code-explorers + code-synthesizer). Since docs-manager is the calling skill, deep-analysis returns control without standalone summary.
+
+**Note:** Deep-analysis may return cached results if a valid exploration cache exists. In skill-invoked mode, cache hits are auto-accepted — this is expected behavior that avoids redundant exploration.
 
 ### Step 3 — Supplemental analysis for update with git-diff mode
 

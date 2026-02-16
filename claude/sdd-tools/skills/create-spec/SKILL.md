@@ -255,7 +255,7 @@ Maintain internal tracking of detected triggers and accepted recommendations:
 If the product type is "New feature for existing product":
 
 1. **Run deep-analysis workflow:**
-   1. Read the deep-analysis skill: `${CLAUDE_PLUGIN_ROOT}/skills/deep-analysis/SKILL.md`
+   1. Read the deep-analysis skill: `${CLAUDE_PLUGIN_ROOT}/../core-tools/skills/deep-analysis/SKILL.md`
    2. Follow its full workflow (Phases 1-6) with analysis context set to:
       ```
       Feature exploration for spec: {spec_name}. Description: {user's description from Phase 2}.
@@ -264,6 +264,8 @@ If the product type is "New feature for existing product":
       ```
    3. After the analysis completes and control returns, store the synthesized findings internally as "Codebase Context" for use in subsequent interview rounds and spec compilation
    4. Present a brief summary of key findings to the user before starting the interview
+
+   **Note:** Deep-analysis may return cached results if a valid exploration cache exists. In skill-invoked mode, cache hits are auto-accepted — this is expected behavior that avoids redundant exploration.
 
    **Error handling / fallback:**
    If the deep-analysis workflow fails at any point (TeamCreate fails, agents fail, etc.):

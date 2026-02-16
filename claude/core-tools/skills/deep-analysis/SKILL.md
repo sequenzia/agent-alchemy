@@ -42,11 +42,89 @@ This skill can be invoked standalone or loaded by other skills as a reusable bui
    - If direct invocation → use `direct-invocation-approval` value (default: `true`)
    - If skill-invoked → use `invocation-by-skill-approval` value (default: `false`)
 
+5. **Parse session settings** (also under the `deep-analysis` section):
+   ```markdown
+   - **deep-analysis**:
+     - **cache-ttl-hours**: 24
+     - **enable-checkpointing**: true
+     - **enable-progress-indicators**: true
+   ```
+   - `cache-ttl-hours`: Number of hours before exploration cache expires. Default: `24`. Set to `0` to disable caching entirely.
+   - `enable-checkpointing`: Whether to write session checkpoints at phase boundaries. Default: `true`.
+   - `enable-progress-indicators`: Whether to display `[Phase N/6]` progress messages. Default: `true`.
+
+6. **Set behavioral flags:**
+   - `CACHE_TTL` = value of `cache-ttl-hours` (default: `24`)
+   - `ENABLE_CHECKPOINTING` = value of `enable-checkpointing` (default: `true`)
+   - `ENABLE_PROGRESS` = value of `enable-progress-indicators` (default: `true`)
+
+---
+
+## Phase 0: Session Setup
+
+**Goal:** Check for cached exploration results, detect interrupted sessions, and initialize the session directory.
+
+> Skip this phase entirely if `CACHE_TTL = 0` AND `ENABLE_CHECKPOINTING = false`.
+
+### Step 1: Exploration Cache Check
+
+If `CACHE_TTL > 0`:
+
+1. Check if `.claude/sessions/exploration-cache/manifest.md` exists
+2. If found, read the manifest and verify:
+   - `analysis_context` matches the current analysis context (or is a superset)
+   - `codebase_path` matches the current working directory
+   - `timestamp` is within `CACHE_TTL` hours of now
+   - Config files referenced in `config_checksum` haven't been modified since the cache was written (check mod-times of `package.json`, `tsconfig.json`, `pyproject.toml`, etc.)
+3. **If cache is valid:**
+   - **Skill-invoked mode:** Auto-accept the cache. Set `CACHE_HIT = true`. Read cached `synthesis.md` and `recon_summary.md`. Skip to Phase 6 step 2 (present/return results).
+   - **Direct invocation:** Use `AskUserQuestion` to offer:
+     - **"Use cached results"** — Set `CACHE_HIT = true`, skip to Phase 6 step 2
+     - **"Refresh analysis"** — Set `CACHE_HIT = false`, proceed normally
+4. **If cache is invalid or absent:** Set `CACHE_HIT = false`
+
+### Step 2: Interrupted Session Check
+
+If `ENABLE_CHECKPOINTING = true`:
+
+1. Check if `.claude/sessions/__da_live__/checkpoint.md` exists
+2. If found, read the checkpoint to determine `last_completed_phase`
+3. Use `AskUserQuestion` to offer:
+   - **"Resume from Phase [N+1]"** — Load checkpoint state, proceed from the interrupted phase (see Session Recovery in Error Handling)
+   - **"Start fresh"** — Archive the interrupted session to `.claude/sessions/da-interrupted-{timestamp}/` and proceed normally
+4. If not found: proceed normally
+
+### Step 3: Initialize Session Directory
+
+If `ENABLE_CHECKPOINTING = true` AND `CACHE_HIT = false`:
+
+1. Create `.claude/sessions/__da_live__/` directory
+2. Write `checkpoint.md`:
+   ```markdown
+   ## Deep Analysis Session
+   - **analysis_context**: [context from arguments or caller]
+   - **codebase_path**: [current working directory]
+   - **started**: [ISO timestamp]
+   - **current_phase**: 0
+   - **status**: initialized
+   ```
+3. Write `progress.md`:
+   ```markdown
+   ## Deep Analysis Progress
+   - **Phase**: 0 of 6
+   - **Status**: Session initialized
+
+   ### Phase Log
+   - [timestamp] Phase 0: Session initialized
+   ```
+
 ---
 
 ## Phase 1: Reconnaissance & Planning
 
 **Goal:** Perform codebase reconnaissance, generate dynamic focus areas, and compose a team plan.
+
+> If `ENABLE_PROGRESS = true`: Display "**[Phase 1/6] Reconnaissance & Planning** — Mapping codebase structure..."
 
 1. **Determine analysis context:**
    - If `$ARGUMENTS` is provided, use it as the analysis context (feature area, question, or general exploration goal)
@@ -157,11 +235,19 @@ This skill can be invoked standalone or loaded by other skills as a reusable bui
    - Synthesis Task: blocked by all exploration tasks
    ```
 
+5. **Checkpoint** (if `ENABLE_CHECKPOINTING = true`):
+   - Update `.claude/sessions/__da_live__/checkpoint.md`: set `current_phase: 1`
+   - Write `.claude/sessions/__da_live__/team_plan.md` with the full team plan from Step 4
+   - Write `.claude/sessions/__da_live__/recon_summary.md` with reconnaissance findings from Step 2
+   - Append to `progress.md`: `[timestamp] Phase 1: Reconnaissance complete — [N] focus areas identified`
+
 ---
 
 ## Phase 2: Review & Approval
 
 **Goal:** Present the team plan for user review and approval before allocating resources.
+
+> If `ENABLE_PROGRESS = true`: Display "**[Phase 2/6] Review & Approval** — Presenting team plan..."
 
 ### If `REQUIRE_APPROVAL = false`
 
@@ -186,11 +272,17 @@ Skip to Phase 3 with a brief note: "Auto-approving team plan (skill-invoked mode
    - Re-compose and re-present the team plan
    - If 2 regeneration cycles are exhausted, offer "Approve current plan" or "Abort analysis"
 
+4. **Checkpoint** (if `ENABLE_CHECKPOINTING = true`):
+   - Update `.claude/sessions/__da_live__/checkpoint.md`: set `current_phase: 2`, record `approval_mode` (approved/auto-approved)
+   - Append to `progress.md`: `[timestamp] Phase 2: Plan approved (mode: [approval_mode])`
+
 ---
 
 ## Phase 3: Team Assembly
 
 **Goal:** Create the team, spawn agents, create tasks, and assign work using the approved plan.
+
+> If `ENABLE_PROGRESS = true`: Display "**[Phase 3/6] Team Assembly** — Creating team and spawning agents..."
 
 1. **Create the team:**
    - Use `TeamCreate` with name `deep-analysis-{timestamp}` (e.g., `deep-analysis-1707300000`)
@@ -214,14 +306,48 @@ Skip to Phase 3 with a brief note: "Auto-approving team plan (skill-invoked mode
    - **Synthesis Task:** Subject: "Synthesize and evaluate exploration findings", Description: "Merge and synthesize findings from all exploration tasks into a unified analysis. Investigate gaps using Bash (git history, dependency trees). Evaluate completeness before finalizing."
      - Use `TaskUpdate` to set `addBlockedBy` pointing to all exploration task IDs
 
-4. **Assign exploration tasks:**
-   Use `TaskUpdate` to assign each exploration task to its corresponding explorer from the approved plan.
+4. **Assign exploration tasks (with status guard):**
+
+   For each exploration task, apply the following status-guarded assignment:
+
+   1. Use `TaskGet` to check the task's current status and owner
+   2. **Only assign if** status is `pending` AND owner is empty
+   3. If already assigned or completed: log "Task [ID] already [status], skipping" and move on
+   4. Use `TaskUpdate` to set the owner to the corresponding explorer
+   5. Send the explorer a message with the task details via `SendMessage`:
+      ```
+      SendMessage type: "message", recipient: "[explorer-N]",
+      content: "Your exploration task [ID] is assigned. Focus area: [label]. Directories: [list]. Starting files: [list]. Search patterns: [list]. Begin exploration now.",
+      summary: "Exploration task assigned"
+      ```
+
+   **Never re-assign a completed or in-progress task.**
+
+5. **Checkpoint** (if `ENABLE_CHECKPOINTING = true`):
+   - Update `.claude/sessions/__da_live__/checkpoint.md`: set `current_phase: 3`, record `team_name`, `explorer_names` (list), `task_ids` (map of explorer → task ID), `synthesis_task_id`
+   - Append to `progress.md`: `[timestamp] Phase 3: Team assembled — [N] explorers, 1 synthesizer`
 
 ---
 
 ## Phase 4: Focused Exploration
 
 **Goal:** Workers explore their assigned areas independently.
+
+> If `ENABLE_PROGRESS = true`: Display "**[Phase 4/6] Focused Exploration** — 0/[N] explorers complete"
+
+### Monitoring Loop
+
+After assigning exploration tasks, monitor progress with status-aware tracking:
+
+1. When an explorer goes idle or sends a message, use `TaskGet` to check their task status
+2. **If task is `completed`**: Record the explorer's findings. If `ENABLE_CHECKPOINTING = true`, write `explorer-{N}-findings.md` to `.claude/sessions/__da_live__/` and update checkpoint.
+3. **If task is `in_progress`**: The explorer is still working — do NOT re-send the assignment
+4. **If task is `pending` and owner is set**: The explorer received the assignment but hasn't started yet — wait, do NOT re-send
+5. **If task is `pending` and owner is empty**: Assignment may have been lost — re-assign using the status guard from Phase 3 step 4
+
+**Never re-assign a completed or in-progress task.** This is the primary duplicate prevention mechanism.
+
+If `ENABLE_PROGRESS = true`: Update the progress display as explorers complete: "**[Phase 4/6] Focused Exploration** — [completed]/[N] explorers complete"
 
 - Workers explore their assigned focus areas independently — no cross-worker messaging
 - Workers can respond to follow-up questions from the synthesizer
@@ -234,6 +360,8 @@ Skip to Phase 3 with a brief note: "Auto-approving team plan (skill-invoked mode
 ## Phase 5: Evaluation and Synthesis
 
 **Goal:** Verify exploration completeness, launch synthesis with deep investigation.
+
+> If `ENABLE_PROGRESS = true`: Display "**[Phase 5/6] Synthesis** — Merging findings and investigating gaps..."
 
 ### Step 1: Structural Completeness Check
 
@@ -273,21 +401,44 @@ This is a structural check, not a quality assessment:
    ```
 3. Wait for the synthesizer to mark the synthesis task as completed
 
+4. **Checkpoint** (if `ENABLE_CHECKPOINTING = true`):
+   - Update `.claude/sessions/__da_live__/checkpoint.md`: set `current_phase: 5`
+   - Write `.claude/sessions/__da_live__/synthesis.md` with the synthesis results
+   - Append to `progress.md`: `[timestamp] Phase 5: Synthesis complete`
+
 ---
 
 ## Phase 6: Completion + Cleanup
 
 **Goal:** Collect results, present to user, and tear down the team.
 
+> If `ENABLE_PROGRESS = true`: Display "**[Phase 6/6] Completion** — Collecting results and cleaning up..."
+
 1. **Collect synthesis output:**
    - The synthesizer's findings are in the messages it sent and/or the task completion output
    - Read the synthesis results
 
-2. **Present or return results:**
+2. **Write exploration cache** (if `CACHE_TTL > 0`):
+   - Create `.claude/sessions/exploration-cache/` directory (overwrite if exists)
+   - Write `manifest.md`:
+     ```markdown
+     ## Exploration Cache Manifest
+     - **analysis_context**: [the analysis context used]
+     - **codebase_path**: [current working directory]
+     - **timestamp**: [ISO timestamp]
+     - **config_checksum**: [comma-separated list of config files and their mod-times]
+     - **ttl_hours**: [CACHE_TTL value]
+     - **explorer_count**: [N]
+     ```
+   - Write `synthesis.md` with the full synthesis output
+   - Write `recon_summary.md` with the Phase 1 reconnaissance findings
+   - Write `explorer-{N}-findings.md` for each explorer's findings (if not already persisted from Phase 4 checkpoints)
+
+3. **Present or return results:**
    - **Standalone invocation:** Present the synthesized analysis to the user. The results remain in conversation memory for follow-up questions.
    - **Loaded by another skill:** The synthesis is complete. Control returns to the calling workflow — do not present a standalone summary.
 
-3. **Shutdown teammates:**
+4. **Shutdown teammates:**
    Send shutdown requests to all spawned teammates (iterate over the actual agents from the approved plan):
    ```
    SendMessage type: "shutdown_request", recipient: "explorer-1", content: "Analysis complete"
@@ -296,7 +447,8 @@ This is a structural check, not a quality assessment:
    SendMessage type: "shutdown_request", recipient: "synthesizer", content: "Analysis complete"
    ```
 
-4. **Cleanup team:**
+5. **Archive session and cleanup team:**
+   - If `ENABLE_CHECKPOINTING = true`: Move `.claude/sessions/__da_live__/` to `.claude/sessions/da-{timestamp}/`
    - Use `TeamDelete` to remove the team and its task list
 
 ---
@@ -331,6 +483,25 @@ If any phase fails:
    - Retry the phase
    - Continue with partial results
    - Abort the analysis
+
+### Session Recovery
+
+When resuming from an interrupted session (detected in Phase 0 Step 2), use the following per-phase strategy:
+
+| Interrupted At | Recovery Strategy |
+|----------------|-------------------|
+| **Phase 1** | Restart from Phase 1 (reconnaissance is fast, ~1-2 min) |
+| **Phase 2** | Load saved `team_plan.md` from session dir, re-present for approval |
+| **Phase 3** | Load approved plan from checkpoint, restart team assembly |
+| **Phase 4** | Read completed `explorer-{N}-findings.md` files from session dir. Only spawn and assign explorers whose findings files are missing. Add existing findings to synthesizer context. |
+| **Phase 5** | Load all explorer findings from session dir. Spawn a fresh synthesizer and launch synthesis with the persisted findings. |
+| **Phase 6** | Load `synthesis.md` from session dir. Proceed directly to present/return results and cleanup. |
+
+**Recovery procedure:**
+1. Read `checkpoint.md` to determine `last_completed_phase` and session state (team_name, explorer_names, task_ids)
+2. Load any persisted artifacts from the session directory (team_plan, explorer findings, synthesis)
+3. Resume from Phase `last_completed_phase + 1` using the loaded state
+4. For Phase 4 recovery: compare persisted `explorer-{N}-findings.md` files against expected explorer list to determine which explorers still need to run
 
 ---
 

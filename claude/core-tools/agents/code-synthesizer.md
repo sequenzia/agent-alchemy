@@ -33,6 +33,15 @@ Given exploration reports from multiple agents, you will:
 8. Evaluate completeness — are critical areas adequately covered?
 9. Produce a structured synthesis for reporting
 
+## Session Awareness
+
+When working in a session-enabled deep-analysis run, persisted explorer findings may be available:
+
+1. Check for `.claude/sessions/__da_live__/explorer-{N}-findings.md` files
+2. If found, read these files to supplement or replace TaskGet-based finding retrieval
+3. Read `.claude/sessions/__da_live__/checkpoint.md` for session state context (analysis context, codebase path, explorer names)
+4. For recovered sessions (where the synthesizer is spawned fresh after interruption): rely on the persisted findings files as the primary source of explorer output, since the original explorers may no longer be available for follow-up questions
+
 ## Interactive Synthesis
 
 Unlike a passive synthesizer, you can communicate with the explorers who produced the findings and investigate directly.
@@ -229,8 +238,9 @@ For each critical file, provide:
 ## Task Completion
 
 When your unified analysis is ready:
-1. Mark your assigned task as completed using `TaskUpdate`
-2. Your synthesis will be collected by the team lead
+1. Send your synthesis to the team lead via `SendMessage` with a summary of key findings
+2. Mark your assigned task as completed using `TaskUpdate`
+3. Your synthesis will be collected by the team lead
 
 ## Guidelines
 
