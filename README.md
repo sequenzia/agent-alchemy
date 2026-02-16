@@ -25,6 +25,10 @@ Four plugin groups providing 15 skills and 9 agents:
 
 A Next.js real-time Kanban dashboard for monitoring autonomous task execution. Tasks update live via filesystem watching and Server-Sent Events.
 
+![Claude Task Manager](./internal/images/claude-task-manager.png)
+
+**See more screenshots [screenshots](#screenshots) below**
+
 ### [VS Code Extension](extensions/vscode/)
 
 Schema validation, YAML frontmatter autocomplete, and hover documentation for Claude Code plugin development.
@@ -117,6 +121,22 @@ extensions/vscode/               # Developer tooling
 ├── src/frontmatter/             # YAML validation
 └── schemas/                     # JSON Schemas for plugin contracts
 ```
+
+
+## Screenshots
+
+### Task Manager Kanban View
+![Claude Task Manager](./internal/images/claude-task-manager.png)
+
+### Tasks Generated from sdd-tools
+![Spec Tasks](./internal/images/tasks-generated-by-sdd-tools.png)
+
+### Single Task View with Dependencies, Test Cases and Acceptance Criteria
+![Task Detail View](./internal/images/task-in-task-manager.png)
+
+### Completed Tasks in Claude Code
+![Completed Tasks](./internal/images/completed-tasks-in-claude.png)
+
 
 ## License
 
