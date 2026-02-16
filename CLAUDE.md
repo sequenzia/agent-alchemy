@@ -13,6 +13,7 @@ agent-alchemy/
 │   ├── core-tools/            # Codebase analysis, deep exploration, language patterns
 │   ├── dev-tools/             # Feature dev, code review, docs, changelog
 │   ├── sdd-tools/             # Spec-Driven Development pipeline
+│   ├── tdd-tools/             # TDD workflows: test generation, RED-GREEN-REFACTOR, coverage
 │   └── git-tools/             # Git commit automation
 ├── apps/
 │   └── task-manager/          # Next.js 16 real-time Kanban dashboard
@@ -86,6 +87,11 @@ create-spec -> researcher agent (for technical research)
 
 create-tasks -> reads spec -> generates task JSON
 execute-tasks -> task-executor agent x N per wave -> writes execution context
+
+tdd-cycle -> tdd-executor (opus) x 1 per feature (6-phase RED-GREEN-REFACTOR)
+generate-tests -> test-writer (sonnet) x N parallel (criteria-driven or code-analysis)
+create-tdd-tasks -> reads existing tasks -> generates TDD pairs (test blocks impl)
+execute-tdd-tasks -> tdd-executor for TDD tasks, task-executor for non-TDD tasks
 ```
 
 ### Task Manager (apps/task-manager/)
@@ -113,7 +119,8 @@ execute-tasks -> task-executor agent x N per wave -> writes execution context
 |-------|--------|--------|---------|
 | core-tools | deep-analysis, codebase-analysis, language-patterns, project-conventions | code-explorer, code-synthesizer | 0.1.0 |
 | dev-tools | feature-dev, architecture-patterns, code-quality, changelog-format, docs-manager, release-python-package | code-architect, code-reviewer, changelog-manager, docs-writer | 0.1.0 |
-| sdd-tools | create-spec, analyze-spec, create-tasks, execute-tasks | researcher, spec-analyzer, task-executor | 0.1.0 |
+| sdd-tools | create-spec, analyze-spec, create-tasks, execute-tasks, create-tdd-tasks, execute-tdd-tasks | researcher, spec-analyzer, task-executor | 0.1.0 |
+| tdd-tools | generate-tests, tdd-cycle, analyze-coverage | test-writer, tdd-executor, test-reviewer | 0.1.0 |
 | git-tools | git-commit | — | 0.1.0 |
 
 ## Critical Plugin Files
@@ -125,9 +132,18 @@ execute-tasks -> task-executor agent x N per wave -> writes execution context
 | `claude/sdd-tools/skills/create-tasks/SKILL.md` | 653 | Spec-to-task decomposition with `task_uid` merge mode |
 | `claude/sdd-tools/skills/execute-tasks/SKILL.md` | 262 | Wave-based parallel execution with session management |
 | `claude/dev-tools/skills/feature-dev/SKILL.md` | 271 | 7-phase lifecycle spawning architect + reviewer agent teams |
+| `claude/tdd-tools/skills/tdd-cycle/SKILL.md` | 718 | 7-phase RED-GREEN-REFACTOR TDD workflow |
+| `claude/tdd-tools/skills/generate-tests/SKILL.md` | 513 | Test generation from acceptance criteria or source code |
+| `claude/sdd-tools/skills/create-tdd-tasks/SKILL.md` | 687 | SDD-to-TDD task pair transformation |
+| `claude/sdd-tools/skills/execute-tdd-tasks/SKILL.md` | 630 | TDD-aware wave execution with agent routing |
 
 ## Settings
 
 User preferences are stored in `.claude/agent-alchemy.local.md` (not committed):
 - `deep-analysis.direct-invocation-approval`: Whether to require plan approval when user invokes directly (default: true)
 - `deep-analysis.invocation-by-skill-approval`: Whether to require approval when loaded by another skill (default: false)
+- `tdd.framework`: Override test framework auto-detection (`auto` | `pytest` | `jest` | `vitest`, default: `auto`)
+- `tdd.coverage-threshold`: Target coverage percentage for analyze-coverage (0-100, default: `80`)
+- `tdd.strictness`: RED phase enforcement level (`strict` | `normal` | `relaxed`, default: `normal`)
+- `tdd.test-review-threshold`: Minimum test quality score (0-100, default: `70`)
+- `tdd.test-review-on-generate`: Auto-run test-reviewer after generate-tests (default: `false`)

@@ -1,0 +1,22 @@
+{
+  "id": "2",
+  "subject": "Create test-patterns and framework-templates references for generate-tests",
+  "description": "Create two reference files for the generate-tests skill that provide framework-specific test patterns and templates.\n\n**File 1: `claude/tdd-tools/skills/generate-tests/references/test-patterns.md`**\n\nDocument framework-specific test patterns covering:\n- pytest patterns: fixtures, parametrize, markers, conftest.py conventions\n- Jest patterns: describe/it blocks, beforeEach/afterEach, jest.mock, test utilities\n- Vitest patterns: similar to Jest but with Vitest-specific features (vi.fn, vi.mock)\n- Common patterns: AAA (Arrange-Act-Assert), Given-When-Then, test isolation\n- Behavior-driven vs implementation-detail examples (what to prefer and what to avoid)\n- Test naming conventions per framework\n\n**File 2: `claude/tdd-tools/skills/generate-tests/references/framework-templates.md`**\n\nDocument test framework auto-detection chain and templates:\n- Detection chain: pyproject.toml/setup.cfg → pytest config, package.json → jest/vitest/mocha, conftest.py → pytest, jest.config.* → Jest, vitest.config.* → Vitest\n- Test directory convention detection: tests/, __tests__/, test/, spec/\n- Test file naming patterns: test_*.py, *_test.py, *.test.ts, *.spec.ts\n- Assertion library detection\n- Fixture detection\n- Fallback to `.claude/agent-alchemy.local.md` settings\n- Boilerplate templates for each framework (pytest, Jest, Vitest)\n\n**Acceptance Criteria:**\n\n_Functional:_\n- [ ] test-patterns.md covers pytest, Jest, and Vitest patterns\n- [ ] framework-templates.md includes the full detection chain from US-008\n- [ ] Templates are copy-pasteable boilerplate for each framework\n- [ ] Behavior-driven examples distinguish good tests from implementation-detail tests\n- [ ] Detection chain matches spec Section 5.7 (US-008) requirements\n\n_Edge Cases:_\n- [ ] Monorepo detection guidance (per-directory framework detection)\n- [ ] No config files scenario documented (infer from existing test files)\n- [ ] Mixed language project guidance\n\n_Error Handling:_\n- [ ] Fallback strategy documented when auto-detection fails\n\n**Testing Requirements:**\n• Manual: Verify patterns match real-world pytest/Jest/Vitest conventions\n• Manual: Validate detection chain covers common project configurations\n\nSource: specs/tdd-features-SPEC.md Section 5.1, 5.7, 9.1",
+  "activeForm": "Creating test pattern and framework template references",
+  "status": "completed",
+  "blocks": [
+    "4"
+  ],
+  "blockedBy": [
+    "1"
+  ],
+  "metadata": {
+    "priority": "critical",
+    "complexity": "M",
+    "source_section": "5.1, 5.7, 9.1",
+    "spec_path": "specs/tdd-features-SPEC.md",
+    "feature_name": "Generate Tests + Auto-Detection",
+    "task_uid": "specs/tdd-features-SPEC.md:generate-tests:references:001",
+    "task_group": "tdd-features"
+  }
+}

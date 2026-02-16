@@ -1,0 +1,20 @@
+{
+  "id": "16",
+  "subject": "Add TDD settings documentation to agent-alchemy.local.md",
+  "description": "Document the TDD-specific settings that users can configure in `.claude/agent-alchemy.local.md`.\n\nUpdate the settings documentation (or create a reference in tdd-tools) to include the following new configuration options:\n\n**New Settings:**\n\n```yaml\ntdd:\n  framework: auto                    # auto | pytest | jest | vitest\n  coverage-threshold: 80             # Minimum coverage percentage (0-100)\n  strictness: normal                 # strict | normal | relaxed\n  test-review-threshold: 70          # Minimum test quality score (0-100)\n  test-review-on-generate: false     # Run test-reviewer after generate-tests\n```\n\n**Setting Descriptions:**\n\n- `tdd.framework`: Override auto-detection with explicit framework selection. Default: `auto` (use detection chain)\n- `tdd.coverage-threshold`: Target coverage percentage for analyze-coverage reports. Default: `80`\n- `tdd.strictness`: TDD strictness level affecting RED phase behavior:\n  - `strict`: RED phase failure is mandatory — abort if tests pass before implementation\n  - `normal`: RED phase failure is expected — warn but continue\n  - `relaxed`: RED phase is informational — proceed regardless\n- `tdd.test-review-threshold`: Minimum score for test quality. Tests below threshold are flagged. Default: `70`\n- `tdd.test-review-on-generate`: Whether to automatically run test-reviewer after /generate-tests. Default: `false`\n\n**Documentation Location:**\n- Add to existing `.claude/agent-alchemy.local.md` pattern documentation\n- Include in tdd-tools README.md settings section\n\n**Acceptance Criteria:**\n\n_Functional:_\n- [ ] All 5 TDD settings documented with descriptions, types, and defaults\n- [ ] Settings follow existing agent-alchemy.local.md YAML frontmatter convention\n- [ ] tdd-tools README.md includes settings section\n- [ ] Settings referenced by tdd-cycle, generate-tests, and analyze-coverage skills\n\n_Edge Cases:_\n- [ ] Invalid framework value: skills should fall back to auto-detection\n- [ ] Coverage threshold out of range: skills should clamp to 0-100\n\n_Error Handling:_\n- [ ] Missing settings file: all skills use defaults\n- [ ] Malformed YAML: skills use defaults with warning\n\n**Testing Requirements:**\n• Manual: Verify settings are parseable from agent-alchemy.local.md YAML frontmatter\n• Manual: Validate that each skill correctly reads and applies these settings\n\nSource: specs/tdd-features-SPEC.md Section 7.3, 9.3",
+  "activeForm": "Adding TDD settings documentation",
+  "status": "completed",
+  "blocks": [],
+  "blockedBy": [
+    "7"
+  ],
+  "metadata": {
+    "priority": "high",
+    "complexity": "S",
+    "source_section": "7.3, 9.3",
+    "spec_path": "specs/tdd-features-SPEC.md",
+    "feature_name": "TDD Settings",
+    "task_uid": "specs/tdd-features-SPEC.md:settings:tdd-config:001",
+    "task_group": "tdd-features"
+  }
+}

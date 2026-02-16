@@ -1,0 +1,22 @@
+{
+  "id": "5",
+  "subject": "Create tdd-workflow reference for tdd-cycle",
+  "description": "Create the TDD workflow reference at `claude/tdd-tools/skills/tdd-cycle/references/tdd-workflow.md`.\n\nThis reference defines the RED-GREEN-REFACTOR phases that guide both the tdd-cycle skill and the tdd-executor agent.\n\n**Content:**\n\n_Phase Definitions:_\n1. **UNDERSTAND** — Load project conventions, identify test framework, explore relevant codebase areas, understand requirements\n2. **WRITE TESTS (RED Setup)** — Write failing tests from requirements/acceptance criteria before any implementation\n3. **RED Verification** — Run tests, confirm they ALL fail. If any pass, warn that implementation may already exist\n4. **IMPLEMENT (GREEN)** — Write minimal code to make tests pass. No over-engineering, no extra features\n5. **GREEN Verification** — Run tests, confirm they ALL pass. If any fail, iterate on implementation\n6. **REFACTOR** — Clean up code while keeping tests green. Run tests after each refactor step. If tests break, revert refactor\n\n_Phase Verification Rules:_\n- RED phase: ALL new tests MUST fail. If tests pass → warn user, verify completeness\n- GREEN phase: ALL tests (new + existing) MUST pass. Zero tolerance for regressions\n- REFACTOR phase: ALL tests MUST remain green after each change. Revert on failure\n\n_TDD Strictness Levels:_\n- **Strict**: RED phase failure is mandatory — abort if tests pass before implementation\n- **Normal** (default): RED phase failure is expected — warn but continue if tests pass\n- **Relaxed**: RED phase is informational — proceed regardless\n\n_Edge Case Handling:_\n- Tests pass immediately during RED: Log warning, check if implementation already exists, verify test completeness\n- Implementation cannot make tests pass: Report FAIL with specific failing tests and recommendations\n- Refactor breaks tests: Revert refactor changes, report PARTIAL with passing but unrefactored code\n- Existing test suite has failures: Snapshot existing failures, only track new test results\n\n**Acceptance Criteria:**\n\n_Functional:_\n- [ ] All 6 phases clearly defined with entry/exit criteria\n- [ ] Phase verification rules documented for RED, GREEN, REFACTOR\n- [ ] TDD strictness levels defined (strict, normal, relaxed)\n- [ ] Edge case handling documented for each phase\n\n_Edge Cases:_\n- [ ] Pre-existing test failures scenario addressed\n- [ ] Partial implementation scenario addressed\n\n**Testing Requirements:**\n• Manual: Verify phase definitions are clear and unambiguous\n• Manual: Validate strictness levels make sense for different use cases\n\nSource: specs/tdd-features-SPEC.md Section 5.2, 9.2",
+  "activeForm": "Creating tdd-workflow reference",
+  "status": "completed",
+  "blocks": [
+    "6"
+  ],
+  "blockedBy": [
+    "1"
+  ],
+  "metadata": {
+    "priority": "critical",
+    "complexity": "S",
+    "source_section": "5.2, 9.2",
+    "spec_path": "specs/tdd-features-SPEC.md",
+    "feature_name": "TDD Cycle",
+    "task_uid": "specs/tdd-features-SPEC.md:tdd-cycle:workflow-ref:001",
+    "task_group": "tdd-features"
+  }
+}
