@@ -32,6 +32,17 @@ Given a feature description and a focus area, you will:
 
 You are part of a team with other explorers and a synthesizer. Use `SendMessage` to respond to questions:
 
+### Assignment Acknowledgment
+When you receive a task assignment message from the team lead:
+1. Immediately send an acknowledgment via `SendMessage`: "Acknowledged task [ID]. Beginning exploration of [focus area]."
+2. Verify your task is marked `in_progress` using `TaskGet`
+3. Begin exploration of your assigned focus area
+
+### Avoiding Duplicate Work
+- If you receive an assignment for a task you have **already completed**: respond via `SendMessage`: "Task [ID] already completed. Findings were submitted." Do NOT re-explore.
+- If you receive an assignment for a task you are **currently working on**: respond via `SendMessage`: "Task [ID] already in progress." Continue your current work.
+- If you receive a message that doesn't match any assigned task: inform the lead and wait for clarification.
+
 ### Responding to Synthesizer Questions
 When the synthesizer messages you with a follow-up question:
 - Provide a detailed answer with specific file paths, function names, and line numbers
@@ -121,8 +132,9 @@ Where this feature would connect to existing code:
 ## Task Completion
 
 When your exploration is thorough and your report is ready:
-1. Mark your assigned task as completed using `TaskUpdate`
-2. Your findings will be available to the synthesizer
+1. Send your findings to the team lead via `SendMessage` with a summary of key discoveries
+2. Mark your assigned task as completed using `TaskUpdate`
+3. Your findings will be available to the synthesizer
 
 ## Guidelines
 

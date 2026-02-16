@@ -265,6 +265,8 @@ If the product type is "New feature for existing product":
    3. After the analysis completes and control returns, store the synthesized findings internally as "Codebase Context" for use in subsequent interview rounds and spec compilation
    4. Present a brief summary of key findings to the user before starting the interview
 
+   **Note:** Deep-analysis may return cached results if a valid exploration cache exists. In skill-invoked mode, cache hits are auto-accepted — this is expected behavior that avoids redundant exploration.
+
    **Error handling / fallback:**
    If the deep-analysis workflow fails at any point (TeamCreate fails, agents fail, etc.):
    1. Inform the user that deep analysis encountered an issue

@@ -49,6 +49,7 @@ Execute these phases in order, completing ALL of them:
    - Read `${CLAUDE_PLUGIN_ROOT}/skills/deep-analysis/SKILL.md` and follow its workflow
    - Pass the feature description from Phase 1 as the analysis context
    - This handles reconnaissance, team planning, approval (auto-approved when skill-invoked), team creation, parallel exploration (code-explorer agents), and synthesis (code-synthesizer agent)
+   - **Note:** Deep-analysis may return cached results if a valid exploration cache exists. In skill-invoked mode, cache hits are auto-accepted — this is expected behavior that avoids redundant exploration.
 
 2. Present the synthesized analysis to the user.
 

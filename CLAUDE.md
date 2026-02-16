@@ -10,7 +10,7 @@ Agent Alchemy is a monorepo that extends Claude Code into a structured developme
 agent-alchemy/
 ├── claude/                    # Claude Code plugins (markdown-as-code)
 │   ├── .claude-plugin/        # Plugin marketplace registry
-│   ├── core-tools/            # Codebase analysis, deep exploration, language patterns
+│   ├── core-tools/            # Codebase analysis, deep exploration, language patterns (includes hooks/)
 │   ├── dev-tools/             # Feature dev, code review, docs, changelog
 │   ├── sdd-tools/             # Spec-Driven Development pipeline
 │   ├── tdd-tools/             # TDD workflows: test generation, RED-GREEN-REFACTOR, coverage
@@ -127,7 +127,7 @@ execute-tdd-tasks -> tdd-executor for TDD tasks, task-executor for non-TDD tasks
 
 | File | Lines | Role |
 |------|-------|------|
-| `claude/core-tools/skills/deep-analysis/SKILL.md` | 350 | Keystone skill — hub-and-spoke team engine loaded by 4 other skills |
+| `claude/core-tools/skills/deep-analysis/SKILL.md` | 521 | Keystone skill — hub-and-spoke team engine loaded by 4 other skills |
 | `claude/sdd-tools/skills/create-spec/SKILL.md` | 664 | Largest skill — adaptive interview with depth-aware questioning |
 | `claude/sdd-tools/skills/create-tasks/SKILL.md` | 653 | Spec-to-task decomposition with `task_uid` merge mode |
 | `claude/sdd-tools/skills/execute-tasks/SKILL.md` | 262 | Wave-based parallel execution with session management |
@@ -142,6 +142,9 @@ execute-tdd-tasks -> tdd-executor for TDD tasks, task-executor for non-TDD tasks
 User preferences are stored in `.claude/agent-alchemy.local.md` (not committed):
 - `deep-analysis.direct-invocation-approval`: Whether to require plan approval when user invokes directly (default: true)
 - `deep-analysis.invocation-by-skill-approval`: Whether to require approval when loaded by another skill (default: false)
+- `deep-analysis.cache-ttl-hours`: Hours before exploration cache expires; 0 disables caching (default: 24)
+- `deep-analysis.enable-checkpointing`: Write session checkpoints at phase boundaries for recovery (default: true)
+- `deep-analysis.enable-progress-indicators`: Display `[Phase N/6]` progress messages during execution (default: true)
 - `tdd.framework`: Override test framework auto-detection (`auto` | `pytest` | `jest` | `vitest`, default: `auto`)
 - `tdd.coverage-threshold`: Target coverage percentage for analyze-coverage (0-100, default: `80`)
 - `tdd.strictness`: RED phase enforcement level (`strict` | `normal` | `relaxed`, default: `normal`)
