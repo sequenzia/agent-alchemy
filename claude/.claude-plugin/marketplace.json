@@ -1,7 +1,7 @@
 {
   "name": "agent-alchemy",
   "metadata": {
-    "description": "Custom Skills, Agents, MCP Servers & Hooks for Agent Alchemy"
+    "description": "Custom Skills, Agents, MCP Servers & Hooks for AI agents"
   },
   "owner": {
     "name": "Stephen Sequenzia",
@@ -11,7 +11,7 @@
     {
       "name": "agent-alchemy-core-tools",
       "version": "0.1.0",
-      "description": "Core tools for Agent Alchemy",
+      "description": "Core tools for AI agents — essential utilities and foundational capabilities",
       "source": "./core-tools",
       "homepage": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/core-tools",
       "repository": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/core-tools",
@@ -20,7 +20,7 @@
     {
       "name": "agent-alchemy-dev-tools",
       "version": "0.1.0",
-      "description": "Dev tools for Agent Alchemy",
+      "description": "Dev tools for AI agents — development utilities, debugging, and workflow enhancements",
       "source": "./dev-tools",
       "homepage": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/dev-tools",
       "repository": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/dev-tools",
@@ -29,7 +29,7 @@
     {
       "name": "agent-alchemy-git-tools",
       "version": "0.1.0",
-      "description": "Git tools for Agent Alchemy",
+      "description": "Git tools for AI agents — version control, commit management, and repository analysis",
       "source": "./git-tools",
       "homepage": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/git-tools",
       "repository": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/git-tools",
@@ -38,7 +38,7 @@
     {
       "name": "agent-alchemy-sdd-tools",
       "version": "0.1.1",
-      "description": "SDD tools for Agent Alchemy",
+      "description": "SDD tools for AI agents — specification generation, analysis, and task decomposition",
       "source": "./sdd-tools",
       "homepage": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/sdd-tools",
       "repository": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/sdd-tools",
@@ -47,7 +47,7 @@
     {
       "name": "agent-alchemy-tdd-tools",
       "version": "0.1.0",
-      "description": "TDD tools for Agent Alchemy",
+      "description": "TDD tools for AI agents — test generation, RED-GREEN-REFACTOR workflows, and coverage analysis",
       "source": "./tdd-tools",
       "homepage": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/tdd-tools",
       "repository": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/tdd-tools",
