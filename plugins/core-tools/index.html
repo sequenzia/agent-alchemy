@@ -1,0 +1,2350 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A plugin suite and developer toolkit that extends Claude Code into a structured development platform">
+      
+      
+      
+      
+        <link rel="prev" href="../">
+      
+      
+        <link rel="next" href="../dev-tools/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>Core Tools - Agent Alchemy</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="cyan">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#core-tools" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Agent Alchemy" class="md-header__button md-logo" aria-label="Agent Alchemy" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Agent Alchemy
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Core Tools
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="cyan"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="cyan"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/sequenzia/agent-alchemy" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    sequenzia/agent-alchemy
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../getting-started/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Getting Started
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../architecture/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
+          
+  
+  
+  Plugins
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../task-manager/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Task Manager
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../vscode-extension/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  VS Code Extension
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../configuration/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Configuration
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../contributing/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Contributing
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Agent Alchemy" class="md-nav__button md-logo" aria-label="Agent Alchemy" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Agent Alchemy
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/sequenzia/agent-alchemy" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    sequenzia/agent-alchemy
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plugins
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Plugins
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Core Tools
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Core Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#skills" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Skills
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Skills">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#deep-analysis-the-keystone-skill" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        /deep-analysis — The Keystone Skill
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="/deep-analysis — The Keystone Skill">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-6-phases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The 6 Phases
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-0-session-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 0: Session Setup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-1-reconnaissance-planning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 1: Reconnaissance &amp; Planning
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-2-review-approval" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 2: Review &amp; Approval
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-3-team-assembly" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 3: Team Assembly
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-4-focused-exploration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 4: Focused Exploration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-5-evaluation-synthesis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 5: Evaluation &amp; Synthesis
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-6-completion-cleanup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 6: Completion + Cleanup
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#codebase-analysis-structured-analysis-wrapper" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        /codebase-analysis — Structured Analysis Wrapper
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="/codebase-analysis — Structured Analysis Wrapper">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Workflow
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#language-patterns-language-specific-best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        language-patterns — Language-Specific Best Practices
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#project-conventions-convention-discovery-guide" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        project-conventions — Convention Discovery Guide
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#agents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Agents
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Agents">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#code-explorer-sonnet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        code-explorer (Sonnet)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#code-synthesizer-opus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        code-synthesizer (Opus)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hub-and-spoke-coordination-pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hub-and-Spoke Coordination Pattern
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hooks
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cross-plugin-dependency-map" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cross-Plugin Dependency Map
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#settings-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Settings Reference
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#session-recovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Session Recovery
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#error-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error Handling
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#directory-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Directory Structure
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dev Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sdd-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SDD Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tdd-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    TDD Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../git-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Git Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../task-manager/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Task Manager
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../vscode-extension/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    VS Code Extension
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#skills" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Skills
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Skills">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#deep-analysis-the-keystone-skill" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        /deep-analysis — The Keystone Skill
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="/deep-analysis — The Keystone Skill">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-6-phases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The 6 Phases
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-0-session-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 0: Session Setup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-1-reconnaissance-planning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 1: Reconnaissance &amp; Planning
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-2-review-approval" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 2: Review &amp; Approval
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-3-team-assembly" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 3: Team Assembly
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-4-focused-exploration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 4: Focused Exploration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-5-evaluation-synthesis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 5: Evaluation &amp; Synthesis
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-6-completion-cleanup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 6: Completion + Cleanup
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#codebase-analysis-structured-analysis-wrapper" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        /codebase-analysis — Structured Analysis Wrapper
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="/codebase-analysis — Structured Analysis Wrapper">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Workflow
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#language-patterns-language-specific-best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        language-patterns — Language-Specific Best Practices
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#project-conventions-convention-discovery-guide" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        project-conventions — Convention Discovery Guide
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#agents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Agents
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Agents">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#code-explorer-sonnet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        code-explorer (Sonnet)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#code-synthesizer-opus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        code-synthesizer (Opus)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hub-and-spoke-coordination-pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hub-and-Spoke Coordination Pattern
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hooks
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cross-plugin-dependency-map" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cross-Plugin Dependency Map
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#settings-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Settings Reference
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#session-recovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Session Recovery
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#error-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error Handling
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#directory-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Directory Structure
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="core-tools">Core Tools<a class="headerlink" href="#core-tools" title="Permanent link">&para;</a></h1>
+<p>Core Tools (v0.1.1) provides the foundational analysis and exploration capabilities for Agent Alchemy. It contains the <strong>deep-analysis</strong> skill — the keystone of the entire plugin ecosystem — along with supporting skills and agents that power codebase understanding across all plugin groups.</p>
+<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Version</strong></td>
+<td>0.1.1</td>
+</tr>
+<tr>
+<td><strong>Skills</strong></td>
+<td>4 (2 user-invocable, 2 agent-loaded)</td>
+</tr>
+<tr>
+<td><strong>Agents</strong></td>
+<td>2 (code-explorer, code-synthesizer)</td>
+</tr>
+<tr>
+<td><strong>Hooks</strong></td>
+<td>1 (auto-approve session file operations)</td>
+</tr>
+</tbody>
+</table>
+<p>Core Tools is the most composed plugin in Agent Alchemy. Its <code>deep-analysis</code> skill is loaded by four other skills across three different plugin groups, making it the engine behind every workflow that needs to understand a codebase before acting on it.</p>
+<pre class="mermaid"><code>graph TD
+    DA[deep-analysis&lt;br/&gt;&lt;i&gt;core-tools&lt;/i&gt;]
+    CA[codebase-analysis&lt;br/&gt;&lt;i&gt;core-tools&lt;/i&gt;]
+    FD[feature-dev&lt;br/&gt;&lt;i&gt;dev-tools&lt;/i&gt;]
+    DM[docs-manager&lt;br/&gt;&lt;i&gt;dev-tools&lt;/i&gt;]
+    CS[create-spec&lt;br/&gt;&lt;i&gt;sdd-tools&lt;/i&gt;]
+
+    CA --&gt;|wraps| DA
+    FD --&gt;|loads in Phase 2| DA
+    DM --&gt;|loads for understanding| DA
+    CS --&gt;|optional, new features| DA
+
+    style DA fill:#7c3aed,color:#fff,stroke:#5b21b6
+    style CA fill:#6366f1,color:#fff,stroke:#4f46e5
+    style FD fill:#06b6d4,color:#fff,stroke:#0891b2
+    style DM fill:#06b6d4,color:#fff,stroke:#0891b2
+    style CS fill:#f59e0b,color:#fff,stroke:#d97706</code></pre>
+<h2 id="skills">Skills<a class="headerlink" href="#skills" title="Permanent link">&para;</a></h2>
+<h3 id="deep-analysis-the-keystone-skill"><code>/deep-analysis</code> — The Keystone Skill<a class="headerlink" href="#deep-analysis-the-keystone-skill" title="Permanent link">&para;</a></h3>
+<div class="admonition abstract">
+<p class="admonition-title">Quick Reference</p>
+<ul>
+<li><strong>Invocable:</strong> <code>/deep-analysis &lt;analysis-context or focus-area&gt;</code></li>
+<li><strong>Lines:</strong> 521</li>
+<li><strong>Phases:</strong> 6 (Session Setup through Completion)</li>
+<li><strong>Team pattern:</strong> Hub-and-spoke (N explorers + 1 synthesizer)</li>
+<li><strong>Source:</strong> <code>claude/core-tools/skills/deep-analysis/SKILL.md</code></li>
+</ul>
+</div>
+<p>Deep-analysis is the core engine that powers codebase understanding across Agent Alchemy. It performs rapid reconnaissance, dynamically plans focus areas tailored to the actual codebase structure, assembles a team of explorer and synthesizer agents, and produces a unified analysis.</p>
+<h4 id="the-6-phases">The 6 Phases<a class="headerlink" href="#the-6-phases" title="Permanent link">&para;</a></h4>
+<pre class="mermaid"><code>sequenceDiagram
+    participant U as User
+    participant L as Lead (You)
+    participant E1 as Explorer 1&lt;br/&gt;(Sonnet)
+    participant E2 as Explorer 2&lt;br/&gt;(Sonnet)
+    participant EN as Explorer N&lt;br/&gt;(Sonnet)
+    participant S as Synthesizer&lt;br/&gt;(Opus)
+
+    Note over L: Phase 0: Session Setup
+    L-&gt;&gt;L: Check exploration cache
+    L-&gt;&gt;L: Check for interrupted session
+    L-&gt;&gt;L: Initialize session directory
+
+    Note over L: Phase 1: Reconnaissance &amp; Planning
+    L-&gt;&gt;L: Rapid codebase mapping&lt;br/&gt;(Glob, Grep, Read)
+    L-&gt;&gt;L: Generate dynamic focus areas
+    L-&gt;&gt;L: Compose team plan
+
+    Note over U,L: Phase 2: Review &amp; Approval
+    L-&gt;&gt;U: Present team plan
+    U-&gt;&gt;L: Approve / Modify / Regenerate
+
+    Note over L,S: Phase 3: Team Assembly
+    L-&gt;&gt;E1: Spawn + assign Focus Area 1
+    L-&gt;&gt;E2: Spawn + assign Focus Area 2
+    L-&gt;&gt;EN: Spawn + assign Focus Area N
+    L-&gt;&gt;S: Spawn synthesizer (waits)
+
+    Note over E1,EN: Phase 4: Focused Exploration
+    par Independent Exploration
+        E1-&gt;&gt;E1: Explore assigned area
+        E2-&gt;&gt;E2: Explore assigned area
+        EN-&gt;&gt;EN: Explore assigned area
+    end
+    E1-&gt;&gt;L: Findings complete
+    E2-&gt;&gt;L: Findings complete
+    EN-&gt;&gt;L: Findings complete
+
+    Note over L,S: Phase 5: Evaluation &amp; Synthesis
+    L-&gt;&gt;S: All findings ready — begin synthesis
+    S-&gt;&gt;S: Merge findings
+    S-&gt;&gt;S: Deep investigation (Bash)
+    S--&gt;&gt;E1: Follow-up question (optional)
+    E1--&gt;&gt;S: Clarification
+    S-&gt;&gt;S: Evaluate completeness
+    S-&gt;&gt;L: Unified analysis complete
+
+    Note over L: Phase 6: Completion + Cleanup
+    L-&gt;&gt;L: Cache results
+    L-&gt;&gt;U: Present analysis
+    L-&gt;&gt;E1: Shutdown
+    L-&gt;&gt;E2: Shutdown
+    L-&gt;&gt;EN: Shutdown
+    L-&gt;&gt;S: Shutdown
+    L-&gt;&gt;L: Archive session, delete team</code></pre>
+<h4 id="phase-0-session-setup">Phase 0: Session Setup<a class="headerlink" href="#phase-0-session-setup" title="Permanent link">&para;</a></h4>
+<p>Before any exploration begins, deep-analysis checks for existing work:</p>
+<ol>
+<li>
+<p><strong>Exploration Cache Check</strong> — If caching is enabled (<code>cache-ttl-hours &gt; 0</code>), it looks for a valid cached analysis in <code>.claude/sessions/exploration-cache/manifest.md</code>. A cache hit is valid when the analysis context matches, the codebase path matches, the timestamp is within the TTL, and config files haven't been modified. In skill-invoked mode, valid caches are auto-accepted. In direct invocation, the user is offered a choice.</p>
+</li>
+<li>
+<p><strong>Interrupted Session Check</strong> — If checkpointing is enabled, it looks for <code>.claude/sessions/__da_live__/checkpoint.md</code> to detect a prior run that didn't complete. The user can resume from the last completed phase or start fresh.</p>
+</li>
+<li>
+<p><strong>Session Initialization</strong> — Creates the <code>.claude/sessions/__da_live__/</code> directory with <code>checkpoint.md</code> and <code>progress.md</code> files to track the run.</p>
+</li>
+</ol>
+<div class="admonition tip">
+<p class="admonition-title">Skipping Phase 0</p>
+<p>If both caching and checkpointing are disabled (<code>cache-ttl-hours: 0</code> and <code>enable-checkpointing: false</code>), Phase 0 is skipped entirely for faster startup.</p>
+</div>
+<h4 id="phase-1-reconnaissance-planning">Phase 1: Reconnaissance &amp; Planning<a class="headerlink" href="#phase-1-reconnaissance-planning" title="Permanent link">&para;</a></h4>
+<p>The lead performs a rapid (1-2 minute) codebase scan:</p>
+<ul>
+<li><strong>Directory structure</strong> — <code>Glob</code> maps top-level layout</li>
+<li><strong>Language/framework detection</strong> — Reads <code>package.json</code>, <code>tsconfig.json</code>, <code>pyproject.toml</code>, etc.</li>
+<li><strong>File distribution</strong> — Gauges size and shape of different areas</li>
+<li><strong>Key documentation</strong> — Reads <code>README.md</code>, <code>CLAUDE.md</code> for project context</li>
+<li><strong>Hotspot identification</strong> — For feature-focused analysis, <code>Grep</code> finds feature-related code; for general analysis, identifies the most architecturally significant directories</li>
+</ul>
+<p>From these findings, the lead generates <strong>dynamic focus areas</strong> (typically 2-4, based on codebase size) with specific directories, starting files, search terms, and complexity estimates. Static fallback templates are available if reconnaissance fails.</p>
+<div class="admonition example">
+<p class="admonition-title">Dynamic Focus Area Example</p>
+<div class="highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gu">#### Focus Area 1: API layer in src/api/</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="k">-</span><span class="w"> </span><span class="gs">**Directories:**</span> src/api/, src/middleware/
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="k">-</span><span class="w"> </span><span class="gs">**Starting files:**</span> src/api/routes.ts, src/api/auth.ts
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="k">-</span><span class="w"> </span><span class="gs">**Search patterns:**</span> &quot;router&quot;, &quot;middleware&quot;, &quot;authenticate&quot;
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="k">-</span><span class="w"> </span><span class="gs">**Complexity:**</span> Medium
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="k">-</span><span class="w"> </span><span class="gs">**Assigned to:**</span> explorer-1 (sonnet)
+</span></code></pre></div>
+</div>
+<h4 id="phase-2-review-approval">Phase 2: Review &amp; Approval<a class="headerlink" href="#phase-2-review-approval" title="Permanent link">&para;</a></h4>
+<p>The team plan is presented for user review. Approval behavior depends on how deep-analysis was invoked:</p>
+<table>
+<thead>
+<tr>
+<th>Invocation Mode</th>
+<th>Default Behavior</th>
+<th>Setting</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Direct (<code>/deep-analysis</code>)</td>
+<td>Requires approval</td>
+<td><code>direct-invocation-approval: true</code></td>
+</tr>
+<tr>
+<td>Loaded by another skill</td>
+<td>Auto-approved</td>
+<td><code>invocation-by-skill-approval: false</code></td>
+</tr>
+</tbody>
+</table>
+<p>When approval is required, the user can <strong>Approve</strong>, <strong>Modify</strong> (up to 3 cycles), or <strong>Regenerate</strong> (up to 2 cycles) the plan.</p>
+<h4 id="phase-3-team-assembly">Phase 3: Team Assembly<a class="headerlink" href="#phase-3-team-assembly" title="Permanent link">&para;</a></h4>
+<p>Using the approved plan, the lead:</p>
+<ol>
+<li>Creates a team via <code>TeamCreate</code> named <code>deep-analysis-{timestamp}</code></li>
+<li>Spawns <strong>N explorer agents</strong> (Sonnet) — one per focus area</li>
+<li>Spawns <strong>1 synthesizer agent</strong> (Opus)</li>
+<li>Creates tasks for each focus area and a blocked synthesis task</li>
+<li>Assigns exploration tasks with a <strong>status guard</strong> — tasks are only assigned if <code>status === pending</code> and <code>owner === empty</code>, preventing duplicate work</li>
+</ol>
+<h4 id="phase-4-focused-exploration">Phase 4: Focused Exploration<a class="headerlink" href="#phase-4-focused-exploration" title="Permanent link">&para;</a></h4>
+<p>Explorers work independently in a hub-and-spoke topology:</p>
+<ul>
+<li>No cross-worker communication — each explorer handles its assigned focus area</li>
+<li>The lead monitors progress by checking task statuses</li>
+<li>Completed findings are checkpointed to <code>.claude/sessions/__da_live__/explorer-{N}-findings.md</code></li>
+<li>The lead waits for all exploration tasks to complete before proceeding</li>
+</ul>
+<div class="admonition warning">
+<p class="admonition-title">Duplicate Prevention</p>
+<p>The status-guard pattern is the primary mechanism for preventing duplicate work. The lead never re-assigns a task that is <code>completed</code> or <code>in_progress</code>. If a task is <code>pending</code> with an owner set, the explorer received the assignment but hasn't started — the lead waits without re-sending.</p>
+</div>
+<h4 id="phase-5-evaluation-synthesis">Phase 5: Evaluation &amp; Synthesis<a class="headerlink" href="#phase-5-evaluation-synthesis" title="Permanent link">&para;</a></h4>
+<p>The synthesizer (Opus) performs a multi-step process:</p>
+<ol>
+<li><strong>Structural completeness check</strong> — Verifies all explorers produced content. Failed explorations trigger follow-up tasks.</li>
+<li><strong>Merge findings</strong> — Deduplicates and reconciles reports across explorers</li>
+<li><strong>Deep investigation</strong> — Uses Bash for git history, dependency trees, and static analysis</li>
+<li><strong>Follow-up questions</strong> — Messages explorers to resolve conflicts or fill gaps</li>
+<li><strong>Completeness evaluation</strong> — Assesses confidence and notes open questions</li>
+</ol>
+<h4 id="phase-6-completion-cleanup">Phase 6: Completion + Cleanup<a class="headerlink" href="#phase-6-completion-cleanup" title="Permanent link">&para;</a></h4>
+<ol>
+<li>Writes the exploration cache (for future reuse within the TTL window)</li>
+<li>Presents results to the user (standalone) or returns to the calling skill</li>
+<li>Sends shutdown requests to all agents</li>
+<li>Archives the session directory and deletes the team</li>
+</ol>
+<hr />
+<h3 id="codebase-analysis-structured-analysis-wrapper"><code>/codebase-analysis</code> — Structured Analysis Wrapper<a class="headerlink" href="#codebase-analysis-structured-analysis-wrapper" title="Permanent link">&para;</a></h3>
+<div class="admonition abstract">
+<p class="admonition-title">Quick Reference</p>
+<ul>
+<li><strong>Invocable:</strong> <code>/codebase-analysis &lt;analysis-context or feature-description&gt;</code></li>
+<li><strong>Phases:</strong> 3 (Deep Analysis, Reporting, Post-Analysis Actions)</li>
+<li><strong>Source:</strong> <code>claude/core-tools/skills/codebase-analysis/SKILL.md</code></li>
+</ul>
+</div>
+<p>Codebase-analysis wraps deep-analysis with structured reporting and interactive post-analysis actions. It is the primary user-facing entry point for codebase understanding.</p>
+<h4 id="workflow">Workflow<a class="headerlink" href="#workflow" title="Permanent link">&para;</a></h4>
+<pre class="mermaid"><code>flowchart LR
+    P1[Phase 1&lt;br/&gt;Deep Analysis] --&gt; P2[Phase 2&lt;br/&gt;Reporting]
+    P2 --&gt; P3[Phase 3&lt;br/&gt;Post-Analysis Actions]
+
+    style P1 fill:#7c3aed,color:#fff
+    style P2 fill:#6366f1,color:#fff
+    style P3 fill:#06b6d4,color:#fff</code></pre>
+<p><strong>Phase 1: Deep Analysis</strong> — Loads and executes the deep-analysis skill. Since it's skill-invoked, the team plan is auto-approved by default and cache hits are auto-accepted.</p>
+<p><strong>Phase 2: Reporting</strong> — Structures the synthesis into a report with these sections:</p>
+<ul>
+<li>Executive Summary</li>
+<li>Architecture Overview</li>
+<li>Critical Files (5-10 most important)</li>
+<li>Patterns &amp; Conventions</li>
+<li>Relationship Map</li>
+<li>Challenges &amp; Risks</li>
+<li>Recommendations</li>
+</ul>
+<p><strong>Phase 3: Post-Analysis Actions</strong> — Presents an interactive menu (multi-select) of follow-up actions:</p>
+<table>
+<thead>
+<tr>
+<th>Action</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Save report as Markdown</td>
+<td>Writes the full report to a file</td>
+</tr>
+<tr>
+<td>Update README.md</td>
+<td>Adds architecture/structure insights</td>
+</tr>
+<tr>
+<td>Update CLAUDE.md</td>
+<td>Adds patterns/conventions for AI context</td>
+</tr>
+<tr>
+<td>Keep condensed summary in memory</td>
+<td>Retains a quick reference in conversation</td>
+</tr>
+<tr>
+<td>Address actionable insights</td>
+<td>Fix challenges and implement recommendations interactively</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">Action Ordering</p>
+<p>"Address actionable insights" always runs last, since code changes could invalidate analysis if documentation is generated afterward. It is also the most interactive action.</p>
+</div>
+<hr />
+<h3 id="language-patterns-language-specific-best-practices"><code>language-patterns</code> — Language-Specific Best Practices<a class="headerlink" href="#language-patterns-language-specific-best-practices" title="Permanent link">&para;</a></h3>
+<div class="admonition info">
+<p class="admonition-title">Agent Skill</p>
+<p>This skill is <strong>not user-invocable</strong>. It is loaded by the <code>code-explorer</code> and <code>code-synthesizer</code> agents to inform their work.</p>
+</div>
+<p>Provides patterns and idioms for three languages/frameworks:</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:3"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">TypeScript</label><label for="__tabbed_1_2">Python</label><label for="__tabbed_1_3">React</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<ul>
+<li>Type safety (<code>unknown</code> over <code>any</code>, discriminated unions, type guards)</li>
+<li>Null handling (optional chaining, nullish coalescing)</li>
+<li>Async patterns (<code>async</code>/<code>await</code>, <code>Promise.all</code>, <code>Promise.allSettled</code>)</li>
+<li>Import organization (external, internal, relative)</li>
+</ul>
+</div>
+<div class="tabbed-block">
+<ul>
+<li>Type hints and dataclasses</li>
+<li>Pydantic validation</li>
+<li>Pythonic patterns (comprehensions, context managers, <code>pathlib</code>)</li>
+<li>Custom error hierarchies</li>
+</ul>
+</div>
+<div class="tabbed-block">
+<ul>
+<li>Functional components with hooks</li>
+<li>Custom hooks for logic reuse</li>
+<li>State management hierarchy (local, lifted, context, external store)</li>
+<li>Performance (memoization, lazy loading, error boundaries)</li>
+</ul>
+</div>
+</div>
+</div>
+<p><strong>Source:</strong> <code>claude/core-tools/skills/language-patterns/SKILL.md</code></p>
+<hr />
+<h3 id="project-conventions-convention-discovery-guide"><code>project-conventions</code> — Convention Discovery Guide<a class="headerlink" href="#project-conventions-convention-discovery-guide" title="Permanent link">&para;</a></h3>
+<div class="admonition info">
+<p class="admonition-title">Agent Skill</p>
+<p>This skill is <strong>not user-invocable</strong>. It is loaded by the <code>code-explorer</code> and <code>code-synthesizer</code> agents.</p>
+</div>
+<p>Guides agents through a structured process for discovering project-specific conventions:</p>
+<ol>
+<li><strong>Project Configuration</strong> — Reads <code>.eslintrc</code>, <code>.prettierrc</code>, <code>tsconfig.json</code>, <code>pyproject.toml</code>, <code>CONTRIBUTING.md</code>, etc.</li>
+<li><strong>Existing Code Patterns</strong> — Studies file organization, naming patterns, and import styles from the actual codebase</li>
+<li><strong>Similar Features</strong> — Finds features analogous to the analysis target and studies their implementation</li>
+</ol>
+<p>The skill also provides a <strong>Convention Application Checklist</strong> covering code style, structure, patterns, testing, and documentation — ensuring agents match the project's existing practices rather than imposing generic standards.</p>
+<p><strong>Source:</strong> <code>claude/core-tools/skills/project-conventions/SKILL.md</code></p>
+<hr />
+<h2 id="agents">Agents<a class="headerlink" href="#agents" title="Permanent link">&para;</a></h2>
+<h3 id="code-explorer-sonnet">code-explorer (Sonnet)<a class="headerlink" href="#code-explorer-sonnet" title="Permanent link">&para;</a></h3>
+<p>The exploration workhorse of the deep-analysis team. Each instance is assigned a single focus area and works independently.</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Model</strong></td>
+<td>Sonnet</td>
+</tr>
+<tr>
+<td><strong>Tools</strong></td>
+<td>Read, Glob, Grep, Bash, SendMessage, TaskUpdate, TaskGet, TaskList</td>
+</tr>
+<tr>
+<td><strong>Loaded Skills</strong></td>
+<td><code>project-conventions</code>, <code>language-patterns</code></td>
+</tr>
+<tr>
+<td><strong>Source</strong></td>
+<td><code>claude/core-tools/agents/code-explorer.md</code></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition warning">
+<p class="admonition-title">Read-Only by Design</p>
+<p>Explorers use Read, Glob, Grep, and Bash for investigation — they do not have Write or Edit access. This enforces separation of concerns: explorers observe, they do not modify.</p>
+</div>
+<p><strong>Exploration strategies:</strong></p>
+<ol>
+<li><strong>Start from entry points</strong> — Routes, CLI commands, UI components, then trace execution paths</li>
+<li><strong>Follow the data</strong> — Models, schemas, validation, transformation, persistence</li>
+<li><strong>Find similar features</strong> — Search for analogous implementations to understand patterns</li>
+<li><strong>Map dependencies</strong> — Shared utilities, configuration, external dependencies</li>
+</ol>
+<p><strong>Output format:</strong> Structured markdown with Key Files table, Code Patterns, Important Functions/Classes, Integration Points, Potential Challenges, and Recommendations.</p>
+<p><strong>Team communication:</strong></p>
+<ul>
+<li>Acknowledges task assignments immediately</li>
+<li>Prevents duplicate work by checking task status before re-exploring</li>
+<li>Responds to follow-up questions from the synthesizer with specific file paths, function names, and line numbers</li>
+</ul>
+<hr />
+<h3 id="code-synthesizer-opus">code-synthesizer (Opus)<a class="headerlink" href="#code-synthesizer-opus" title="Permanent link">&para;</a></h3>
+<p>The analytical brain of the deep-analysis team. Merges findings from all explorers into a unified analysis with deep investigation capabilities.</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Model</strong></td>
+<td>Opus</td>
+</tr>
+<tr>
+<td><strong>Tools</strong></td>
+<td>Read, Glob, Grep, Bash, SendMessage, TaskUpdate, TaskGet, TaskList</td>
+</tr>
+<tr>
+<td><strong>Loaded Skills</strong></td>
+<td><code>project-conventions</code>, <code>language-patterns</code></td>
+</tr>
+<tr>
+<td><strong>Source</strong></td>
+<td><code>claude/core-tools/agents/code-synthesizer.md</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Synthesis process (8 steps):</strong></p>
+<ol>
+<li><strong>Merge findings</strong> — Combine and deduplicate across all explorer reports</li>
+<li><strong>Identify conflicts and gaps</strong> — Flag disagreements, thin coverage, missing connections</li>
+<li><strong>Read critical files</strong> — Verify by reading high-relevance files directly</li>
+<li><strong>Deep investigation</strong> — Use Bash for git history, dependency trees, static analysis</li>
+<li><strong>Map relationships</strong> — Trace imports, calls, data flow between components</li>
+<li><strong>Identify patterns</strong> — Catalog conventions, shared abstractions, deviations</li>
+<li><strong>Assess challenges</strong> — Technical risks, coupling hotspots, test coverage gaps</li>
+<li><strong>Evaluate completeness</strong> — Confirm all critical areas are covered, note confidence levels</li>
+</ol>
+<p><strong>Deep investigation capabilities (via Bash):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Investigation Type</th>
+<th>Example Commands</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Git history</td>
+<td><code>git blame</code>, <code>git log --stat</code>, <code>git diff branch..HEAD</code></td>
+</tr>
+<tr>
+<td>Dependency trees</td>
+<td><code>npm ls</code>, <code>pip show</code>, <code>cargo tree</code></td>
+</tr>
+<tr>
+<td>Static analysis</td>
+<td>Linters, type checkers, build config inspection</td>
+</tr>
+<tr>
+<td>Cross-cutting concerns</td>
+<td>Tracing patterns across 3+ modules</td>
+</tr>
+<tr>
+<td>Security audit</td>
+<td>Auth flows, secret handling, common vulnerabilities</td>
+</tr>
+<tr>
+<td>Performance</td>
+<td>N+1 queries, hot paths, bundle sizes</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition tip">
+<p class="admonition-title">Interactive Synthesis</p>
+<p>Unlike a passive aggregator, the synthesizer can message explorers with targeted follow-up questions to resolve conflicts. If an explorer is unresponsive, the synthesizer investigates directly rather than blocking.</p>
+</div>
+<hr />
+<h2 id="hub-and-spoke-coordination-pattern">Hub-and-Spoke Coordination Pattern<a class="headerlink" href="#hub-and-spoke-coordination-pattern" title="Permanent link">&para;</a></h2>
+<p>The deep-analysis team uses a hub-and-spoke topology — not a mesh. This is a deliberate architectural choice.</p>
+<pre class="mermaid"><code>graph TD
+    Lead[Lead&lt;br/&gt;&lt;i&gt;Plans &amp; coordinates&lt;/i&gt;]
+    E1[Explorer 1&lt;br/&gt;&lt;i&gt;Sonnet&lt;/i&gt;]
+    E2[Explorer 2&lt;br/&gt;&lt;i&gt;Sonnet&lt;/i&gt;]
+    E3[Explorer N&lt;br/&gt;&lt;i&gt;Sonnet&lt;/i&gt;]
+    Syn[Synthesizer&lt;br/&gt;&lt;i&gt;Opus&lt;/i&gt;]
+
+    Lead --&gt;|assigns| E1
+    Lead --&gt;|assigns| E2
+    Lead --&gt;|assigns| E3
+    Lead --&gt;|assigns| Syn
+
+    E1 --&gt;|findings| Lead
+    E2 --&gt;|findings| Lead
+    E3 --&gt;|findings| Lead
+
+    Syn -.-&gt;|follow-up| E1
+    Syn -.-&gt;|follow-up| E2
+    Syn -.-&gt;|follow-up| E3
+    Syn --&gt;|synthesis| Lead
+
+    style Lead fill:#7c3aed,color:#fff,stroke:#5b21b6
+    style E1 fill:#6366f1,color:#fff,stroke:#4f46e5
+    style E2 fill:#6366f1,color:#fff,stroke:#4f46e5
+    style E3 fill:#6366f1,color:#fff,stroke:#4f46e5
+    style Syn fill:#f59e0b,color:#fff,stroke:#d97706</code></pre>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Communicates With</th>
+<th>Never Communicates With</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Lead</td>
+<td>All agents</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Explorer</td>
+<td>Lead, Synthesizer (when asked)</td>
+<td>Other explorers</td>
+</tr>
+<tr>
+<td>Synthesizer</td>
+<td>Lead, any explorer (follow-ups)</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Why hub-and-spoke?</strong></p>
+<ul>
+<li><strong>Predictability</strong> — No emergent cross-worker conversations that could diverge</li>
+<li><strong>Efficiency</strong> — Explorers focus purely on their assigned area without coordination overhead</li>
+<li><strong>Fault isolation</strong> — One explorer failing doesn't cascade to others</li>
+<li><strong>Duplicate prevention</strong> — The lead is the single source of truth for task assignment</li>
+</ul>
+<hr />
+<h2 id="hooks">Hooks<a class="headerlink" href="#hooks" title="Permanent link">&para;</a></h2>
+<p>Core Tools includes one lifecycle hook that auto-approves file operations targeting deep-analysis session directories:</p>
+<div class="highlight"><span class="filename">claude/core-tools/hooks/auto-approve-da-session.sh</span><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Auto-approves Write/Edit/Bash operations targeting:</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="c1">#   .claude/sessions/__da_live__/*         (active session)</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="c1">#   .claude/sessions/exploration-cache/*   (cached results)</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1">#   .claude/sessions/da-*/*               (archived sessions)</span>
+</span></code></pre></div>
+<p>This hook is registered in <code>claude/core-tools/hooks/hooks.json</code> as a <code>PreToolUse</code> hook matching <code>Write|Edit|Bash</code> tools. It enables autonomous session management without prompting the user for every checkpoint write or cache update.</p>
+<div class="admonition note">
+<p class="admonition-title">Safety Design</p>
+<p>The hook never exits non-zero. If it encounters an unexpected error, it exits cleanly with no output (the "no opinion" response), allowing the normal permission prompt to appear. Operations outside session directories are always passed through to the standard permission flow.</p>
+</div>
+<hr />
+<h2 id="cross-plugin-dependency-map">Cross-Plugin Dependency Map<a class="headerlink" href="#cross-plugin-dependency-map" title="Permanent link">&para;</a></h2>
+<p>Deep-analysis is the keystone skill — the most-composed building block in Agent Alchemy. Understanding how it integrates with other plugins is essential for understanding the platform.</p>
+<table>
+<thead>
+<tr>
+<th>Consumer Skill</th>
+<th>Plugin</th>
+<th>How It Uses Deep-Analysis</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>codebase-analysis</code></td>
+<td>core-tools</td>
+<td>Wraps it with reporting and post-analysis actions</td>
+</tr>
+<tr>
+<td><code>feature-dev</code></td>
+<td>dev-tools</td>
+<td>Loads in Phase 2 for codebase exploration before architecture planning</td>
+</tr>
+<tr>
+<td><code>docs-manager</code></td>
+<td>dev-tools</td>
+<td>Loads for codebase understanding before generating documentation</td>
+</tr>
+<tr>
+<td><code>create-spec</code></td>
+<td>sdd-tools</td>
+<td>Optionally loads for "new feature" type specs that need codebase context</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Cross-plugin reference convention:</strong></p>
+<p>Skills reference deep-analysis using the relative path pattern:</p>
+<div class="highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>${CLAUDE_PLUGIN_ROOT}/../core-tools/skills/deep-analysis/SKILL.md
+</span></code></pre></div>
+<p>Same-plugin references (like <code>codebase-analysis</code> loading <code>deep-analysis</code>) use:</p>
+<div class="highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>${CLAUDE_PLUGIN_ROOT}/skills/deep-analysis/SKILL.md
+</span></code></pre></div>
+<div class="admonition danger">
+<p class="admonition-title">Never Use Marketplace Names in Paths</p>
+<p>Path references always use the short source directory name (<code>core-tools</code>, <code>dev-tools</code>, <code>sdd-tools</code>), never the full marketplace name (<code>agent-alchemy-core-tools</code>).</p>
+</div>
+<hr />
+<h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">&para;</a></h2>
+<p>All deep-analysis settings are stored in <code>.claude/agent-alchemy.local.md</code> (not committed to version control). Settings are read at the start of every deep-analysis run.</p>
+<h3 id="settings-reference">Settings Reference<a class="headerlink" href="#settings-reference" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>direct-invocation-approval</code></td>
+<td><code>true</code></td>
+<td>Require user approval of the team plan when <code>/deep-analysis</code> is invoked directly</td>
+</tr>
+<tr>
+<td><code>invocation-by-skill-approval</code></td>
+<td><code>false</code></td>
+<td>Require approval when deep-analysis is loaded by another skill (e.g., <code>feature-dev</code>)</td>
+</tr>
+<tr>
+<td><code>cache-ttl-hours</code></td>
+<td><code>24</code></td>
+<td>Hours before exploration cache expires. Set to <code>0</code> to disable caching entirely</td>
+</tr>
+<tr>
+<td><code>enable-checkpointing</code></td>
+<td><code>true</code></td>
+<td>Write session checkpoints at phase boundaries for crash recovery</td>
+</tr>
+<tr>
+<td><code>enable-progress-indicators</code></td>
+<td><code>true</code></td>
+<td>Display <code>[Phase N/6]</code> progress messages during execution</td>
+</tr>
+</tbody>
+</table>
+<h3 id="session-recovery">Session Recovery<a class="headerlink" href="#session-recovery" title="Permanent link">&para;</a></h3>
+<p>When checkpointing is enabled and a run is interrupted, the next invocation detects the incomplete session and offers to resume:</p>
+<table>
+<thead>
+<tr>
+<th>Interrupted At</th>
+<th>Recovery Strategy</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Phase 1</td>
+<td>Restart from Phase 1 (reconnaissance is fast, ~1-2 min)</td>
+</tr>
+<tr>
+<td>Phase 2</td>
+<td>Load saved <code>team_plan.md</code>, re-present for approval</td>
+</tr>
+<tr>
+<td>Phase 3</td>
+<td>Load approved plan, restart team assembly</td>
+</tr>
+<tr>
+<td>Phase 4</td>
+<td>Load completed explorer findings, only re-run missing explorers</td>
+</tr>
+<tr>
+<td>Phase 5</td>
+<td>Load all explorer findings, spawn fresh synthesizer</td>
+</tr>
+<tr>
+<td>Phase 6</td>
+<td>Load <code>synthesis.md</code>, skip to present results and cleanup</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition tip">
+<p class="admonition-title">Disabling Session Features</p>
+<p>For lightweight runs where persistence overhead isn't wanted, set both <code>cache-ttl-hours: 0</code> and <code>enable-checkpointing: false</code>. Phase 0 will be skipped entirely.</p>
+</div>
+<hr />
+<h2 id="error-handling">Error Handling<a class="headerlink" href="#error-handling" title="Permanent link">&para;</a></h2>
+<p>Deep-analysis includes structured error handling at every phase:</p>
+<table>
+<thead>
+<tr>
+<th>Failure</th>
+<th>Response</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Settings file malformed</td>
+<td>Warn user, proceed with defaults</td>
+</tr>
+<tr>
+<td>Reconnaissance fails</td>
+<td>Fall back to static focus area templates</td>
+</tr>
+<tr>
+<td>Max approval cycles exhausted</td>
+<td>Offer "Approve current" or "Abort"</td>
+</tr>
+<tr>
+<td>Single worker fails</td>
+<td>Create follow-up task for the missed area</td>
+</tr>
+<tr>
+<td>Two workers fail</td>
+<td>Attempt follow-ups; if those fail, synthesize with partial results</td>
+</tr>
+<tr>
+<td>All workers fail</td>
+<td>Inform user, offer retry or abort</td>
+</tr>
+<tr>
+<td>Synthesizer fails</td>
+<td>Present raw exploration results directly</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="directory-structure">Directory Structure<a class="headerlink" href="#directory-structure" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>claude/core-tools/
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>├── agents/
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>│   ├── code-explorer.md              # Sonnet — exploration worker
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>│   └── code-synthesizer.md           # Opus — synthesis agent
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>├── hooks/
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>│   ├── hooks.json                    # Hook registration
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>│   └── auto-approve-da-session.sh    # Auto-approve session file ops
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>├── skills/
+</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>│   ├── deep-analysis/
+</span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>│   │   └── SKILL.md                  # Keystone skill (521 lines)
+</span><span id="__span-4-11"><a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>│   ├── codebase-analysis/
+</span><span id="__span-4-12"><a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>│   │   ├── SKILL.md                  # 3-phase analysis wrapper
+</span><span id="__span-4-13"><a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>│   │   └── references/
+</span><span id="__span-4-14"><a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>│   │       ├── report-template.md    # Structured report format
+</span><span id="__span-4-15"><a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>│   │       └── actionable-insights-template.md
+</span><span id="__span-4-16"><a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>│   ├── language-patterns/
+</span><span id="__span-4-17"><a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>│   │   └── SKILL.md                  # TS/Python/React patterns
+</span><span id="__span-4-18"><a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>│   └── project-conventions/
+</span><span id="__span-4-19"><a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>│       └── SKILL.md                  # Convention discovery guide
+</span><span id="__span-4-20"><a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>└── README.md
+</span></code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.tabs.link"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

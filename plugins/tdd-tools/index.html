@@ -1,0 +1,2597 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A plugin suite and developer toolkit that extends Claude Code into a structured development platform">
+      
+      
+      
+      
+        <link rel="prev" href="../sdd-tools/">
+      
+      
+        <link rel="next" href="../git-tools/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>TDD Tools - Agent Alchemy</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="cyan">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#tdd-tools" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Agent Alchemy" class="md-header__button md-logo" aria-label="Agent Alchemy" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Agent Alchemy
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              TDD Tools
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="cyan"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="cyan"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/sequenzia/agent-alchemy" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    sequenzia/agent-alchemy
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../getting-started/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Getting Started
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../architecture/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
+          
+  
+  
+  Plugins
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../task-manager/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Task Manager
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../vscode-extension/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  VS Code Extension
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../configuration/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Configuration
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../contributing/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Contributing
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Agent Alchemy" class="md-nav__button md-logo" aria-label="Agent Alchemy" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Agent Alchemy
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/sequenzia/agent-alchemy" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    sequenzia/agent-alchemy
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plugins
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Plugins
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Core Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dev Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sdd-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SDD Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    TDD Tools
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    TDD Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#philosophy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Philosophy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#plugin-inventory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Plugin Inventory
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tdd-cycle-tdd-cycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TDD Cycle (/tdd-cycle)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="TDD Cycle (/tdd-cycle)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#workflow-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Workflow Overview
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase Details
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase Details">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-1-parse-input" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 1: Parse Input
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-2-understand" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 2: Understand
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-3-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 3: Plan
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-4-red" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 4: RED
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-5-green" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 5: GREEN
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-6-refactor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 6: REFACTOR
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-7-report" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 7: Report
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#integration-modes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Integration Modes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#test-generation-generate-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test Generation (/generate-tests)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Test Generation (/generate-tests)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#modes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#six-phase-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Six-Phase Workflow
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#coverage-analysis-analyze-coverage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Coverage Analysis (/analyze-coverage)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Coverage Analysis (/analyze-coverage)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#six-phase-workflow_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Six-Phase Workflow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gap-priority-levels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gap Priority Levels
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#spec-to-coverage-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Spec-to-Coverage Mapping
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#agents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Agents
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Agents">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tdd-executor-opus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        tdd-executor (Opus)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-writer-sonnet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        test-writer (Sonnet)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-reviewer-opus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        test-reviewer (Opus)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#supported-frameworks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Supported Frameworks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Supported Frameworks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#detection-chain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Detection Chain
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#framework-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Framework Details
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sdd-pipeline-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SDD Pipeline Integration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="SDD Pipeline Integration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#task-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task Flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-tdd-tasks-sdd-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        /create-tdd-tasks (sdd-tools)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#execute-tdd-tasks-sdd-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        /execute-tdd-tasks (sdd-tools)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#settings-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Settings Reference
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#setting-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Setting Details
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#strictness-levels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Strictness Levels
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reference-materials" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reference Materials
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../git-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Git Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../task-manager/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Task Manager
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../vscode-extension/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    VS Code Extension
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#philosophy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Philosophy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#plugin-inventory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Plugin Inventory
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tdd-cycle-tdd-cycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TDD Cycle (/tdd-cycle)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="TDD Cycle (/tdd-cycle)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#workflow-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Workflow Overview
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase Details
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase Details">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-1-parse-input" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 1: Parse Input
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-2-understand" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 2: Understand
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-3-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 3: Plan
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-4-red" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 4: RED
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-5-green" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 5: GREEN
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-6-refactor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 6: REFACTOR
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-7-report" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 7: Report
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#integration-modes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Integration Modes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#test-generation-generate-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test Generation (/generate-tests)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Test Generation (/generate-tests)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#modes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#six-phase-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Six-Phase Workflow
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#coverage-analysis-analyze-coverage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Coverage Analysis (/analyze-coverage)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Coverage Analysis (/analyze-coverage)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#six-phase-workflow_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Six-Phase Workflow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gap-priority-levels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gap Priority Levels
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#spec-to-coverage-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Spec-to-Coverage Mapping
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#agents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Agents
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Agents">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tdd-executor-opus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        tdd-executor (Opus)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-writer-sonnet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        test-writer (Sonnet)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-reviewer-opus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        test-reviewer (Opus)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#supported-frameworks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Supported Frameworks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Supported Frameworks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#detection-chain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Detection Chain
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#framework-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Framework Details
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sdd-pipeline-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SDD Pipeline Integration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="SDD Pipeline Integration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#task-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task Flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-tdd-tasks-sdd-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        /create-tdd-tasks (sdd-tools)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#execute-tdd-tasks-sdd-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        /execute-tdd-tasks (sdd-tools)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#settings-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Settings Reference
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#setting-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Setting Details
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#strictness-levels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Strictness Levels
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reference-materials" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reference Materials
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="tdd-tools">TDD Tools<a class="headerlink" href="#tdd-tools" title="Permanent link">&para;</a></h1>
+<p>The TDD Tools plugin (<code>v0.1.0</code>) brings Test-Driven Development workflows to Agent Alchemy. It provides three skills and three agents that automate the RED-GREEN-REFACTOR cycle, generate behavior-driven tests, and analyze test coverage -- all with framework auto-detection and deep integration into the SDD pipeline.</p>
+<h2 id="philosophy">Philosophy<a class="headerlink" href="#philosophy" title="Permanent link">&para;</a></h2>
+<p>TDD Tools follows five core principles:</p>
+<ol>
+<li><strong>Tests before implementation</strong> -- Tests define what the code should do. Implementation follows from tests, never the reverse.</li>
+<li><strong>Minimal implementation</strong> -- Write only the code needed to make failing tests pass. No extra features, no premature optimization.</li>
+<li><strong>Behavior over implementation</strong> -- Test what code does (inputs, outputs, side effects), not how it does it internally.</li>
+<li><strong>Phase gate enforcement</strong> -- Each phase must complete and verify before the next begins. RED verification is mandatory. GREEN verification is mandatory.</li>
+<li><strong>Regression protection</strong> -- Existing tests must continue passing at every phase. Zero tolerance for regressions.</li>
+</ol>
+<h2 id="plugin-inventory">Plugin Inventory<a class="headerlink" href="#plugin-inventory" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Type</th>
+<th>Model</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>tdd-cycle</code></td>
+<td>Skill</td>
+<td>--</td>
+<td>Full 7-phase RED-GREEN-REFACTOR workflow</td>
+</tr>
+<tr>
+<td><code>generate-tests</code></td>
+<td>Skill</td>
+<td>--</td>
+<td>Test generation from criteria or existing code</td>
+</tr>
+<tr>
+<td><code>analyze-coverage</code></td>
+<td>Skill</td>
+<td>--</td>
+<td>Coverage analysis with gap identification</td>
+</tr>
+<tr>
+<td><code>tdd-executor</code></td>
+<td>Agent</td>
+<td>Opus</td>
+<td>Executes the 6-phase TDD cycle per task</td>
+</tr>
+<tr>
+<td><code>test-writer</code></td>
+<td>Agent</td>
+<td>Sonnet</td>
+<td>Generates test files (parallelizable)</td>
+</tr>
+<tr>
+<td><code>test-reviewer</code></td>
+<td>Agent</td>
+<td>Opus</td>
+<td>Evaluates test quality against a behavior-driven rubric</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="tdd-cycle-tdd-cycle">TDD Cycle (<code>/tdd-cycle</code>)<a class="headerlink" href="#tdd-cycle-tdd-cycle" title="Permanent link">&para;</a></h2>
+<p>The flagship skill. It drives the entire TDD lifecycle through 7 sequential phases, from understanding the feature to delivering a final compliance report.</p>
+<h3 id="workflow-overview">Workflow Overview<a class="headerlink" href="#workflow-overview" title="Permanent link">&para;</a></h3>
+<pre class="mermaid"><code>flowchart TD
+    A["Phase 1: Parse Input"] --&gt; B["Phase 2: Understand"]
+    B --&gt; C["Phase 3: Plan"]
+    C --&gt; D{User Confirms?}
+    D --&gt;|Modify| C
+    D --&gt;|Cancel| Z["Workflow Cancelled"]
+    D --&gt;|Proceed| E["Phase 4: RED"]
+    E --&gt; F["Phase 5: GREEN"]
+    F --&gt; G["Phase 6: REFACTOR"]
+    G --&gt; H["Phase 7: Report"]
+
+    style E fill:#d32f2f,color:#fff
+    style F fill:#388e3c,color:#fff
+    style G fill:#1565c0,color:#fff</code></pre>
+<div class="admonition info">
+<p class="admonition-title">Autonomous After Confirmation</p>
+<p>The user confirms the plan once in Phase 3. After that, Phases 4 through 7 run autonomously without interruption.</p>
+</div>
+<h3 id="phase-details">Phase Details<a class="headerlink" href="#phase-details" title="Permanent link">&para;</a></h3>
+<h4 id="phase-1-parse-input">Phase 1: Parse Input<a class="headerlink" href="#phase-1-parse-input" title="Permanent link">&para;</a></h4>
+<p>Determines the input type and resolves context. Supports three input modes:</p>
+<table>
+<thead>
+<tr>
+<th>Input Type</th>
+<th>Trigger</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Feature description</td>
+<td>Free-text or file path</td>
+<td><code>/tdd-cycle add user login with email validation</code></td>
+</tr>
+<tr>
+<td>Task ID</td>
+<td>Numeric ID with optional prefix</td>
+<td><code>/tdd-cycle #5</code> or <code>/tdd-cycle task-12</code></td>
+</tr>
+<tr>
+<td>Spec section</td>
+<td>Spec file path with section ref</td>
+<td><code>/tdd-cycle specs/SPEC-auth.md Section 5.1</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="phase-2-understand">Phase 2: Understand<a class="headerlink" href="#phase-2-understand" title="Permanent link">&para;</a></h4>
+<p>Loads project conventions, detects the test framework, and explores the relevant codebase. This phase also snapshots the existing test suite to establish a baseline (total tests, pass count, fail count) used for regression detection in later phases.</p>
+<p>Key actions:</p>
+<ul>
+<li>Reads <code>CLAUDE.md</code> and TDD settings from <code>.claude/agent-alchemy.local.md</code></li>
+<li>Loads cross-plugin skills (<code>language-patterns</code>, <code>project-conventions</code>)</li>
+<li>Runs framework auto-detection (see <a href="#supported-frameworks">Supported Frameworks</a>)</li>
+<li>Reads 2-3 existing test files to learn project conventions</li>
+<li>Runs the existing test suite to record a baseline</li>
+</ul>
+<h4 id="phase-3-plan">Phase 3: Plan<a class="headerlink" href="#phase-3-plan" title="Permanent link">&para;</a></h4>
+<p>Builds and presents a TDD plan covering feature scope, test cases (organized by Functional, Edge Cases, Error Handling), file locations, and implementation approach. The user confirms, modifies, or cancels via interactive prompt.</p>
+<h4 id="phase-4-red">Phase 4: RED<a class="headerlink" href="#phase-4-red" title="Permanent link">&para;</a></h4>
+<div class="admonition danger">
+<p class="admonition-title">RED Phase</p>
+<p>Write failing tests, then verify they all fail. No implementation code is written during this phase.</p>
+</div>
+<p>Tests are written from the planned requirements using the AAA pattern (Arrange-Act-Assert). After writing, the full test suite runs to confirm every new test fails with an appropriate error (<code>ImportError</code>, <code>AssertionError</code>, etc.).</p>
+<p>The strictness level controls what happens if tests pass unexpectedly:</p>
+<table>
+<thead>
+<tr>
+<th>Strictness</th>
+<th>If new tests pass</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>strict</code></td>
+<td>Any test passes</td>
+<td><strong>Abort</strong> the workflow</td>
+</tr>
+<tr>
+<td><code>normal</code></td>
+<td>Some tests pass</td>
+<td>Log warning, investigate, continue</td>
+</tr>
+<tr>
+<td><code>relaxed</code></td>
+<td>Any outcome</td>
+<td>Log results, continue</td>
+</tr>
+</tbody>
+</table>
+<h4 id="phase-5-green">Phase 5: GREEN<a class="headerlink" href="#phase-5-green" title="Permanent link">&para;</a></h4>
+<div class="admonition success">
+<p class="admonition-title">GREEN Phase</p>
+<p>Implement the minimal code to make all failing tests pass. Fix the implementation, never the tests.</p>
+</div>
+<p>Implementation follows dependency-aware order: data layer, service layer, API/interface layer, configuration. If tests still fail after 5 iterations, the workflow reports FAIL.</p>
+<p>Regressions (a previously-passing test now failing) take priority over making new tests pass.</p>
+<h4 id="phase-6-refactor">Phase 6: REFACTOR<a class="headerlink" href="#phase-6-refactor" title="Permanent link">&para;</a></h4>
+<div class="admonition info">
+<p class="admonition-title">REFACTOR Phase</p>
+<p>Clean up the implementation while keeping all tests green. Each refactoring change is individually verified.</p>
+</div>
+<p>Looks for code duplication, unclear naming, overly complex logic, and missing abstractions. If a refactoring change breaks a test, it is reverted immediately -- no attempt to fix both simultaneously.</p>
+<h4 id="phase-7-report">Phase 7: Report<a class="headerlink" href="#phase-7-report" title="Permanent link">&para;</a></h4>
+<p>Collects results from all phases, optionally runs coverage tools, and presents a final TDD compliance report:</p>
+<div class="highlight"><span class="filename">Example Report</span><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gu">## TDD Cycle Complete: User Authentication</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="gs">**Status**</span>: PASS
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="gs">**Strictness**</span>: normal
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="gu">### Phase Results</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>| Phase | Status | Details |
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>|-------|--------|---------|
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>| Understand | Complete | Framework: pytest, Baseline: 42 tests |
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>| RED | Verified | 8/8 new tests failed as expected |
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>| GREEN | Verified | 50/50 tests pass, 0 regressions |
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>| REFACTOR | Complete | Extracted 2 helpers, improved naming |
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="gu">### TDD Compliance</span>
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>
+</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="k">-</span><span class="w"> </span>RED verified: Yes
+</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="k">-</span><span class="w"> </span>GREEN verified: Yes
+</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="k">-</span><span class="w"> </span>Refactored: Yes
+</span></code></pre></div>
+<h3 id="integration-modes">Integration Modes<a class="headerlink" href="#integration-modes" title="Permanent link">&para;</a></h3>
+<p>The TDD cycle supports three operating modes:</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:3"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Standalone</label><label for="__tabbed_1_2">SDD Pipeline</label><label for="__tabbed_1_3">Retrofit</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<p>Invoked directly with a feature description:</p>
+<div class="highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>/tdd-cycle add user login with email and password validation
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>/tdd-cycle src/auth/login.py
+</span></code></pre></div>
+</div>
+<div class="tabbed-block">
+<p>Receives a task ID from <code>execute-tdd-tasks</code> or the user:</p>
+<div class="highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>/tdd-cycle #5
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>/tdd-cycle task-12
+</span></code></pre></div>
+<p>Loads task details via <code>TaskGet</code>, extracts acceptance criteria, and updates task status on completion.</p>
+</div>
+<div class="tabbed-block">
+<p>Adds tests to existing untested code:</p>
+<div class="highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>/tdd-cycle --retrofit src/utils/helpers.py
+</span></code></pre></div>
+<p>Skips RED phase (implementation already exists), generates characterization tests, and uses relaxed strictness automatically.</p>
+</div>
+</div>
+</div>
+<hr />
+<h2 id="test-generation-generate-tests">Test Generation (<code>/generate-tests</code>)<a class="headerlink" href="#test-generation-generate-tests" title="Permanent link">&para;</a></h2>
+<p>Generates high-quality, behavior-driven test files without running the full TDD cycle. Operates in two modes and spawns <code>test-writer</code> agents in parallel for multi-file generation.</p>
+<h3 id="modes">Modes<a class="headerlink" href="#modes" title="Permanent link">&para;</a></h3>
+<div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Criteria-Driven</label><label for="__tabbed_2_2">Code-Analysis</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<p>Generates tests from acceptance criteria in specs or tasks.</p>
+<div class="highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>/generate-tests specs/SPEC-auth.md
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>/generate-tests #5
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>/generate-tests specs/SPEC-auth.md Section 5.1
+</span></code></pre></div>
+<p><strong>Process:</strong></p>
+<ol>
+<li>Parse acceptance criteria into categories (Functional, Edge Cases, Error Handling, Performance)</li>
+<li>Map each criterion to one or more test cases</li>
+<li>Spawn <code>test-writer</code> agents (one per feature) in parallel</li>
+<li>Validate syntax and convention compliance</li>
+<li>Report generated files and criteria coverage</li>
+</ol>
+</div>
+<div class="tabbed-block">
+<p>Generates characterization tests from existing source files.</p>
+<div class="highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>/generate-tests src/utils.py
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>/generate-tests src/services/
+</span></code></pre></div>
+<p><strong>Process:</strong></p>
+<ol>
+<li>Analyze source files for public functions, classes, and methods</li>
+<li>Generate tests for the public interface (inputs, outputs, side effects)</li>
+<li>Identify untested edge cases (boundary conditions, error paths)</li>
+<li>Preserve existing test files (writes supplementary files with <code>_additional</code> suffix)</li>
+</ol>
+</div>
+</div>
+</div>
+<h3 id="six-phase-workflow">Six-Phase Workflow<a class="headerlink" href="#six-phase-workflow" title="Permanent link">&para;</a></h3>
+<pre class="mermaid"><code>flowchart LR
+    A["Parse Input"] --&gt; B["Detect Framework"]
+    B --&gt; C["Load References"]
+    C --&gt; D["Generate Tests"]
+    D --&gt; E["Validate"]
+    E --&gt; F["Report"]</code></pre>
+<ol>
+<li><strong>Parse Input</strong> -- Determine mode (criteria-driven or code-analysis) and resolve paths</li>
+<li><strong>Detect Framework</strong> -- Auto-detect pytest, Jest, or Vitest from project configuration</li>
+<li><strong>Load References</strong> -- Load test patterns, framework templates, and project conventions</li>
+<li><strong>Generate Tests</strong> -- Spawn <code>test-writer</code> agents to produce test files</li>
+<li><strong>Validate</strong> -- Syntax check each generated file, verify convention compliance</li>
+<li><strong>Report</strong> -- Present summary with file list, test counts, criteria coverage, and next steps</li>
+</ol>
+<div class="admonition tip">
+<p class="admonition-title">RED State Awareness</p>
+<p>If no implementation exists, generated tests are flagged as being in RED state -- they will fail when run. If implementation already exists, a warning is displayed noting that tests may pass immediately.</p>
+</div>
+<hr />
+<h2 id="coverage-analysis-analyze-coverage">Coverage Analysis (<code>/analyze-coverage</code>)<a class="headerlink" href="#coverage-analysis-analyze-coverage" title="Permanent link">&para;</a></h2>
+<p>Runs real coverage tools, parses results into structured reports, and identifies gaps with actionable test suggestions. Optionally maps coverage against spec acceptance criteria.</p>
+<h3 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>/analyze-coverage                              # Current project, default threshold
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>/analyze-coverage /path/to/project             # Specific project path
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>/analyze-coverage --spec specs/SPEC-auth.md    # Map against spec criteria
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>/analyze-coverage --threshold 90               # Override coverage threshold
+</span></code></pre></div>
+<h3 id="six-phase-workflow_1">Six-Phase Workflow<a class="headerlink" href="#six-phase-workflow_1" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Detect Environment</strong> -- Auto-detect project type, test runner, coverage tool, and source package</li>
+<li><strong>Run Coverage</strong> -- Execute the appropriate coverage command (<code>pytest --cov</code>, <code>npx jest --coverage</code>, etc.)</li>
+<li><strong>Parse Results</strong> -- Parse JSON coverage reports into structured per-file data</li>
+<li><strong>Analyze Gaps</strong> -- Identify uncovered files, functions, and branches; optionally map against spec criteria</li>
+<li><strong>Generate Report</strong> -- Produce a structured markdown report with gap priorities (P0--P3)</li>
+<li><strong>Suggest Next Steps</strong> -- Recommend specific <code>/generate-tests</code> and <code>/tdd-cycle</code> commands</li>
+</ol>
+<h3 id="gap-priority-levels">Gap Priority Levels<a class="headerlink" href="#gap-priority-levels" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Priority</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>P0</td>
+<td>Completely uncovered files (0%)</td>
+<td>New module with no tests</td>
+</tr>
+<tr>
+<td>P1</td>
+<td>Uncovered functions/methods</td>
+<td>Public API with zero execution</td>
+</tr>
+<tr>
+<td>P2</td>
+<td>Uncovered branches</td>
+<td>Partial coverage, untaken paths</td>
+</tr>
+<tr>
+<td>P3</td>
+<td>Files below threshold</td>
+<td>45% coverage vs 80% target</td>
+</tr>
+</tbody>
+</table>
+<h3 id="spec-to-coverage-mapping">Spec-to-Coverage Mapping<a class="headerlink" href="#spec-to-coverage-mapping" title="Permanent link">&para;</a></h3>
+<p>When <code>--spec</code> is provided, each acceptance criterion is mapped to source code locations and classified:</p>
+<ul>
+<li><strong>TESTED</strong> -- All mapped locations have coverage &gt; 0</li>
+<li><strong>PARTIAL</strong> -- Some mapped locations covered, others not</li>
+<li><strong>UNTESTED</strong> -- No coverage for mapped locations</li>
+</ul>
+<div class="admonition warning">
+<p class="admonition-title">Coverage Tool Required</p>
+<p>If the coverage tool is not installed, the skill provides the exact install command (<code>pip install pytest-cov</code> or <code>npm install -D @vitest/coverage-v8</code>) and stops. It does not attempt to estimate coverage.</p>
+</div>
+<hr />
+<h2 id="agents">Agents<a class="headerlink" href="#agents" title="Permanent link">&para;</a></h2>
+<h3 id="tdd-executor-opus">tdd-executor (Opus)<a class="headerlink" href="#tdd-executor-opus" title="Permanent link">&para;</a></h3>
+<p>The heavyweight agent that runs the complete 6-phase TDD workflow for a single task. It works autonomously without user interaction after being launched.</p>
+<pre class="mermaid"><code>flowchart LR
+    A["Understand"] --&gt; B["Write Tests"]
+    B --&gt; C["RED"]
+    C --&gt; D["Implement"]
+    D --&gt; E["GREEN"]
+    E --&gt; F["Complete"]
+
+    style C fill:#d32f2f,color:#fff
+    style E fill:#388e3c,color:#fff</code></pre>
+<p><strong>Key characteristics:</strong></p>
+<ul>
+<li>Model: <strong>Opus</strong> (high-reasoning tasks)</li>
+<li>Full tool access: Read, Write, Edit, Glob, Grep, Bash, TaskGet, TaskUpdate, TaskList</li>
+<li>Loads <code>language-patterns</code> and <code>project-conventions</code> skills for project awareness</li>
+<li>Writes per-task learnings to execution context for downstream tasks</li>
+<li>Reports structured results with per-phase status and TDD compliance metrics</li>
+<li>Supports retry with context from previous failure</li>
+</ul>
+<h3 id="test-writer-sonnet">test-writer (Sonnet)<a class="headerlink" href="#test-writer-sonnet" title="Permanent link">&para;</a></h3>
+<p>A test generation specialist spawned in parallel for multi-file test creation. Focused on producing a single, complete test file per invocation.</p>
+<p><strong>Key characteristics:</strong></p>
+<ul>
+<li>Model: <strong>Sonnet</strong> (parallelizable worker tasks)</li>
+<li>Tools: Read, Write, Edit, Glob, Grep, Bash</li>
+<li>Supports both criteria-driven and code-analysis modes</li>
+<li>Follows the AAA pattern (Arrange-Act-Assert)</li>
+<li>Flags RED state compliance -- warns if implementation already exists</li>
+<li>Loads <code>language-patterns</code> and <code>project-conventions</code> for consistency</li>
+</ul>
+<h3 id="test-reviewer-opus">test-reviewer (Opus)<a class="headerlink" href="#test-reviewer-opus" title="Permanent link">&para;</a></h3>
+<p>A read-only agent that evaluates test quality across four weighted dimensions. It produces confidence-scored findings with line references.</p>
+<p><strong>Key characteristics:</strong></p>
+<ul>
+<li>Model: <strong>Opus</strong> (nuanced quality evaluation)</li>
+<li>Tools: Read, Glob, Grep (read-only -- cannot modify files)</li>
+<li>Scores four dimensions with explicit weights:</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Dimension</th>
+<th>Weight</th>
+<th>Focus</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Meaningful Assertions</td>
+<td>35%</td>
+<td>Behavior verification over implementation details</td>
+</tr>
+<tr>
+<td>Edge Case Coverage</td>
+<td>25%</td>
+<td>Boundary conditions, error paths, unusual scenarios</td>
+</tr>
+<tr>
+<td>Test Independence</td>
+<td>20%</td>
+<td>Isolation, no shared mutable state, order independence</td>
+</tr>
+<tr>
+<td>Readability</td>
+<td>20%</td>
+<td>Clear names, AAA structure, consistent style</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>Overall score: weighted average (0--100)</li>
+<li>Only reports issues with confidence &gt;= 80 to avoid false positives</li>
+<li>Recognizes acceptable implementation-detail testing (security-critical algorithms, external service calls, protocol compliance)</li>
+</ul>
+<hr />
+<h2 id="supported-frameworks">Supported Frameworks<a class="headerlink" href="#supported-frameworks" title="Permanent link">&para;</a></h2>
+<p>TDD Tools auto-detects the test framework using a four-level detection chain:</p>
+<h3 id="detection-chain">Detection Chain<a class="headerlink" href="#detection-chain" title="Permanent link">&para;</a></h3>
+<pre class="mermaid"><code>flowchart TD
+    A["Priority 1: Config Files"] --&gt;|Not found| B["Priority 2: Existing Test Files"]
+    B --&gt;|Not found| C["Priority 3: Settings Fallback"]
+    C --&gt;|Not found| D["Priority 4: User Prompt"]
+
+    A --&gt;|Found| R["Framework Detected"]
+    B --&gt;|Found| R
+    C --&gt;|Found| R
+    D --&gt;|Selected| R</code></pre>
+<h3 id="framework-details">Framework Details<a class="headerlink" href="#framework-details" title="Permanent link">&para;</a></h3>
+<div class="tabbed-set tabbed-alternate" data-tabs="3:3"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><input id="__tabbed_3_3" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">pytest (Python)</label><label for="__tabbed_3_2">Jest (JavaScript/TypeScript)</label><label for="__tabbed_3_3">Vitest (JavaScript/TypeScript)</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<p><strong>Detection signals:</strong></p>
+<ul>
+<li><code>pyproject.toml</code> with <code>[tool.pytest.ini_options]</code></li>
+<li><code>setup.cfg</code> with <code>[tool:pytest]</code></li>
+<li><code>pytest.ini</code> or <code>conftest.py</code> present</li>
+<li><code>test_*.py</code> or <code>*_test.py</code> file patterns</li>
+</ul>
+<p><strong>Test conventions:</strong></p>
+<div class="highlight"><span class="filename">tests/test_user_registration.py</span><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">TestUserRegistration</span><span class="p">:</span>
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">test_register_creates_user_with_valid_email</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">db_session</span><span class="p">):</span>
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>        <span class="c1"># Arrange</span>
+</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>        <span class="n">email</span> <span class="o">=</span> <span class="s2">&quot;user@example.com&quot;</span>
+</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>        <span class="n">password</span> <span class="o">=</span> <span class="s2">&quot;secure-password-123&quot;</span>
+</span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>
+</span><span id="__span-7-9"><a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>        <span class="c1"># Act</span>
+</span><span id="__span-7-10"><a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>        <span class="n">user</span> <span class="o">=</span> <span class="n">register_user</span><span class="p">(</span><span class="n">email</span><span class="o">=</span><span class="n">email</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="n">password</span><span class="p">)</span>
+</span><span id="__span-7-11"><a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>
+</span><span id="__span-7-12"><a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>        <span class="c1"># Assert</span>
+</span><span id="__span-7-13"><a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>        <span class="k">assert</span> <span class="n">user</span><span class="o">.</span><span class="n">email</span> <span class="o">==</span> <span class="n">email</span>
+</span><span id="__span-7-14"><a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>        <span class="k">assert</span> <span class="n">user</span><span class="o">.</span><span class="n">id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+</span><span id="__span-7-15"><a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a>
+</span><span id="__span-7-16"><a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a>    <span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">parametrize</span><span class="p">(</span><span class="s2">&quot;invalid_email&quot;</span><span class="p">,</span> <span class="p">[</span>
+</span><span id="__span-7-17"><a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a>        <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;not-an-email&quot;</span><span class="p">,</span> <span class="s2">&quot;@missing-local&quot;</span><span class="p">,</span> <span class="s2">&quot;missing-domain@&quot;</span><span class="p">,</span>
+</span><span id="__span-7-18"><a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a>    <span class="p">])</span>
+</span><span id="__span-7-19"><a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">test_register_rejects_invalid_email_formats</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">invalid_email</span><span class="p">):</span>
+</span><span id="__span-7-20"><a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a>        <span class="k">with</span> <span class="n">pytest</span><span class="o">.</span><span class="n">raises</span><span class="p">(</span><span class="n">InvalidEmailError</span><span class="p">):</span>
+</span><span id="__span-7-21"><a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a>            <span class="n">register_user</span><span class="p">(</span><span class="n">email</span><span class="o">=</span><span class="n">invalid_email</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="s2">&quot;any-password&quot;</span><span class="p">)</span>
+</span></code></pre></div>
+<p><strong>Coverage command:</strong> <code>pytest --cov={package} --cov-report=term-missing --cov-report=json --cov-branch</code></p>
+</div>
+<div class="tabbed-block">
+<p><strong>Detection signals:</strong></p>
+<ul>
+<li><code>jest.config.*</code> exists</li>
+<li><code>package.json</code> with <code>jest</code> in dependencies/devDependencies</li>
+<li><code>package.json</code> with <code>"jest": {}</code> config section</li>
+</ul>
+<p><strong>Test conventions:</strong></p>
+<div class="highlight"><span class="filename">src/__tests__/user-registration.test.ts</span><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nx">describe</span><span class="p">(</span><span class="s2">&quot;UserRegistration&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span><span class="nx">describe</span><span class="p">(</span><span class="s2">&quot;register&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">    </span><span class="nx">it</span><span class="p">(</span><span class="s2">&quot;should create a user with a valid email&quot;</span><span class="p">,</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">      </span><span class="c1">// Arrange</span>
+</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">email</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;user@example.com&quot;</span><span class="p">;</span>
+</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">password</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;secure-password-123&quot;</span><span class="p">;</span>
+</span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>
+</span><span id="__span-8-8"><a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="w">      </span><span class="c1">// Act</span>
+</span><span id="__span-8-9"><a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">user</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">register</span><span class="p">({</span><span class="w"> </span><span class="nx">email</span><span class="p">,</span><span class="w"> </span><span class="nx">password</span><span class="w"> </span><span class="p">});</span>
+</span><span id="__span-8-10"><a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>
+</span><span id="__span-8-11"><a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="w">      </span><span class="c1">// Assert</span>
+</span><span id="__span-8-12"><a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="w">      </span><span class="nx">expect</span><span class="p">(</span><span class="nx">user</span><span class="p">.</span><span class="nx">email</span><span class="p">).</span><span class="nx">toBe</span><span class="p">(</span><span class="nx">email</span><span class="p">);</span>
+</span><span id="__span-8-13"><a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="w">      </span><span class="nx">expect</span><span class="p">(</span><span class="nx">user</span><span class="p">.</span><span class="nx">id</span><span class="p">).</span><span class="nx">toBeDefined</span><span class="p">();</span>
+</span><span id="__span-8-14"><a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a><span class="w">    </span><span class="p">});</span>
+</span><span id="__span-8-15"><a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a>
+</span><span id="__span-8-16"><a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a><span class="w">    </span><span class="nx">it</span><span class="p">.</span><span class="nx">each</span><span class="p">([</span><span class="s2">&quot;&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;not-an-email&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;@missing-local&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;missing-domain@&quot;</span><span class="p">])(</span>
+</span><span id="__span-8-17"><a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a><span class="w">      </span><span class="s2">&quot;should reject invalid email format: %s&quot;</span><span class="p">,</span>
+</span><span id="__span-8-18"><a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a><span class="w">      </span><span class="k">async</span><span class="w"> </span><span class="p">(</span><span class="nx">invalidEmail</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-8-19"><a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a><span class="w">        </span><span class="k">await</span><span class="w"> </span><span class="nx">expect</span><span class="p">(</span>
+</span><span id="__span-8-20"><a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a><span class="w">          </span><span class="nx">register</span><span class="p">({</span><span class="w"> </span><span class="nx">email</span><span class="o">:</span><span class="w"> </span><span class="kt">invalidEmail</span><span class="p">,</span><span class="w"> </span><span class="nx">password</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;any-password&quot;</span><span class="w"> </span><span class="p">})</span>
+</span><span id="__span-8-21"><a id="__codelineno-8-21" name="__codelineno-8-21" href="#__codelineno-8-21"></a><span class="w">        </span><span class="p">).</span><span class="nx">rejects</span><span class="p">.</span><span class="nx">toThrow</span><span class="p">(</span><span class="s2">&quot;Invalid email&quot;</span><span class="p">);</span>
+</span><span id="__span-8-22"><a id="__codelineno-8-22" name="__codelineno-8-22" href="#__codelineno-8-22"></a><span class="w">      </span><span class="p">}</span>
+</span><span id="__span-8-23"><a id="__codelineno-8-23" name="__codelineno-8-23" href="#__codelineno-8-23"></a><span class="w">    </span><span class="p">);</span>
+</span><span id="__span-8-24"><a id="__codelineno-8-24" name="__codelineno-8-24" href="#__codelineno-8-24"></a><span class="w">  </span><span class="p">});</span>
+</span><span id="__span-8-25"><a id="__codelineno-8-25" name="__codelineno-8-25" href="#__codelineno-8-25"></a><span class="p">});</span>
+</span></code></pre></div>
+<p><strong>Coverage command:</strong> <code>npx jest --coverage --coverageReporters=json --coverageReporters=text</code></p>
+</div>
+<div class="tabbed-block">
+<p><strong>Detection signals:</strong></p>
+<ul>
+<li><code>vitest.config.*</code> exists (takes priority over Jest)</li>
+<li><code>package.json</code> with <code>vitest</code> in dependencies/devDependencies</li>
+<li><code>*.test.ts</code> / <code>*.spec.ts</code> with <code>vitest</code> imports</li>
+</ul>
+<p><strong>Test conventions:</strong></p>
+<div class="highlight"><span class="filename">src/__tests__/user-registration.test.ts</span><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">describe</span><span class="p">,</span><span class="w"> </span><span class="nx">it</span><span class="p">,</span><span class="w"> </span><span class="nx">expect</span><span class="p">,</span><span class="w"> </span><span class="nx">vi</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;vitest&quot;</span><span class="p">;</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="nx">describe</span><span class="p">(</span><span class="s2">&quot;UserRegistration&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">  </span><span class="nx">describe</span><span class="p">(</span><span class="s2">&quot;register&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">    </span><span class="nx">it</span><span class="p">(</span><span class="s2">&quot;should create a user with a valid email&quot;</span><span class="p">,</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-9-6"><a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="w">      </span><span class="c1">// Arrange</span>
+</span><span id="__span-9-7"><a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">email</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;user@example.com&quot;</span><span class="p">;</span>
+</span><span id="__span-9-8"><a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">password</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;secure-password-123&quot;</span><span class="p">;</span>
+</span><span id="__span-9-9"><a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>
+</span><span id="__span-9-10"><a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="w">      </span><span class="c1">// Act</span>
+</span><span id="__span-9-11"><a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">user</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">register</span><span class="p">({</span><span class="w"> </span><span class="nx">email</span><span class="p">,</span><span class="w"> </span><span class="nx">password</span><span class="w"> </span><span class="p">});</span>
+</span><span id="__span-9-12"><a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>
+</span><span id="__span-9-13"><a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a><span class="w">      </span><span class="c1">// Assert</span>
+</span><span id="__span-9-14"><a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a><span class="w">      </span><span class="nx">expect</span><span class="p">(</span><span class="nx">user</span><span class="p">.</span><span class="nx">email</span><span class="p">).</span><span class="nx">toBe</span><span class="p">(</span><span class="nx">email</span><span class="p">);</span>
+</span><span id="__span-9-15"><a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a><span class="w">      </span><span class="nx">expect</span><span class="p">(</span><span class="nx">user</span><span class="p">.</span><span class="nx">id</span><span class="p">).</span><span class="nx">toBeDefined</span><span class="p">();</span>
+</span><span id="__span-9-16"><a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a><span class="w">    </span><span class="p">});</span>
+</span><span id="__span-9-17"><a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a><span class="w">  </span><span class="p">});</span>
+</span><span id="__span-9-18"><a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a><span class="p">});</span>
+</span></code></pre></div>
+<p><strong>Key difference from Jest:</strong> Explicit imports from <code>vitest</code>, <code>vi.fn()</code> and <code>vi.mock()</code> instead of <code>jest.fn()</code> and <code>jest.mock()</code>.</p>
+<p><strong>Coverage command:</strong> <code>npx vitest run --coverage --coverage.reporter=json --coverage.reporter=text</code></p>
+</div>
+</div>
+</div>
+<div class="admonition tip">
+<p class="admonition-title">Framework Override</p>
+<p>If auto-detection picks the wrong framework, override it in <code>.claude/agent-alchemy.local.md</code> with <code>tdd.framework: pytest | jest | vitest</code>.</p>
+</div>
+<hr />
+<h2 id="sdd-pipeline-integration">SDD Pipeline Integration<a class="headerlink" href="#sdd-pipeline-integration" title="Permanent link">&para;</a></h2>
+<p>TDD Tools integrates with the Spec-Driven Development pipeline through two skills in the <code>sdd-tools</code> plugin.</p>
+<h3 id="task-flow">Task Flow<a class="headerlink" href="#task-flow" title="Permanent link">&para;</a></h3>
+<pre class="mermaid"><code>flowchart LR
+    A["/create-tasks"] --&gt; B["/create-tdd-tasks"]
+    B --&gt; C["/execute-tdd-tasks"]
+    C --&gt; D["tdd-executor"]
+    C --&gt; E["task-executor"]
+
+    style D fill:#7b1fa2,color:#fff
+    style E fill:#455a64,color:#fff</code></pre>
+<h3 id="create-tdd-tasks-sdd-tools"><code>/create-tdd-tasks</code> (sdd-tools)<a class="headerlink" href="#create-tdd-tasks-sdd-tools" title="Permanent link">&para;</a></h3>
+<p>Transforms SDD implementation tasks into test-first TDD task pairs. For each implementation task, it creates a paired test task that <strong>blocks</strong> it -- enforcing test-first development at the pipeline level.</p>
+<ul>
+<li>Preserves existing SDD dependency chains</li>
+<li>Detects and skips existing TDD pairs (merge mode)</li>
+<li>Converts acceptance criteria into test descriptions for the paired test task</li>
+<li>Adds minimal metadata: <code>tdd_mode</code>, <code>tdd_phase</code>, <code>paired_task_id</code></li>
+</ul>
+<h3 id="execute-tdd-tasks-sdd-tools"><code>/execute-tdd-tasks</code> (sdd-tools)<a class="headerlink" href="#execute-tdd-tasks-sdd-tools" title="Permanent link">&para;</a></h3>
+<p>Orchestrates wave-based execution of TDD task pairs. Routes tasks to the appropriate agent:</p>
+<table>
+<thead>
+<tr>
+<th>Task Type</th>
+<th>Agent</th>
+<th>Workflow</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TDD task (<code>tdd_mode: true</code>)</td>
+<td><code>tdd-executor</code> (Opus)</td>
+<td>6-phase RED-GREEN-REFACTOR</td>
+</tr>
+<tr>
+<td>Non-TDD task</td>
+<td><code>task-executor</code></td>
+<td>Standard implementation</td>
+</tr>
+</tbody>
+</table>
+<p>Reports aggregate TDD compliance across all executed task pairs.</p>
+<div class="admonition note">
+<p class="admonition-title">Cross-Plugin Dependency</p>
+<p><code>execute-tdd-tasks</code> requires the <code>tdd-tools</code> plugin to be installed. It uses the <code>tdd-executor</code> and <code>test-writer</code> agents from this plugin. If <code>tdd-tools</code> is not available, the skill aborts with a clear error message.</p>
+</div>
+<hr />
+<h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">&para;</a></h2>
+<p>All TDD settings are stored in <code>.claude/agent-alchemy.local.md</code> (not committed to version control).</p>
+<h3 id="settings-reference">Settings Reference<a class="headerlink" href="#settings-reference" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nt">tdd</span><span class="p">:</span>
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">  </span><span class="nt">framework</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auto</span><span class="w">                    </span><span class="c1"># auto | pytest | jest | vitest</span>
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">  </span><span class="nt">coverage-threshold</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span><span class="w">             </span><span class="c1"># Minimum coverage percentage (0-100)</span>
+</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">  </span><span class="nt">strictness</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">normal</span><span class="w">                 </span><span class="c1"># strict | normal | relaxed</span>
+</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="w">  </span><span class="nt">test-review-threshold</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">70</span><span class="w">          </span><span class="c1"># Minimum test quality score (0-100)</span>
+</span><span id="__span-10-6"><a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="w">  </span><span class="nt">test-review-on-generate</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w">     </span><span class="c1"># Run test-reviewer after generate-tests</span>
+</span></code></pre></div>
+<h3 id="setting-details">Setting Details<a class="headerlink" href="#setting-details" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Default</th>
+<th>Used By</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>tdd.framework</code></td>
+<td><code>auto</code></td>
+<td>All skills</td>
+<td>Override framework auto-detection. Set to <code>pytest</code>, <code>jest</code>, or <code>vitest</code> to skip the detection chain.</td>
+</tr>
+<tr>
+<td><code>tdd.coverage-threshold</code></td>
+<td><code>80</code></td>
+<td><code>analyze-coverage</code>, <code>tdd-cycle</code></td>
+<td>Target coverage percentage. Files below this threshold are flagged.</td>
+</tr>
+<tr>
+<td><code>tdd.strictness</code></td>
+<td><code>normal</code></td>
+<td><code>tdd-cycle</code>, <code>tdd-executor</code></td>
+<td>RED phase enforcement level. See Strictness Levels below.</td>
+</tr>
+<tr>
+<td><code>tdd.test-review-threshold</code></td>
+<td><code>70</code></td>
+<td><code>test-reviewer</code></td>
+<td>Minimum overall score (0--100) for tests to pass review.</td>
+</tr>
+<tr>
+<td><code>tdd.test-review-on-generate</code></td>
+<td><code>false</code></td>
+<td><code>generate-tests</code></td>
+<td>Automatically run <code>test-reviewer</code> after test generation completes.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="strictness-levels">Strictness Levels<a class="headerlink" href="#strictness-levels" title="Permanent link">&para;</a></h3>
+<p>The strictness setting controls how the RED phase handles tests that pass before implementation exists.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="4:3"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><input id="__tabbed_4_2" name="__tabbed_4" type="radio" /><input id="__tabbed_4_3" name="__tabbed_4" type="radio" /><div class="tabbed-labels"><label for="__tabbed_4_1">Strict</label><label for="__tabbed_4_2">Normal (default)</label><label for="__tabbed_4_3">Relaxed</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<p>RED phase failure is mandatory. If <strong>any</strong> new test passes before implementation, the workflow aborts immediately.</p>
+<p><strong>Best for:</strong> Greenfield development, enforcing rigorous TDD discipline.</p>
+</div>
+<div class="tabbed-block">
+<p>RED phase failure is expected. If tests pass, a warning is logged with details. The passing tests are investigated (existing implementation? weak tests?) before continuing.</p>
+<p><strong>Best for:</strong> Standard development, iterating on existing features.</p>
+</div>
+<div class="tabbed-block">
+<p>RED phase is informational only. Results are recorded but the workflow proceeds regardless of pass/fail outcome.</p>
+<p><strong>Best for:</strong> Retrofitting tests onto existing code, characterization testing.</p>
+</div>
+</div>
+</div>
+<hr />
+<h2 id="reference-materials">Reference Materials<a class="headerlink" href="#reference-materials" title="Permanent link">&para;</a></h2>
+<p>TDD Tools includes extensive reference materials loaded by skills and agents during execution:</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Lines</th>
+<th>Loaded By</th>
+<th>Content</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>tdd-workflow.md</code></td>
+<td>~325</td>
+<td><code>tdd-cycle</code>, <code>tdd-executor</code></td>
+<td>Phase definitions, verification rules, strictness levels</td>
+</tr>
+<tr>
+<td><code>test-patterns.md</code></td>
+<td>~776</td>
+<td><code>tdd-cycle</code>, <code>generate-tests</code>, <code>tdd-executor</code></td>
+<td>Framework-specific test patterns, behavior-driven guidance</td>
+</tr>
+<tr>
+<td><code>framework-templates.md</code></td>
+<td>—</td>
+<td><code>generate-tests</code></td>
+<td>Auto-detection chain, boilerplate templates</td>
+</tr>
+<tr>
+<td><code>coverage-patterns.md</code></td>
+<td>—</td>
+<td><code>analyze-coverage</code></td>
+<td>Coverage tool integration, JSON parsing, gap analysis</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.tabs.link"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
