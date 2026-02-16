@@ -68,7 +68,7 @@ pnpm lint                      # Lint all packages
 - `docs-manager` (dev-tools) — loads for codebase understanding before doc generation
 - `create-spec` (sdd-tools) — optionally loads for "new feature" type specs
 
-These cross-plugin references resolve via `${CLAUDE_PLUGIN_ROOT}` — the resolution mechanism is implicit.
+**Cross-plugin reference convention:** Always use `${CLAUDE_PLUGIN_ROOT}/../{source-dir-name}/` for cross-plugin references, where `{source-dir-name}` is the directory name under `claude/` (e.g., `core-tools`, `tdd-tools`). Same-plugin references use `${CLAUDE_PLUGIN_ROOT}/` directly. Never use full marketplace names (e.g., `agent-alchemy-core-tools`) in path references — use the short source directory name.
 
 ### Model Tiering
 
@@ -103,8 +103,10 @@ execute-tdd-tasks -> tdd-executor for TDD tasks, task-executor for non-TDD tasks
 ### VS Code Extension (extensions/vscode/)
 
 - Ajv-based YAML frontmatter validation for skills and agents
-- JSON schema validation for plugin.json, hooks.json, .mcp.json
+- JSON schema validation for plugin.json, hooks.json, .mcp.json, .lsp.json, marketplace.json
+- 7 JSON schemas total in `extensions/vscode/schemas/` (skill-frontmatter, agent-frontmatter, plugin, hooks, mcp, lsp, marketplace)
 - Schema-driven autocompletion and hover documentation
+- Auto-activates on workspaces containing `.claude-plugin/plugin.json`
 
 ## Conventions
 
@@ -117,9 +119,9 @@ execute-tdd-tasks -> tdd-executor for TDD tasks, task-executor for non-TDD tasks
 
 | Group | Skills | Agents | Version |
 |-------|--------|--------|---------|
-| core-tools | deep-analysis, codebase-analysis, language-patterns, project-conventions | code-explorer, code-synthesizer | 0.1.0 |
-| dev-tools | feature-dev, architecture-patterns, code-quality, changelog-format, docs-manager, release-python-package | code-architect, code-reviewer, changelog-manager, docs-writer | 0.1.0 |
-| sdd-tools | create-spec, analyze-spec, create-tasks, execute-tasks, create-tdd-tasks, execute-tdd-tasks | researcher, spec-analyzer, task-executor | 0.1.0 |
+| core-tools | deep-analysis, codebase-analysis, language-patterns, project-conventions | code-explorer, code-synthesizer | 0.1.1 |
+| dev-tools | feature-dev, architecture-patterns, code-quality, changelog-format, docs-manager, release-python-package | code-architect, code-reviewer, changelog-manager, docs-writer | 0.1.1 |
+| sdd-tools | create-spec, analyze-spec, create-tasks, execute-tasks, create-tdd-tasks, execute-tdd-tasks | researcher, spec-analyzer, task-executor | 0.1.2 |
 | tdd-tools | generate-tests, tdd-cycle, analyze-coverage | test-writer, tdd-executor, test-reviewer | 0.1.0 |
 | git-tools | git-commit | — | 0.1.0 |
 
@@ -136,6 +138,15 @@ execute-tdd-tasks -> tdd-executor for TDD tasks, task-executor for non-TDD tasks
 | `claude/tdd-tools/skills/generate-tests/SKILL.md` | 513 | Test generation from acceptance criteria or source code |
 | `claude/sdd-tools/skills/create-tdd-tasks/SKILL.md` | 687 | SDD-to-TDD task pair transformation |
 | `claude/sdd-tools/skills/execute-tdd-tasks/SKILL.md` | 630 | TDD-aware wave execution with agent routing |
+
+## Known Challenges
+
+| Challenge | Severity | Notes |
+|-----------|----------|-------|
+| Cross-plugin `${CLAUDE_PLUGIN_ROOT}` inconsistency | Resolved | Standardized to `/../{source-dir-name}/` pattern. Convention documented above in Cross-Plugin Dependencies. |
+| Zero test coverage for VS Code extension | High | Validator is the most critical component — Ajv compilation, path detection, and line-number mapping are all untested. |
+| Schema drift risk | Medium | JSON schemas manually maintained. No CI validation ensures schemas match actual plugin frontmatter usage. |
+| Large reference files | Medium | Largest reference (776 lines) + skill (718 lines) can exceed 1,500 lines before codebase context is added. |
 
 ## Settings
 

@@ -74,7 +74,7 @@ The TDD task pairs are planning artifacts themselves -- generating them IS the p
 
 ### Requires tdd-tools Plugin
 
-This skill depends on the `tdd-tools` plugin. Before proceeding with any work, verify the plugin is available. Check for the plugin at `${CLAUDE_PLUGIN_ROOT}/../agent-alchemy-tdd-tools/` by attempting to read its `plugin.json`.
+This skill depends on the `tdd-tools` plugin. Before proceeding with any work, verify the plugin is available. Check for the plugin at `${CLAUDE_PLUGIN_ROOT}/../tdd-tools/` by attempting to read its `README.md`.
 
 If `tdd-tools` is not installed, display a clear error and stop:
 
@@ -102,7 +102,7 @@ Without tdd-tools, TDD task pairs cannot be executed.
 
 Verify the tdd-tools plugin is available by reading:
 ```
-Read: ${CLAUDE_PLUGIN_ROOT}/../agent-alchemy-tdd-tools/plugin.json
+Read: ${CLAUDE_PLUGIN_ROOT}/../tdd-tools/README.md
 ```
 
 If the file cannot be read, display the error message above and stop. Do not proceed to Phase 2.

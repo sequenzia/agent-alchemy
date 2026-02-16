@@ -46,7 +46,7 @@ Execute these phases in order, completing ALL of them:
 **Goal:** Understand the relevant parts of the codebase.
 
 1. **Run deep-analysis workflow:**
-   - Read `${CLAUDE_PLUGIN_ROOT}/skills/deep-analysis/SKILL.md` and follow its workflow
+   - Read `${CLAUDE_PLUGIN_ROOT}/../core-tools/skills/deep-analysis/SKILL.md` and follow its workflow
    - Pass the feature description from Phase 1 as the analysis context
    - This handles reconnaissance, team planning, approval (auto-approved when skill-invoked), team creation, parallel exploration (code-explorer agents), and synthesis (code-synthesizer agent)
    - **Note:** Deep-analysis may return cached results if a valid exploration cache exists. In skill-invoked mode, cache hits are auto-accepted — this is expected behavior that avoids redundant exploration.
@@ -80,7 +80,7 @@ Execute these phases in order, completing ALL of them:
 
 1. **Load skills for this phase:**
    - Read `${CLAUDE_PLUGIN_ROOT}/skills/architecture-patterns/SKILL.md` and apply its guidance
-   - Read `${CLAUDE_PLUGIN_ROOT}/skills/language-patterns/SKILL.md` and apply its guidance
+   - Read `${CLAUDE_PLUGIN_ROOT}/../core-tools/skills/language-patterns/SKILL.md` and apply its guidance
 
 2. **Launch code-architect agents:**
 

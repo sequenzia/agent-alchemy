@@ -166,7 +166,7 @@ Construct a specific context string based on Phase 1 selections:
 
 ### Step 2 — Run deep-analysis
 
-Read `${CLAUDE_PLUGIN_ROOT}/skills/deep-analysis/SKILL.md` and follow its workflow.
+Read `${CLAUDE_PLUGIN_ROOT}/../core-tools/skills/deep-analysis/SKILL.md` and follow its workflow.
 
 Pass the documentation-focused analysis context from Step 1.
 

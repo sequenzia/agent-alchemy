@@ -255,7 +255,7 @@ Maintain internal tracking of detected triggers and accepted recommendations:
 If the product type is "New feature for existing product":
 
 1. **Run deep-analysis workflow:**
-   1. Read the deep-analysis skill: `${CLAUDE_PLUGIN_ROOT}/skills/deep-analysis/SKILL.md`
+   1. Read the deep-analysis skill: `${CLAUDE_PLUGIN_ROOT}/../core-tools/skills/deep-analysis/SKILL.md`
    2. Follow its full workflow (Phases 1-6) with analysis context set to:
       ```
       Feature exploration for spec: {spec_name}. Description: {user's description from Phase 2}.
