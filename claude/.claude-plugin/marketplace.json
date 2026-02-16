@@ -10,7 +10,7 @@
   "plugins": [
     {
       "name": "agent-alchemy-core-tools",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "description": "Core tools for AI agents — essential utilities and foundational capabilities",
       "source": "./core-tools",
       "homepage": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/core-tools",
@@ -19,7 +19,7 @@
     },
     {
       "name": "agent-alchemy-dev-tools",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "description": "Dev tools for AI agents — development utilities, debugging, and workflow enhancements",
       "source": "./dev-tools",
       "homepage": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/dev-tools",
@@ -37,7 +37,7 @@
     },
     {
       "name": "agent-alchemy-sdd-tools",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "description": "SDD tools for AI agents — specification generation, analysis, and task decomposition",
       "source": "./sdd-tools",
       "homepage": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/sdd-tools",
