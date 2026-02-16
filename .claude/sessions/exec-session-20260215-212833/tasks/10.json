@@ -1,0 +1,22 @@
+{
+  "id": "10",
+  "subject": "Create TDD execution and verification references for sdd-tools",
+  "description": "Create two reference files for the execute-tdd-tasks skill in sdd-tools.\n\n**File 1: `claude/sdd-tools/skills/execute-tdd-tasks/references/tdd-execution-workflow.md`**\n\nDocument the TDD-aware execution workflow:\n- Wave-based execution adapted for TDD task pairs\n- Strategic parallelism rules:\n  - PARALLEL: Multiple test-writer agents can generate tests simultaneously across different features\n  - SEQUENTIAL: RED-GREEN-REFACTOR phases are sequential within a single task pair\n  - Wave grouping: test tasks in Wave N, their paired implementation tasks in Wave N+1\n- Session management: reuse execution context from execute-tasks (session ID, execution context sharing)\n- Agent spawning: tdd-executor agents (from tdd-tools) for TDD tasks, standard task-executor for non-TDD tasks\n- Context sharing between test and implementation phases (test task output informs implementation task)\n- Max parallel configuration from settings (default: 5, from agent-alchemy.local.md)\n\n**File 2: `claude/sdd-tools/skills/execute-tdd-tasks/references/tdd-verification-patterns.md`**\n\nDocument TDD-specific verification rules (extending existing verification-patterns.md):\n- RED Phase Verification:\n  - PASS: All new tests fail as expected\n  - WARN: Some tests pass unexpectedly (possible pre-existing implementation)\n  - FAIL: Tests cannot be run (syntax errors, missing dependencies)\n- GREEN Phase Verification:\n  - PASS: All tests pass (new + existing), zero regressions\n  - PARTIAL: New tests pass but existing tests regressed\n  - FAIL: New tests still failing after implementation\n- REFACTOR Verification:\n  - PASS: All tests still green after cleanup\n  - PARTIAL: Tests broke during refactor, reverted to pre-refactor state\n  - FAIL: Tests broke and cannot be recovered\n- Per-task TDD compliance reporting:\n  - RED verified: boolean (tests failed before implementation)\n  - GREEN verified: boolean (tests pass after implementation)\n  - Refactored: boolean (cleanup performed while maintaining green)\n  - Coverage delta: percentage change from pre to post\n\n**Acceptance Criteria:**\n\n_Functional:_\n- [ ] Execution workflow documents wave-based TDD execution with strategic parallelism\n- [ ] Verification patterns cover RED, GREEN, and REFACTOR phases with PASS/PARTIAL/FAIL states\n- [ ] Session management reuse from execute-tasks documented\n- [ ] Per-task TDD compliance reporting format defined\n\n_Edge Cases:_\n- [ ] Mixed TDD and non-TDD tasks in same group documented\n- [ ] Test-writer agent failure: retry with fallback strategy documented\n- [ ] Pre-existing test failures handling documented\n\n_Error Handling:_\n- [ ] tdd-tools not installed scenario documented\n- [ ] Agent spawn failures documented\n\n**Testing Requirements:**\n• Manual: Verify execution workflow is clear and complete\n• Manual: Validate verification patterns align with tdd-workflow.md definitions\n\nSource: specs/tdd-features-SPEC.md Section 5.5, 9.2",
+  "activeForm": "Creating TDD execution and verification references",
+  "status": "completed",
+  "blocks": [
+    "11"
+  ],
+  "blockedBy": [
+    "7"
+  ],
+  "metadata": {
+    "priority": "critical",
+    "complexity": "M",
+    "source_section": "5.5, 9.2",
+    "spec_path": "specs/tdd-features-SPEC.md",
+    "feature_name": "Execute TDD Tasks",
+    "task_uid": "specs/tdd-features-SPEC.md:execute-tdd-tasks:references:001",
+    "task_group": "tdd-features"
+  }
+}

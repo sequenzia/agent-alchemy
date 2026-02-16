@@ -1,0 +1,57 @@
+{
+  "name": "agent-alchemy",
+  "metadata": {
+    "description": "Custom Skills, Agents, MCP Servers & Hooks for Agent Alchemy"
+  },
+  "owner": {
+    "name": "Stephen Sequenzia",
+    "email": "sequenzia@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "agent-alchemy-core-tools",
+      "version": "0.1.0",
+      "description": "Core tools for Agent Alchemy",
+      "source": "./core-tools",
+      "homepage": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/core-tools",
+      "repository": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/core-tools",
+      "license": "MIT"
+    },
+    {
+      "name": "agent-alchemy-dev-tools",
+      "version": "0.1.0",
+      "description": "Dev tools for Agent Alchemy",
+      "source": "./dev-tools",
+      "homepage": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/dev-tools",
+      "repository": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/dev-tools",
+      "license": "MIT"
+    },
+    {
+      "name": "agent-alchemy-git-tools",
+      "version": "0.1.0",
+      "description": "Git tools for Agent Alchemy",
+      "source": "./git-tools",
+      "homepage": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/git-tools",
+      "repository": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/git-tools",
+      "license": "MIT"
+    },
+    {
+      "name": "agent-alchemy-sdd-tools",
+      "version": "0.1.1",
+      "description": "SDD tools for Agent Alchemy",
+      "source": "./sdd-tools",
+      "homepage": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/sdd-tools",
+      "repository": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/sdd-tools",
+      "license": "MIT"
+    },
+    {
+      "name": "agent-alchemy-tdd-tools",
+      "version": "0.1.0",
+      "description": "TDD tools for Agent Alchemy",
+      "source": "./tdd-tools",
+      "homepage": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/tdd-tools",
+      "repository": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/tdd-tools",
+      "license": "MIT"
+    }
+  ]
+}

@@ -1,68 +1,127 @@
-# Claude Alchemy
+# Agent Alchemy
 
-**Supercharge your Claude Code workflow with powerful plugins and a visual task manager.**
+A plugin suite and developer toolkit that extends Claude Code into a structured development platform — from specs to tasks to autonomous execution.
 
-Claude Alchemy is a collection of tools and apps designed to help developers get the most out of [Claude Code](https://docs.anthropic.com/en/docs/claude-code).
+## What is Agent Alchemy?
+
+Agent Alchemy is an open-source toolkit for AI and software engineers who use Claude Code. It adds structured development workflows on top of Claude Code through four plugins, a real-time task manager, and a VS Code extension — all designed to work together as an integrated pipeline.
+
+Everything is built with Claude Code for Claude Code. The plugins are plain markdown — readable, editable, and version-controlled like any other code.
+
+## Components
+
+### Claude Code Plugins
+
+Four plugin groups providing 15 skills and 9 agents:
+
+| Plugin | Description |
+|--------|-------------|
+| **[SDD Tools](claude/sdd-tools/)** | Spec-Driven Development — turn ideas into specs, specs into tasks, and tasks into autonomous execution |
+| **[Dev Tools](claude/dev-tools/)** | Feature development, code review, architecture patterns, documentation, and changelog management |
+| **[Core Tools](claude/core-tools/)** | Codebase analysis, deep exploration with multi-agent teams, and language patterns |
+| **[Git Tools](claude/git-tools/)** | Conventional Commits automation |
+
+### [Task Manager](apps/task-manager/)
+
+A Next.js real-time Kanban dashboard for monitoring autonomous task execution. Tasks update live via filesystem watching and Server-Sent Events.
 
 ![Claude Task Manager](./internal/images/claude-task-manager.png)
 
 **See more screenshots [screenshots](#screenshots) below**
 
-> **Documentation:** [sequenzia.github.io/claude-alchemy](https://sequenzia.github.io/claude-alchemy)
+### [VS Code Extension](extensions/vscode/)
 
-## Task Manager
+Schema validation, YAML frontmatter autocomplete, and hover documentation for Claude Code plugin development.
 
-**See your Claude Code Tasks in real-time.**
+## Getting Started
 
-The Task Manager is a real-time Kanban board that visualizes Claude's native task system (`~/.claude/tasks/`). Watch tasks flow from Pending → In Progress → Completed as Claude works through your project.
+### Prerequisites
 
-**Key Features:**
-- **Real-time updates** — Tasks update instantly via Server-Sent Events as Claude works
-- **Dependency tracking** — See which tasks block others and track completion flow
-- **Statistics dashboard** — Monitor progress with completion percentages and blocked task counts
-- **Search & filter** — Quickly find tasks across large task lists
-- **Dark/light themes** — Easy on the eyes during those long coding sessions
+- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) CLI installed
+- Node.js >= 18.0.0
+- pnpm >= 8.0.0
+
+### Install Plugins
 
 ```bash
-cd apps/task-manager
-pnpm install && pnpm dev  # Starts on http://localhost:3030
+# Install from the Claude Code marketplace
+claude plugins install agent-alchemy/agent-alchemy-sdd-tools
+claude plugins install agent-alchemy/agent-alchemy-dev-tools
+claude plugins install agent-alchemy/agent-alchemy-core-tools
+claude plugins install agent-alchemy/agent-alchemy-git-tools
 ```
 
-> **New to Claude Code Tasks?** Check out the [Tasks Cheatsheet](./internal/docs/claude-tasks-cheatsheet.md) for tips on setting up `CLAUDE_CODE_TASK_LIST_ID`, task dependencies, and best practices.
+### Run Task Manager
+
+```bash
+pnpm install
+pnpm dev:task-manager
+# Open http://localhost:3030
+```
+
+### Build VS Code Extension
+
+```bash
+cd extensions/vscode
+npm install
+npm run build
+npm run package
+```
+
+## Configuration
+
+Plugin behavior is configured via `.claude/agent-alchemy.local.md` — a markdown file with nested key-value pairs using `key: value` syntax. This file is not committed to version control.
+
+### File Format
+
+```markdown
+- deep-analysis:
+  - direct-invocation-approval: true
+  - invocation-by-skill-approval: false
+- execute-tasks:
+  - max_parallel: 5
+- author: Your Name
+- spec-output-path: specs/
+```
+
+### Settings Reference
+
+| Setting | Plugin | Default | Description |
+|---------|--------|---------|-------------|
+| `deep-analysis.direct-invocation-approval` | core-tools | `true` | Require user approval of the team plan when invoking `/deep-analysis` directly |
+| `deep-analysis.invocation-by-skill-approval` | core-tools | `false` | Require approval when deep-analysis is loaded by another skill (e.g., `/feature-dev`, `/codebase-analysis`) |
+| `execute-tasks.max_parallel` | sdd-tools | `5` | Maximum concurrent task-executor agents per wave. CLI `--max-parallel` takes precedence. Set to `1` for sequential execution |
+| `author` | sdd-tools | — | Author name for spec attribution and task metadata |
+| `spec-output-path` | sdd-tools | `specs/` | Default directory for spec file output |
+
+### Precedence
+
+Settings follow this precedence order (highest to lowest):
+1. CLI arguments (e.g., `--max-parallel`)
+2. `.claude/agent-alchemy.local.md` settings
+3. Built-in defaults
 
 ## Architecture
 
-Claude Alchemy is a pnpm monorepo with plugins, apps, and developer tooling:
+Agent Alchemy follows a **markdown-as-code** philosophy where AI agent behaviors, workflows, and domain knowledge are defined entirely in Markdown with YAML frontmatter. Skills compose by loading other skills at runtime, and complex workflows orchestrate teams of specialized agents with different model tiers (Opus for synthesis, Sonnet for exploration).
 
-| Component | Location | Description |
-|-----------|----------|-------------|
-| **Tools Plugin** | `plugins/tools/` | 9 agents, 8 skills (+ 5 supporting) for code exploration, architecture, review, docs, and release workflows (v0.2.3) |
-| **SDD Plugin** | `plugins/sdd/` | 2 agents, 4 skills for spec-driven development: create-spec → create-tasks → execute-tasks (v0.2.6) |
-| **Task Manager** | `apps/task-manager/` | Next.js 16 real-time Kanban board for Claude Code Tasks |
-| **VS Code Extension** | `extensions/vscode/` | Schema validation and autocomplete for plugin.json, hooks.json, SKILL.md frontmatter (v0.2.0) |
-| **JSON Schemas** | `schemas/` | 7 JSON Schema definitions for Claude Code plugin file validation |
+```
+claude/                          # Plugins (markdown-as-code)
+├── core-tools/                  # Analysis & exploration
+├── dev-tools/                   # Development lifecycle
+├── sdd-tools/                   # Spec-Driven Development
+└── git-tools/                   # Git automation
 
-### Plugins
+apps/task-manager/               # Real-time dashboard
+├── src/lib/fileWatcher.ts       # Chokidar -> SSE
+├── src/app/api/events/route.ts  # SSE endpoint
+└── src/components/              # React UI
 
-The plugin system uses a "markdown-as-code" design — all workflow logic lives in declarative `SKILL.md` and agent markdown files. Skills orchestrate specialized agents in parallel using Claude Code's Task tool.
+extensions/vscode/               # Developer tooling
+├── src/frontmatter/             # YAML validation
+└── schemas/                     # JSON Schemas for plugin contracts
+```
 
-**Tools Plugin (`claude-alchemy-tools` v0.2.4):**
-- `/codebase-analysis` — Multi-phase codebase exploration with parallel agents
-- `/feature-dev` — Feature development (explore → design → implement → review)
-- `/deep-analysis` — Deep exploration and synthesis workflow
-- `/teams-deep-analysis` — Team-based collaborative analysis with Agent Teams
-- `/docs-manager` — Documentation management for MkDocs sites and standalone markdown
-- `/git-commit` — Conventional commit creation
-- `/release` — Python package release workflow
-- `/bump-plugin-version` — Semantic version management
-
-*Plus 5 supporting skills loaded internally by workflows.*
-
-**SDD Plugin (`claude-alchemy-sdd` v0.2.8):**
-- `/create-spec` — Adaptive interview to generate specifications
-- `/analyze-spec` — Spec quality analysis
-- `/create-tasks` — Decompose specs into Claude Code Tasks with dependency inference
-- `/execute-tasks` — Autonomous task execution with shared context
 
 ## Screenshots
 
@@ -78,44 +137,6 @@ The plugin system uses a "markdown-as-code" design — all workflow logic lives 
 ### Completed Tasks in Claude Code
 ![Completed Tasks](./internal/images/completed-tasks-in-claude.png)
 
-
-## Development
-
-### Prerequisites
-
-- Node.js >= 18
-- pnpm >= 8
-- Python >= 3.14 and [uv](https://docs.astral.sh/uv/) (for documentation site only)
-
-### Setup
-
-```bash
-# Clone the repository
-git clone https://github.com/sequenzia/claude-alchemy.git
-cd claude-alchemy
-
-# Install dependencies
-pnpm install
-
-# Start task-manager
-pnpm dev:task-manager
-```
-
-### Workspace Commands
-
-```bash
-pnpm dev:task-manager     # Start task-manager dev server
-pnpm build:task-manager   # Build task-manager for production
-pnpm lint                 # Run linting across all workspaces
-```
-
-### Documentation Site
-
-```bash
-uv sync --all-extras      # Install Python dependencies
-uv run mkdocs serve       # Local preview at http://localhost:8000
-scripts/deploy-docs.sh    # Deploy to GitHub Pages
-```
 
 ## License
 

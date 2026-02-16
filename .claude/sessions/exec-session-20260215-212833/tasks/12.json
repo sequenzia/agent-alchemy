@@ -1,0 +1,22 @@
+{
+  "id": "12",
+  "subject": "Create behavior-driven test rubric reference",
+  "description": "Create the behavior-driven test rubric reference at `claude/tdd-tools/skills/tdd-cycle/references/test-rubric.md` (or a shared location accessible by test-reviewer agent).\n\nThis reference defines the quality scoring dimensions used by the test-reviewer agent to evaluate AI-generated tests.\n\n**Scoring Dimensions (4 dimensions, each 0-100):**\n\n1. **Meaningful Assertions (weight: 35%)**\n   - Tests verify behavior/outcomes, not implementation details\n   - Assertions are specific and descriptive\n   - Each test has a clear purpose\n   - RED FLAGS: Asserting call counts, mocking internals, testing private methods\n   - GREEN FLAGS: Asserting return values, state changes, error messages, side effects\n\n2. **Edge Case Coverage (weight: 25%)**\n   - Boundary conditions tested (empty, null, max, min)\n   - Error paths tested (invalid input, failures, timeouts)\n   - Concurrent/race conditions considered (where applicable)\n   - Unusual but valid scenarios covered\n\n3. **Test Independence (weight: 20%)**\n   - Each test can run in isolation\n   - No shared mutable state between tests\n   - Test order doesn't matter\n   - Proper setup/teardown (fixtures, beforeEach)\n   - RED FLAGS: Tests depending on other tests, shared global state\n\n4. **Readability (weight: 20%)**\n   - Clear test names that describe the scenario\n   - AAA pattern (Arrange-Act-Assert) followed\n   - Reasonable test length (not too long, not too short)\n   - Consistent style within test file\n   - Good use of test helpers/fixtures for reducing duplication\n\n**Overall Score Calculation:**\n- Weighted average: `0.35 * assertions + 0.25 * edge_cases + 0.20 * independence + 0.20 * readability`\n- Default threshold: 70 (configurable via settings)\n- Below threshold: flagged for improvement with specific suggestions\n\n**Scoring Guidelines:**\n- 90-100: Excellent — comprehensive, behavior-driven, well-structured\n- 70-89: Good — solid tests with minor gaps\n- 50-69: Acceptable — tests work but have quality issues\n- Below 50: Poor — needs significant improvement\n\n**Implementation Detail Detection:**\n- Document specific anti-patterns to flag:\n  - Mocking internal methods that aren't part of the public API\n  - Asserting specific call counts on internal collaborators\n  - Testing private method behavior directly\n  - Asserting specific internal state that isn't externally observable\n- Document when implementation-detail testing is acceptable:\n  - Verifying a specific algorithm is used (security: bcrypt, not md5)\n  - Testing middleware call chains (framework convention)\n  - Allow with explicit justification\n\n**Acceptance Criteria:**\n\n_Functional:_\n- [ ] 4 scoring dimensions defined with clear criteria (US-007)\n- [ ] Weights specified for each dimension\n- [ ] Overall score calculation formula documented\n- [ ] Implementation detail anti-patterns catalogued\n- [ ] Configurable threshold documented\n- [ ] Scoring guidelines with example ranges\n\n_Edge Cases:_\n- [ ] Implementation detail by necessity: allow with justification\n- [ ] All tests score low: provide concrete improvement suggestions\n\n**Testing Requirements:**\n• Manual: Apply rubric to sample test suites and verify scoring is sensible\n• Manual: Validate anti-pattern detection catches common implementation-detail tests\n\nSource: specs/tdd-features-SPEC.md Section 5.6, 9.3",
+  "activeForm": "Creating behavior-driven test rubric reference",
+  "status": "completed",
+  "blocks": [
+    "13"
+  ],
+  "blockedBy": [
+    "7"
+  ],
+  "metadata": {
+    "priority": "high",
+    "complexity": "M",
+    "source_section": "5.6, 9.3",
+    "spec_path": "specs/tdd-features-SPEC.md",
+    "feature_name": "Behavior-Driven Test Rubric",
+    "task_uid": "specs/tdd-features-SPEC.md:test-rubric:reference:001",
+    "task_group": "tdd-features"
+  }
+}

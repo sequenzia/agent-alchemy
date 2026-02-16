@@ -1,0 +1,22 @@
+{
+  "id": "1",
+  "subject": "Create tdd-tools plugin structure and marketplace registration",
+  "description": "Set up the new `tdd-tools` plugin directory structure and register it in the Agent Alchemy marketplace.\n\nCreate the directory layout:\n```\nclaude/tdd-tools/\n├── agents/\n├── skills/\n│   ├── generate-tests/\n│   │   └── references/\n│   ├── tdd-cycle/\n│   │   └── references/\n│   └── analyze-coverage/\n│       └── references/\n└── README.md\n```\n\nCreate `plugin.json` manifest following existing plugin conventions (see `claude/core-tools/plugin.json` as reference). Plugin name: `agent-alchemy-tdd-tools`, version `0.1.0`.\n\nRegister in `claude/.claude-plugin/marketplace.json` following the existing registration pattern for `agent-alchemy-core-tools`, `agent-alchemy-dev-tools`, `agent-alchemy-sdd-tools`, and `agent-alchemy-git-tools`.\n\nCreate a README.md documenting the plugin's purpose: TDD tools for AI agents — test generation, RED-GREEN-REFACTOR workflows, and coverage analysis.\n\n**Acceptance Criteria:**\n\n_Functional:_\n- [ ] Directory structure created matching the proposed layout in spec Section 13.3\n- [ ] plugin.json manifest created with correct name, version, description\n- [ ] Plugin registered in marketplace.json\n- [ ] README.md created with plugin overview\n\n_Edge Cases:_\n- [ ] Plugin structure follows exact conventions of existing plugins (core-tools, dev-tools, sdd-tools)\n- [ ] No duplicate entries in marketplace.json\n\n_Error Handling:_\n- [ ] marketplace.json remains valid JSON after registration\n\n**Testing Requirements:**\n• Manual: Verify plugin structure matches existing plugin patterns\n• Manual: Validate plugin.json and marketplace.json are well-formed\n\nSource: specs/tdd-features-SPEC.md Section 7.1, 13.3",
+  "activeForm": "Creating tdd-tools plugin structure",
+  "status": "completed",
+  "blocks": [
+    "2",
+    "3",
+    "5"
+  ],
+  "blockedBy": [],
+  "metadata": {
+    "priority": "critical",
+    "complexity": "S",
+    "source_section": "7.1, 13.3",
+    "spec_path": "specs/tdd-features-SPEC.md",
+    "feature_name": "Plugin Infrastructure",
+    "task_uid": "specs/tdd-features-SPEC.md:infrastructure:plugin-structure:001",
+    "task_group": "tdd-features"
+  }
+}

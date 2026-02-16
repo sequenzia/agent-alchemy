@@ -1,0 +1,22 @@
+{
+  "id": "8",
+  "subject": "Create TDD decomposition and dependency references for sdd-tools",
+  "description": "Create two reference files for the create-tdd-tasks skill in sdd-tools.\n\n**File 1: `claude/sdd-tools/skills/create-tdd-tasks/references/tdd-decomposition-patterns.md`**\n\nDocument how to transform SDD implementation tasks into TDD task pairs:\n- For each implementation task, generate a paired test task that completes first\n- Test task naming: \"Write tests for {original task subject}\"\n- Test task content: Convert acceptance criteria into test descriptions with file path and framework\n- Task pairing rules: test task has `tdd_phase: \"red\"`, implementation task has `tdd_phase: \"green\"`\n- Metadata additions: `paired_task_id`, `tdd_mode: true`, `tdd_phase`\n- Layer-to-test-type mapping (inverted from current SDD — tests first, not last):\n  - Data Model task → paired with unit + integration test task\n  - API task → paired with integration test task\n  - UI task → paired with component test task\n  - Business Logic task → paired with unit test task\n- How to handle tasks without acceptance criteria: generate basic tests from subject/description\n- How to detect tasks that already have TDD pairs (merge mode)\n\n**File 2: `claude/sdd-tools/skills/create-tdd-tasks/references/tdd-dependency-rules.md`**\n\nDocument dependency rules specific to TDD task pairs:\n- Core rule: test task BLOCKS its paired implementation task (test must complete first)\n- Preserving existing SDD dependencies: TDD pairs are INSERTED into the chain, not replacing\n- Example chain transformation:\n  ```\n  Before: Model Task → API Task → UI Task\n  After: Test-Model → Model Task → Test-API → API Task → Test-UI → UI Task\n  ```\n- Cross-feature dependency preservation\n- Circular dependency detection after TDD pair insertion\n- `--task-group` filtering support: only convert tasks in specified group\n\n**Acceptance Criteria:**\n\n_Functional:_\n- [ ] Decomposition patterns document test task generation from implementation tasks\n- [ ] Layer-to-test-type mapping inverts SDD ordering (tests first)\n- [ ] Dependency rules document TDD pair insertion into existing chains\n- [ ] Metadata fields (tdd_phase, paired_task_id, tdd_mode) documented\n- [ ] Merge mode detection documented (tasks already have TDD pairs)\n\n_Edge Cases:_\n- [ ] Tasks without acceptance criteria: basic test generation from description\n- [ ] Circular dependency detection after insertion\n- [ ] --task-group filtering documented\n\n_Error Handling:_\n- [ ] Weakest-link breaking strategy for circular deps documented\n\n**Testing Requirements:**\n• Manual: Verify decomposition patterns produce sensible test tasks from sample SDD tasks\n• Manual: Validate dependency chain transformation preserves existing relationships\n\nSource: specs/tdd-features-SPEC.md Section 5.4, 9.2",
+  "activeForm": "Creating TDD decomposition references for sdd-tools",
+  "status": "completed",
+  "blocks": [
+    "9"
+  ],
+  "blockedBy": [
+    "4"
+  ],
+  "metadata": {
+    "priority": "critical",
+    "complexity": "M",
+    "source_section": "5.4, 9.2",
+    "spec_path": "specs/tdd-features-SPEC.md",
+    "feature_name": "Create TDD Tasks",
+    "task_uid": "specs/tdd-features-SPEC.md:create-tdd-tasks:references:001",
+    "task_group": "tdd-features"
+  }
+}

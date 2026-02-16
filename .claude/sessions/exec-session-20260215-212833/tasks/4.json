@@ -1,0 +1,25 @@
+{
+  "id": "4",
+  "subject": "Create generate-tests skill",
+  "description": "Create the generate-tests skill at `claude/tdd-tools/skills/generate-tests/SKILL.md`.\n\nThis is a P0 standalone skill that generates test files from acceptance criteria or existing code. It is the foundation for all TDD workflows in the plugin.\n\n**Skill Configuration (YAML Frontmatter):**\n- name: generate-tests\n- description: Generate test files from acceptance criteria or existing code\n- argument-hint: `<spec-path|task-id|file-path>`\n- user-invocable: true\n- allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Task, AskUserQuestion, TaskGet, TaskList\n\n**Two Operating Modes:**\n\n_Mode 1: Criteria-Driven (from spec/task)_\n- Accepts spec file path, task ID, or section reference\n- Extracts acceptance criteria (Functional, Edge Cases, Error Handling, Performance)\n- Converts each criterion into executable test assertions\n- Generates test file(s) following project conventions\n\n_Mode 2: Code-Analysis (from source files)_\n- Accepts file path or directory\n- Analyzes function signatures, class methods, module structure\n- Generates characterization tests for existing behavior\n- Identifies untested edge cases\n- Preserves existing test files (never overwrites)\n\n**Workflow Phases:**\n1. **Parse Input** — Determine mode (criteria vs code-analysis), resolve paths\n2. **Detect Framework** — Auto-detect test framework using detection chain from framework-templates reference\n3. **Load References** — Read test-patterns.md and framework-templates.md\n4. **Generate Tests** — Spawn test-writer agents (sonnet) in parallel for multi-feature inputs; single agent for single-feature\n5. **Validate** — Verify generated tests are syntactically valid and follow conventions\n6. **Report** — Show summary of generated test files, test count, coverage areas\n\n**Cross-Plugin Composition:**\n- Load `${CLAUDE_PLUGIN_ROOT}/../core-tools/skills/language-patterns/SKILL.md` for language-specific patterns\n- Load `${CLAUDE_PLUGIN_ROOT}/../core-tools/skills/project-conventions/SKILL.md` for project conventions\n\n**Acceptance Criteria:**\n\n_Functional:_\n- [ ] Accepts spec file path, task ID, or file path as input (US-001)\n- [ ] Criteria-driven mode converts acceptance criteria into test assertions (US-001)\n- [ ] Code-analysis mode generates characterization tests from source files (US-002)\n- [ ] Auto-detects test framework from config files (US-008)\n- [ ] Falls back to .claude/agent-alchemy.local.md settings if auto-detection fails\n- [ ] Generated tests follow project's test file naming conventions and directory structure\n- [ ] Spawns test-writer agents in parallel for multi-feature inputs\n- [ ] Generated tests are runnable and initially fail (RED state) when no implementation exists\n- [ ] Works standalone — does not require SDD pipeline\n\n_Edge Cases:_\n- [ ] No test framework detected: prompts user via AskUserQuestion\n- [ ] Empty acceptance criteria: generates basic smoke tests from function signatures\n- [ ] Mixed language project: detects primary language per-directory\n- [ ] Preserves existing test files in code-analysis mode (US-002)\n\n_Error Handling:_\n- [ ] Invalid spec path: helpful error with suggestions\n- [ ] Invalid task ID: clear error message\n- [ ] Framework detection failure: graceful fallback to user prompt\n\n**Testing Requirements:**\n• Manual: Verify criteria-driven mode produces appropriate tests from sample acceptance criteria\n• Manual: Verify code-analysis mode correctly analyzes Python/TypeScript source files\n• Manual: Validate framework auto-detection against pytest, Jest, and Vitest projects\n\nSource: specs/tdd-features-SPEC.md Section 5.1, 9.1",
+  "activeForm": "Creating generate-tests skill",
+  "status": "completed",
+  "blocks": [
+    "7",
+    "8",
+    "14"
+  ],
+  "blockedBy": [
+    "2",
+    "3"
+  ],
+  "metadata": {
+    "priority": "critical",
+    "complexity": "L",
+    "source_section": "5.1, 9.1",
+    "spec_path": "specs/tdd-features-SPEC.md",
+    "feature_name": "Generate Tests",
+    "task_uid": "specs/tdd-features-SPEC.md:generate-tests:skill:001",
+    "task_group": "tdd-features"
+  }
+}

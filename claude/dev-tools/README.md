@@ -1,0 +1,66 @@
+# Agent Alchemy Dev Tools
+
+Developer agents and skills for the full feature development lifecycle — from exploration and architecture through implementation, review, and documentation.
+
+## Skills
+
+| Skill | Invocable | Description |
+|-------|-----------|-------------|
+| `/feature-dev` | Yes | 7-phase feature development: Discovery, Exploration (via deep-analysis), Questions, Architecture (code-architect agents), Implementation, Review (code-reviewer agents), Summary. |
+| `/docs-manager` | Yes | Documentation updates with MkDocs integration. Generates markdown files, updates navigation, handles change summaries. |
+| `/release-python-package` | Yes | Python package release automation workflow. |
+| `architecture-patterns` | No (loaded by feature-dev) | Design patterns and architectural approaches for the implementation phase. |
+| `code-quality` | No (loaded by feature-dev) | Quality criteria and review guidelines for the review phase. |
+| `changelog-format` | No (loaded by feature-dev) | Keep a Changelog format guidelines with entry examples. |
+
+## Agents
+
+| Agent | Model | Purpose |
+|-------|-------|---------|
+| `code-architect` | Opus | Generates implementation blueprints with minimal, flexible, and project-aligned approaches. Spawned 2-3x in parallel by feature-dev. |
+| `code-reviewer` | Opus | Quality review with confidence-scored findings. Spawned 3x in parallel by feature-dev for independent review perspectives. |
+| `changelog-manager` | — | Manages CHANGELOG.md entries following Keep a Changelog format. |
+| `docs-writer` | — | Generates and updates documentation files. |
+
+## Feature Development Workflow
+
+The **feature-dev** skill orchestrates a complete development lifecycle:
+
+1. **Discovery**: Understand requirements and scope
+2. **Exploration**: Load deep-analysis to explore relevant codebase areas
+3. **Questions**: Clarify requirements with the user via AskUserQuestion
+4. **Architecture**: Spawn 2-3 code-architect agents in parallel for competing designs
+5. **Implementation**: Apply the selected architectural approach
+6. **Review**: Spawn 3 code-reviewer agents for independent quality assessment
+7. **Summary**: Present results with changelog entry
+
+## Directory Structure
+
+```
+dev-tools/
+├── agents/
+│   ├── code-architect.md       # Opus design agent
+│   ├── code-reviewer.md        # Opus review agent
+│   ├── changelog-manager.md    # Changelog automation
+│   └── docs-writer.md          # Documentation agent
+├── skills/
+│   ├── feature-dev/
+│   │   └── SKILL.md            # 7-phase workflow (272 lines)
+│   ├── architecture-patterns/
+│   │   └── SKILL.md            # Design patterns
+│   ├── code-quality/
+│   │   └── SKILL.md            # Quality criteria
+│   ├── changelog-format/
+│   │   ├── SKILL.md            # Format guidelines
+│   │   └── references/
+│   │       └── entry-examples.md
+│   ├── docs-manager/
+│   │   ├── SKILL.md            # Docs workflow
+│   │   └── references/
+│   │       ├── change-summary-templates.md
+│   │       ├── markdown-file-templates.md
+│   │       └── mkdocs-config-template.md
+│   └── release-python-package/
+│       └── SKILL.md            # Python release workflow
+└── README.md
+```

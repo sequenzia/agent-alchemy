@@ -1,0 +1,22 @@
+{
+  "id": "3",
+  "subject": "Create test-writer agent",
+  "description": "Create the test-writer agent at `claude/tdd-tools/agents/test-writer.md`.\n\nThis is a Sonnet-tier agent designed for parallel test file generation. It is spawned by the generate-tests skill and tdd-executor agent to write test files efficiently.\n\n**Agent Configuration:**\n- **Model**: sonnet (parallel worker tier — optimized for throughput)\n- **Tools**: Read, Write, Edit, Glob, Grep, Bash\n- **Skills**: language-patterns, project-conventions (from core-tools via cross-plugin composition)\n\n**System Prompt Should Cover:**\n- Agent's role: Generate high-quality, behavior-driven test files\n- Input context: Receives acceptance criteria, source file paths, framework info, and test patterns\n- Output expectations: Runnable test files that initially fail (RED state) when no implementation exists\n- Quality standards: Tests must verify behavior not implementation details, follow project conventions\n- Framework awareness: Apply correct patterns for detected framework (pytest/Jest/Vitest)\n- File naming: Follow project's existing test file naming convention\n- Test structure: AAA pattern (Arrange-Act-Assert), descriptive test names, proper fixture usage\n- Edge case coverage: Generate tests for boundary conditions, error paths, not just happy path\n\nFollow the agent frontmatter pattern from existing agents (see `claude/dev-tools/agents/code-reviewer.md` or `claude/sdd-tools/agents/task-executor.md` as reference).\n\n**Acceptance Criteria:**\n\n_Functional:_\n- [ ] Agent file created with correct YAML frontmatter (name, description, model, tools, skills)\n- [ ] Model set to sonnet for parallel execution efficiency\n- [ ] System prompt guides agent to produce behavior-driven tests\n- [ ] Agent loads language-patterns and project-conventions via skill composition\n- [ ] System prompt includes framework-specific guidance for pytest, Jest, Vitest\n\n_Edge Cases:_\n- [ ] Agent handles both criteria-driven mode (from acceptance criteria) and code-analysis mode (from source files)\n- [ ] Agent handles missing or incomplete input gracefully\n\n_Error Handling:_\n- [ ] Agent reports clear errors if framework cannot be determined\n- [ ] Agent flags when generated tests cannot be made to fail (implementation may already exist)\n\n**Testing Requirements:**\n• Manual: Verify agent frontmatter follows existing agent conventions\n• Manual: Validate system prompt quality and completeness\n\nSource: specs/tdd-features-SPEC.md Section 5.1, 9.1, 13.3",
+  "activeForm": "Creating test-writer agent",
+  "status": "completed",
+  "blocks": [
+    "4"
+  ],
+  "blockedBy": [
+    "1"
+  ],
+  "metadata": {
+    "priority": "critical",
+    "complexity": "M",
+    "source_section": "5.1, 9.1, 13.3",
+    "spec_path": "specs/tdd-features-SPEC.md",
+    "feature_name": "Generate Tests",
+    "task_uid": "specs/tdd-features-SPEC.md:generate-tests:test-writer-agent:001",
+    "task_group": "tdd-features"
+  }
+}

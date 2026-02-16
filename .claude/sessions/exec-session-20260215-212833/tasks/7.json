@@ -1,0 +1,25 @@
+{
+  "id": "7",
+  "subject": "Create tdd-cycle skill",
+  "description": "Create the tdd-cycle skill at `claude/tdd-tools/skills/tdd-cycle/SKILL.md`.\n\nThis is a P0 standalone skill that runs a full RED-GREEN-REFACTOR workflow for a feature. It is the primary TDD entry point for users.\n\n**Skill Configuration (YAML Frontmatter):**\n- name: tdd-cycle\n- description: Run a full RED-GREEN-REFACTOR TDD workflow for a feature\n- argument-hint: `<feature-description|task-id|spec-section>`\n- user-invocable: true\n- allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Task, AskUserQuestion, TaskGet, TaskList, TaskUpdate\n\n**Workflow:**\n\n1. **Parse Input** — Determine input type (feature description, task ID, spec section), resolve context\n2. **Understand** — Load project conventions, detect test framework, explore relevant codebase areas\n3. **Plan** — Present TDD plan to user: what tests will be written, what implementation approach, what coverage target. Get single confirmation then run autonomously\n4. **RED Phase** — Spawn tdd-executor agent OR directly write failing tests, run tests to confirm failure\n5. **GREEN Phase** — Implement minimal code, run tests to confirm all pass\n6. **REFACTOR Phase** — Clean up while keeping tests green\n7. **Report** — Final test results with pass/fail counts, coverage percentage, TDD compliance\n\n**Integration Modes:**\n- Standalone: User provides feature description or file path\n- SDD Pipeline: Receives task ID from execute-tdd-tasks, loads task context from TaskGet\n- Retrofit: Receives existing source file, generates characterization tests first\n\n**Key Behaviors:**\n- Fully autonomous after initial plan confirmation — no mid-workflow interruptions\n- Loads tdd-workflow.md reference for phase definitions and verification rules\n- Loads generate-tests references for framework-specific patterns\n- Uses TDD strictness level from settings (default: normal)\n\n**Cross-Plugin Composition:**\n- Load generate-tests references for test patterns\n- Load core-tools language-patterns and project-conventions\n\n**Acceptance Criteria:**\n\n_Functional:_\n- [ ] Accepts feature description, task ID, or spec section as input (US-003)\n- [ ] Phase 1 loads project conventions and identifies test framework\n- [ ] Phase 2 (RED): writes failing tests, runs tests to confirm failure\n- [ ] Phase 3 (GREEN): implements minimal code, runs tests to confirm pass\n- [ ] Phase 4 (REFACTOR): cleans up while keeping tests green\n- [ ] Fully autonomous after initial plan confirmation\n- [ ] Works standalone or integrated with SDD pipeline\n- [ ] Reports final results with pass/fail counts and coverage\n\n_Edge Cases:_\n- [ ] Tests pass immediately (no RED phase): warn user, verify completeness\n- [ ] Implementation cannot make tests pass: report FAIL with recommendations\n- [ ] Refactor breaks tests: revert, report PARTIAL\n\n_Error Handling:_\n- [ ] No test framework detected: prompt user via AskUserQuestion\n- [ ] Invalid input: helpful error with suggestions\n\n**Testing Requirements:**\n• Manual: Verify full RED-GREEN-REFACTOR cycle on a sample Python feature\n• Manual: Verify standalone mode works without SDD pipeline\n\nSource: specs/tdd-features-SPEC.md Section 5.2, 9.2",
+  "activeForm": "Creating tdd-cycle skill",
+  "status": "completed",
+  "blocks": [
+    "10",
+    "12",
+    "16"
+  ],
+  "blockedBy": [
+    "4",
+    "6"
+  ],
+  "metadata": {
+    "priority": "critical",
+    "complexity": "L",
+    "source_section": "5.2, 9.2",
+    "spec_path": "specs/tdd-features-SPEC.md",
+    "feature_name": "TDD Cycle",
+    "task_uid": "specs/tdd-features-SPEC.md:tdd-cycle:skill:001",
+    "task_group": "tdd-features"
+  }
+}

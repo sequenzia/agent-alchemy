@@ -1,0 +1,20 @@
+{
+  "id": "15",
+  "subject": "Create analyze-coverage skill",
+  "description": "Create the analyze-coverage skill at `claude/tdd-tools/skills/analyze-coverage/SKILL.md`.\n\nThis is a P1 standalone skill that runs real coverage tools and produces structured reports with gap analysis.\n\n**Skill Configuration (YAML Frontmatter):**\n- name: analyze-coverage\n- description: Analyze test coverage and identify gaps with actionable recommendations\n- argument-hint: `[<project-path>] [--spec <spec-path>] [--threshold <percentage>]`\n- user-invocable: true\n- allowed-tools: Read, Glob, Grep, Bash, AskUserQuestion\n\n**Workflow:**\n\n1. **Detect Environment** — Auto-detect test framework and coverage tool:\n   - Python: look for pytest-cov, .coveragerc\n   - TypeScript: look for c8, istanbul, jest coverage config\n   - If not found: inform user, suggest installation command\n2. **Run Coverage** — Execute coverage tool via Bash:\n   - Python: `pytest --cov={package} --cov-report=term-missing --cov-report=json`\n   - TypeScript: `npx c8 --reporter=json vitest run` or `npx jest --coverage`\n3. **Parse Results** — Parse JSON coverage report:\n   - Extract per-file coverage percentages\n   - Identify uncovered lines and branches\n   - Calculate aggregate coverage\n4. **Analyze Gaps** — If spec path provided:\n   - Map coverage against spec acceptance criteria\n   - Identify untested acceptance criteria\n   - Prioritize gaps by feature priority (P0 first)\n5. **Generate Report** — Structured markdown report:\n   ```\n   Coverage Analysis Report\n   ━━━━━━━━━━━━━━━━━━━━━━━━\n   Overall: {pct}% ({status vs threshold})\n   \n   By File:\n   • {file}: {pct}% ({missing_lines} uncovered lines)\n   \n   Gaps:\n   • {description of uncovered area}\n     Suggested test: {specific test to write}\n   \n   Untested Acceptance Criteria: (if spec provided)\n   • {criterion from spec} → needs {test type}\n   ```\n6. **Suggest Next Steps** — Recommend using /generate-tests for uncovered areas\n\n**Acceptance Criteria:**\n\n_Functional:_\n- [ ] Runs real coverage tools (pytest --cov, istanbul/c8) via Bash (US-004)\n- [ ] Parses coverage output and generates structured report\n- [ ] Maps coverage against spec requirements if spec path provided\n- [ ] Identifies untested acceptance criteria and coverage gaps\n- [ ] Reports coverage percentage against configurable threshold (default 80%)\n- [ ] Works on any project — not tied to SDD pipeline\n- [ ] Suggests specific tests to write for uncovered areas\n\n_Edge Cases:_\n- [ ] Coverage tool not installed: detect and inform user with install command\n- [ ] No tests exist: report 0% with recommendation to use /generate-tests\n- [ ] Multiple test directories: aggregate coverage across all locations\n\n_Error Handling:_\n- [ ] Coverage tool fails: report error with diagnostic info\n- [ ] Invalid spec path: skip spec mapping, proceed with coverage-only analysis\n- [ ] No source files found: helpful error message\n\n**Testing Requirements:**\n• Manual: Verify coverage analysis on a sample Python project with pytest-cov\n• Manual: Verify coverage analysis on a sample TypeScript project with c8\n• Manual: Validate spec-to-coverage mapping with a sample spec\n\nSource: specs/tdd-features-SPEC.md Section 5.3, 9.3",
+  "activeForm": "Creating analyze-coverage skill",
+  "status": "completed",
+  "blocks": [],
+  "blockedBy": [
+    "14"
+  ],
+  "metadata": {
+    "priority": "high",
+    "complexity": "L",
+    "source_section": "5.3, 9.3",
+    "spec_path": "specs/tdd-features-SPEC.md",
+    "feature_name": "Analyze Coverage",
+    "task_uid": "specs/tdd-features-SPEC.md:analyze-coverage:skill:001",
+    "task_group": "tdd-features"
+  }
+}

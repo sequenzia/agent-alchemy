@@ -1,0 +1,22 @@
+{
+  "id": "14",
+  "subject": "Create coverage-patterns reference for analyze-coverage",
+  "description": "Create the coverage patterns reference at `claude/tdd-tools/skills/analyze-coverage/references/coverage-patterns.md`.\n\nThis reference documents framework-specific coverage tool integration for the analyze-coverage skill.\n\n**Content:**\n\n_Python / pytest-cov:_\n- Command: `pytest --cov={package} --cov-report=term-missing --cov-report=json`\n- JSON report location: `coverage.json` or `.coverage`\n- Parsing the JSON report: extract file-level and line-level coverage data\n- Key metrics: statements, missing, branches, partial, coverage percentage\n- Configuration: `[tool.pytest.ini_options]` in pyproject.toml, `.coveragerc`\n- Common issues: package path not matching, source not found\n\n_TypeScript / istanbul (c8):_\n- Command: `npx c8 --reporter=json --reporter=text vitest run` or `npx jest --coverage --coverageReporters=json`\n- JSON report location: `coverage/coverage-final.json`\n- Parsing: extract file-level statement, branch, function, and line coverage\n- Configuration: Jest `coverageThreshold` in package.json, c8 config\n- Common issues: source maps, monorepo path resolution\n\n_Coverage Report Parsing:_\n- Standard fields to extract: file path, total lines, covered lines, missed lines, branch coverage\n- Gap detection: identify functions/methods with 0% coverage\n- Threshold comparison: compare against configurable target (default 80%)\n\n_Coverage Gap Analysis:_\n- Map coverage results against spec acceptance criteria (if spec provided)\n- Identify untested acceptance criteria\n- Suggest specific tests to write for uncovered areas\n- Prioritize gaps by: criticality (P0 features first), risk (complex code), frequency (hot paths)\n\n_Installation Detection:_\n- Python: check for `pytest-cov` in requirements.txt, pyproject.toml, pip list\n- TypeScript: check for `c8`, `istanbul`, `@vitest/coverage-v8` in package.json\n- If not installed: provide installation command suggestion\n\n**Acceptance Criteria:**\n\n_Functional:_\n- [ ] pytest-cov integration documented with commands and report parsing\n- [ ] istanbul/c8 integration documented with commands and report parsing\n- [ ] Coverage gap analysis approach documented\n- [ ] Spec-to-coverage mapping documented\n- [ ] Installation detection approach documented\n\n_Edge Cases:_\n- [ ] Multiple test directories: aggregate coverage across locations\n- [ ] No tests exist: report 0% with recommendation to use /generate-tests\n- [ ] Coverage tool not installed: detection and installation guidance\n\n**Testing Requirements:**\n• Manual: Verify pytest-cov commands work on a sample Python project\n• Manual: Verify c8/istanbul commands work on a sample TypeScript project\n\nSource: specs/tdd-features-SPEC.md Section 5.3, 9.3",
+  "activeForm": "Creating coverage-patterns reference",
+  "status": "completed",
+  "blocks": [
+    "15"
+  ],
+  "blockedBy": [
+    "4"
+  ],
+  "metadata": {
+    "priority": "high",
+    "complexity": "S",
+    "source_section": "5.3, 9.3",
+    "spec_path": "specs/tdd-features-SPEC.md",
+    "feature_name": "Analyze Coverage",
+    "task_uid": "specs/tdd-features-SPEC.md:analyze-coverage:reference:001",
+    "task_group": "tdd-features"
+  }
+}

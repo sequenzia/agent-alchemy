@@ -1,0 +1,22 @@
+{
+  "id": "6",
+  "subject": "Create tdd-executor agent",
+  "description": "Create the tdd-executor agent at `claude/tdd-tools/agents/tdd-executor.md`.\n\nThis is an Opus-tier agent that executes the full 6-phase RED-GREEN-REFACTOR workflow for a single task. It extends the existing task-executor pattern (see `claude/sdd-tools/agents/task-executor.md` as reference) from 4 phases to 6 phases.\n\n**Agent Configuration:**\n- **Model**: opus (high-reasoning for autonomous TDD execution)\n- **Tools**: Read, Write, Edit, Glob, Grep, Bash, TaskGet, TaskUpdate, TaskList\n- **Skills**: language-patterns, project-conventions (from core-tools)\n\n**6-Phase Workflow:**\n\n1. **Phase 1: Understand** — Read task requirements, load project conventions, identify test framework, explore relevant codebase\n2. **Phase 2: Write Tests** — Generate failing tests from acceptance criteria using behavior-driven patterns. Load test-patterns reference for framework guidance\n3. **Phase 3: RED** — Run test suite. Verify ALL new tests fail. If tests pass unexpectedly, investigate and report\n4. **Phase 4: Implement** — Write minimal implementation to make tests pass. Follow project conventions. No over-engineering\n5. **Phase 5: GREEN** — Run full test suite. Verify ALL tests pass (new + existing). Zero regressions allowed\n6. **Phase 6: Complete** — Clean up code while keeping tests green. Run tests after each change. Report results with pass/fail counts and coverage\n\n**System Prompt Must Include:**\n- TDD philosophy: tests drive design, minimal implementation, no premature optimization\n- Phase gate enforcement: cannot skip phases, must verify before proceeding\n- Regression protection: existing tests must continue passing\n- Reporting format: per-phase results, final summary with test counts and coverage\n- Error recovery: if GREEN fails, iterate implementation; if REFACTOR breaks tests, revert\n\n**Key Difference from task-executor:**\n- task-executor: Understand → Implement → Verify → Report (implementation-first)\n- tdd-executor: Understand → Write Tests → RED → Implement → GREEN → Complete (test-first)\n\n**Acceptance Criteria:**\n\n_Functional:_\n- [ ] Agent file created with correct YAML frontmatter\n- [ ] Model set to opus for autonomous reasoning\n- [ ] 6-phase workflow clearly defined in system prompt\n- [ ] Phase gate verification enforced (can't skip RED, can't skip GREEN)\n- [ ] Regression protection: existing tests must remain passing\n- [ ] Reports final results with pass/fail counts\n\n_Edge Cases:_\n- [ ] Tests pass immediately in RED phase: warn and verify completeness\n- [ ] Implementation cannot make tests pass: report FAIL with specifics\n- [ ] Refactor breaks tests: revert and report PARTIAL\n\n_Error Handling:_\n- [ ] Test framework not found: clear error message\n- [ ] Task has no acceptance criteria: fall back to description-based test generation\n\n**Testing Requirements:**\n• Manual: Verify agent follows task-executor conventions\n• Manual: Validate 6-phase workflow is clearly specified in system prompt\n\nSource: specs/tdd-features-SPEC.md Section 5.2, 9.2, 13.3",
+  "activeForm": "Creating tdd-executor agent",
+  "status": "completed",
+  "blocks": [
+    "7"
+  ],
+  "blockedBy": [
+    "5"
+  ],
+  "metadata": {
+    "priority": "critical",
+    "complexity": "L",
+    "source_section": "5.2, 9.2, 13.3",
+    "spec_path": "specs/tdd-features-SPEC.md",
+    "feature_name": "TDD Cycle",
+    "task_uid": "specs/tdd-features-SPEC.md:tdd-cycle:tdd-executor-agent:001",
+    "task_group": "tdd-features"
+  }
+}

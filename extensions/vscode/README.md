@@ -25,7 +25,7 @@ cd extensions/vscode
 npm install
 npm run build
 npm run package
-code --install-extension claude-code-schemas-0.1.0.vsix
+code --install-extension claude-code-schemas-0.1.1.vsix
 ```
 
 ## Development
@@ -39,4 +39,4 @@ npm run watch
 
 ## Schemas
 
-JSON Schema files live at `schemas/` in the monorepo root and are bundled with the extension. They can also be used independently for CI validation or other tools.
+JSON Schema files live at `extensions/vscode/schemas/` and are bundled with the extension.
