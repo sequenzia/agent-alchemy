@@ -37,7 +37,7 @@
     },
     {
       "name": "agent-alchemy-sdd-tools",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "description": "SDD tools for Agent Alchemy",
       "source": "./sdd-tools",
       "homepage": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/sdd-tools",

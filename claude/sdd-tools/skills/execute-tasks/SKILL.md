@@ -164,7 +164,7 @@ Report results and share learnings.
 - Determine status (PASS/PARTIAL/FAIL) based on verification results
 - If PASS: mark task as `completed` via `TaskUpdate`
 - If PARTIAL or FAIL: leave as `in_progress` for the orchestrator to decide on retry
-- Append learnings to `.claude/sessions/__live_session__/execution_context.md` (files discovered, patterns learned, issues encountered)
+- Write learnings to `.claude/sessions/__live_session__/context-task-{id}.md` (files discovered, patterns learned, issues encountered)
 - Return structured report with verification results
 
 ## Adaptive Verification Overview
@@ -182,10 +182,10 @@ Verification adapts based on task type:
 
 Tasks within an execution session share learnings through `.claude/sessions/__live_session__/execution_context.md`:
 
+- **Write-based updates**: All orchestrator writes to session artifacts (`execution_context.md`, `task_log.md`, `progress.md`) use Write (full file replacement) via a read-modify-write pattern, never Edit. This ensures atomic, reliable updates regardless of file size.
 - **Snapshot before wave**: The orchestrator snapshots `execution_context.md` before launching each wave — all agents in a wave read the same baseline
-- **Per-task writes**: During concurrent execution, each agent writes to `context-task-{id}.md` instead of the shared file to avoid write contention
-- **Merge after wave**: After all agents in a wave complete, the orchestrator merges all `context-task-{id}.md` files into `execution_context.md` and deletes the per-task files
-- **Sequential fallback**: When `max_parallel` is 1, agents write directly to `execution_context.md` as before (no per-task files)
+- **Per-task writes**: Each agent writes to `context-task-{id}.md` instead of the shared file, regardless of `max_parallel` setting. This eliminates write contention and avoids fragile Edit operations on shared files.
+- **Merge after wave**: After all agents in a wave complete, the orchestrator appends all `context-task-{id}.md` content to the `## Task History` section of `execution_context.md` and deletes the per-task files
 - **Sections**: Project Patterns, Key Decisions, Known Issues, File Map, Task History
 
 This enables later tasks to benefit from earlier discoveries and retry attempts to learn from previous failures.
@@ -195,7 +195,7 @@ This enables later tasks to benefit from earlier discoveries and retry attempts 
 - **Autonomous execution loop**: After the user confirms the execution plan, no further prompts occur between tasks. The loop runs without interruption once started.
 - **Wave-based parallelism**: Tasks at the same dependency level run simultaneously, up to `max_parallel` concurrent agents per wave. Tasks in later waves wait until their dependencies in earlier waves complete.
 - **One agent per task, multiple per wave**: Each task gets a fresh agent invocation with isolated context, but multiple agents run concurrently within a wave.
-- **Per-task context isolation**: During concurrent execution, each agent writes to `context-task-{id}.md`. The orchestrator merges these after each wave to prevent write contention.
+- **Per-task context isolation**: Each agent writes to `context-task-{id}.md` regardless of `max_parallel` setting. The orchestrator merges these after each wave. This eliminates write contention and fragile Edit operations on shared files.
 - **Within-wave retry**: Failed tasks with retries remaining are re-launched immediately as agent slots free up within the current wave, maximizing throughput.
 - **Configurable parallelism**: Default 5 concurrent tasks, configurable via `--max-parallel` argument or `.claude/agent-alchemy.local.md` settings. Set to 1 for sequential execution.
 - **Configurable retries**: Default 3 attempts per task, configurable via `retries` argument.
@@ -203,7 +203,7 @@ This enables later tasks to benefit from earlier discoveries and retry attempts 
 - **Dynamic unblocking**: After each wave completes, the dependency graph is refreshed and newly unblocked tasks are added to the next wave.
 - **Honest failure handling**: After retries exhausted, tasks stay `in_progress` (not completed), and execution continues.
 - **Circular dependency detection**: If all remaining tasks are blocked by each other, break at the weakest link (task with fewest blockers) and log a warning.
-- **Shared context**: Agents read the snapshot of `execution_context.md` and write learnings to per-task files that get merged between waves.
+- **Shared context**: Agents read the snapshot of `execution_context.md` and write learnings to per-task context files. The orchestrator appends per-task content to the Task History section between waves.
 - **Resilient context sharing**: If a task-executor fails to append to its context file, learnings are captured in the verification report as a fallback.
 - **Single-session invariant**: Only one execution session can run at a time per project. A `.lock` file in `__live_session__/` prevents concurrent invocations.
 - **Interrupted session recovery**: Stale sessions are detected and archived; tasks left `in_progress` are automatically reset to `pending`.

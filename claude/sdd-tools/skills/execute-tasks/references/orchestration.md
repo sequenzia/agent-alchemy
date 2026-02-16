@@ -2,6 +2,16 @@
 
 This reference provides the detailed 10-step orchestration loop for executing Claude Code Tasks in dependency order. The execute-tasks skill uses this procedure to manage the full execution session.
 
+## File Operation Guidelines
+
+All orchestrator writes to session artifacts (`execution_context.md`, `task_log.md`, `progress.md`) MUST use **Write** (full file replacement), never **Edit**. The Edit tool relies on exact string matching which becomes unreliable as these files grow during execution. Instead, use a **read-modify-write** pattern:
+
+1. **Read** the current file contents
+2. **Modify** in memory (append rows, update sections, etc.)
+3. **Write** the complete updated file
+
+This ensures atomic, reliable updates regardless of file size or content changes.
+
 ## Step 1: Load Task List
 
 Use `TaskList` to get all tasks and their current state.
@@ -247,7 +257,7 @@ Read `.claude/sessions/__live_session__/execution_context.md` and hold it as the
 
 1. Mark all wave tasks as `in_progress` via `TaskUpdate`
 2. Record `wave_start_time`
-3. Update `progress.md`:
+3. Write the complete `progress.md` using Write (read-modify-write pattern):
    ```markdown
    # Execution Progress
    Status: Executing
@@ -321,7 +331,7 @@ Task:
     9. Report any token/usage information available from your session
 ```
 
-**Important**: When `max_parallel` is 1, omit the `CONCURRENT EXECUTION MODE` section from the prompt. The agent will write directly to `execution_context.md` as in the original sequential behavior.
+**Important**: Always include the `CONCURRENT EXECUTION MODE` section regardless of `max_parallel` value. All agents write to per-task context files (`context-task-{id}.md`), and the orchestrator always performs the merge step in 7f. This unified path eliminates fragile direct writes to `execution_context.md`.
 
 ### 7d: Process Results
 
@@ -329,12 +339,12 @@ As each agent returns:
 
 1. Calculate `duration = current_time - task_start_time`. Format: <60s = `{s}s`, <60m = `{m}m {s}s`, >=60m = `{h}h {m}m {s}s`
 2. Capture token usage from the Task tool response if available, otherwise `N/A`
-3. Append a row to `.claude/sessions/__live_session__/task_log.md`:
+3. Update `task_log.md` using read-modify-write: Read the current file, append a new row, Write the complete file:
    ```markdown
    | {id} | {subject} | {PASS/PARTIAL/FAIL} | {attempt_number}/{max_retries} | {duration} | {token_usage or N/A} |
    ```
 4. Log a brief status line: `[{id}] {subject}: {PASS|PARTIAL|FAIL}`
-5. Update `progress.md` — move the task from Active Tasks to Completed This Session:
+5. Update `progress.md` using read-modify-write: Read the current file, move the task from Active Tasks to Completed This Session, Write the complete file:
    ```markdown
    ## Active Tasks
    - [{other_id}] {subject} — Phase 2 — Implementing
@@ -365,11 +375,11 @@ After processing a failed result:
 
 After ALL agents in the current wave have completed (including retries):
 
-1. Read all `context-task-{id}.md` files from `.claude/sessions/__live_session__/`
-2. Append their contents to `.claude/sessions/__live_session__/execution_context.md` in task ID order
-3. Delete the `context-task-{id}.md` files
-
-**Skip merge when `max_parallel` is 1** — agents already wrote directly to `execution_context.md`.
+1. Read `.claude/sessions/__live_session__/execution_context.md`
+2. Read all `context-task-{id}.md` files from `.claude/sessions/__live_session__/` in task ID order
+3. Append each file's full content to the end of the `## Task History` section
+4. Write the complete updated `execution_context.md` using Write
+5. Delete the `context-task-{id}.md` files
 
 ### 7g: Rebuild Next Wave and Archive
 
@@ -382,7 +392,7 @@ After ALL agents in the current wave have completed (including retries):
 
 ## Step 8: Session Summary
 
-Update `progress.md` with final status:
+Write the complete `progress.md` with final status using Write:
 ```
 # Execution Progress
 Status: Complete

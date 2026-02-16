@@ -98,9 +98,7 @@ Before proceeding to implementation, have a clear understanding of:
 
 ## Phase 2: Implement
 
-**Sequential mode**: If `progress.md` exists in `.claude/sessions/__live_session__/`, update the Phase line to `Phase: Phase 2 — Implementing`.
-
-**Concurrent mode**: Do NOT update `progress.md` — the orchestrator manages progress tracking when multiple agents run simultaneously.
+Do NOT update `progress.md` — the orchestrator manages progress tracking.
 
 Execute the implementation following project patterns and best practices.
 
@@ -155,9 +153,7 @@ If the task specifies testing requirements or the project has test patterns:
 
 ## Phase 3: Verify
 
-**Sequential mode**: If `progress.md` exists in `.claude/sessions/__live_session__/`, update the Phase line to `Phase: Phase 3 — Verifying`.
-
-**Concurrent mode**: Do NOT update `progress.md`.
+Do NOT update `progress.md` — the orchestrator manages progress tracking.
 
 Verify the implementation against task requirements. The verification approach is adaptive based on task classification.
 
@@ -231,10 +227,7 @@ Leave task as `in_progress`. Do NOT mark as completed. The orchestrating skill w
 
 ### Append to Execution Context
 
-The write target depends on execution mode:
-
-**Concurrent mode** (prompt contains `CONCURRENT EXECUTION MODE` with a `Context Write Path`):
-Write learnings to the specified per-task context file (e.g., `.claude/sessions/__live_session__/context-task-{id}.md`):
+Write learnings to your per-task context file at the `Context Write Path` specified in your prompt (e.g., `.claude/sessions/__live_session__/context-task-{id}.md`). Do NOT write to `execution_context.md` directly — the orchestrator merges per-task files after each wave.
 
 ```markdown
 ### Task [{id}]: {subject} - {PASS/PARTIAL/FAIL}
@@ -245,25 +238,9 @@ Write learnings to the specified per-task context file (e.g., `.claude/sessions/
 
 Include updates to Project Patterns, Key Decisions, Known Issues, and File Map sections as relevant — the orchestrator will merge these into the shared context after the wave.
 
-**Sequential mode** (no `CONCURRENT EXECUTION MODE` in prompt):
-Append learnings directly to `.claude/sessions/__live_session__/execution_context.md`:
-
-```markdown
-### Task [{id}]: {subject} - {PASS/PARTIAL/FAIL}
-- Files modified: {list of files created or changed}
-- Key learnings: {patterns discovered, conventions noted, useful file locations}
-- Issues encountered: {problems hit, workarounds applied, things that didn't work}
-```
-
-Also update the relevant sections if new information was discovered:
-- **Project Patterns**: New coding patterns or conventions found
-- **Key Decisions**: Architecture or approach decisions made
-- **Known Issues**: New problems or gotchas discovered
-- **File Map**: Important files discovered and their purposes
-
 #### Error Resilience
 
-If the write to the context file fails (whether `execution_context.md` in sequential mode or `context-task-{id}.md` in concurrent mode):
+If the write to the per-task context file fails:
 
 1. **Do not crash** — continue the workflow normally
 2. Log a `WARNING: Failed to write learnings to context file` line in the verification report

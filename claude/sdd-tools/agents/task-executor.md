@@ -27,9 +27,8 @@ You have been launched by the `agent-alchemy-sdd:execute-tasks` skill with:
 - **Task Details**: Subject, description, metadata, dependencies
 - **Retry Context**: (if retry) Previous attempt's verification results and failure details
 - **Task Execution ID**: The execution session identifier (e.g., `exec-session-20260131-143022`)
-- **Execution Context Path**: Path to `.claude/sessions/__live_session__/execution_context.md` for shared learnings
-- **Context Write Path**: (if concurrent mode) Path to `context-task-{id}.md` for writing learnings instead of shared `execution_context.md`
-- **Execution Mode**: Sequential (default) or Concurrent — determines where to write context and whether to update `progress.md`
+- **Execution Context Path**: Path to `.claude/sessions/__live_session__/execution_context.md` for reading shared learnings
+- **Context Write Path**: Path to `context-task-{id}.md` for writing learnings (never write directly to `execution_context.md`)
 
 ## Process Overview
 
@@ -115,9 +114,7 @@ Before writing code, have a clear plan:
 
 ## Phase 2: Implement
 
-If running in **sequential mode** (no `CONCURRENT EXECUTION MODE` in prompt) and `progress.md` exists in `.claude/sessions/__live_session__/`, update the Phase line to `Phase: Phase 2 — Implementing`.
-
-If running in **concurrent mode**, do NOT update `progress.md` — the orchestrator manages it.
+Do NOT update `progress.md` — the orchestrator manages progress tracking.
 
 ### Pre-Implementation
 
@@ -161,9 +158,7 @@ If testing requirements are specified:
 
 ## Phase 3: Verify
 
-If running in **sequential mode** and `progress.md` exists in `.claude/sessions/__live_session__/`, update the Phase line to `Phase: Phase 3 — Verifying`.
-
-If running in **concurrent mode**, do NOT update `progress.md`.
+Do NOT update `progress.md` — the orchestrator manages progress tracking.
 
 ### Spec-Generated Tasks
 
@@ -227,10 +222,7 @@ Leave task as `in_progress`. Do NOT mark as completed.
 
 ### Append to Execution Context
 
-The write target depends on execution mode:
-
-**Concurrent mode** (prompt contains `CONCURRENT EXECUTION MODE` with a `Context Write Path`):
-Write learnings to the specified per-task context file (e.g., `.claude/sessions/__live_session__/context-task-{id}.md`):
+Write learnings to your per-task context file at the `Context Write Path` specified in your prompt (e.g., `.claude/sessions/__live_session__/context-task-{id}.md`). Do NOT write to `execution_context.md` directly — the orchestrator merges per-task files after each wave.
 
 ```markdown
 ### Task [{id}]: {subject} - {PASS/PARTIAL/FAIL}
@@ -239,23 +231,7 @@ Write learnings to the specified per-task context file (e.g., `.claude/sessions/
 - Issues encountered: {problems hit, workarounds applied, things that didn't work}
 ```
 
-Also include updates to Project Patterns, Key Decisions, Known Issues, and File Map sections as relevant — the orchestrator will merge these into the shared context after the wave completes.
-
-**Sequential mode** (no `CONCURRENT EXECUTION MODE` in prompt):
-Append learnings directly to `.claude/sessions/__live_session__/execution_context.md` as before:
-
-```markdown
-### Task [{id}]: {subject} - {PASS/PARTIAL/FAIL}
-- Files modified: {list of files created or changed}
-- Key learnings: {patterns discovered, conventions noted, useful file locations}
-- Issues encountered: {problems hit, workarounds applied, things that didn't work}
-```
-
-Update other sections as needed:
-- **Project Patterns**: New coding patterns found
-- **Key Decisions**: Architecture choices made
-- **Known Issues**: New problems discovered
-- **File Map**: Important files found
+Include updates to Project Patterns, Key Decisions, Known Issues, and File Map sections as relevant — the orchestrator will merge these into the shared context after the wave completes.
 
 ### Return Report
 
@@ -289,7 +265,7 @@ LEARNINGS:
   - Issues encountered: {problems, workarounds}
 ```
 
-If the append to `execution_context.md` fails, do not crash. Instead, include the `LEARNINGS:` section in the report as a fallback so the orchestrator can append the data.
+If the write to the per-task context file fails, do not crash. Instead, include the `LEARNINGS:` section in the report as a fallback so the orchestrator can write the data.
 
 ---
 
