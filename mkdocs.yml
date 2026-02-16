@@ -1,0 +1,66 @@
+site_name: Agent Alchemy
+site_description: A plugin suite and developer toolkit that extends Claude Code into a structured development platform
+site_url: ""
+repo_url: https://github.com/sequenzia/agent-alchemy
+repo_name: sequenzia/agent-alchemy
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.tabs.link
+  palette:
+    - scheme: default
+      primary: deep purple
+      accent: cyan
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: deep purple
+      accent: cyan
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.snippets
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - Architecture: architecture.md
+  - Plugins:
+    - Overview: plugins/index.md
+    - Core Tools: plugins/core-tools.md
+    - Dev Tools: plugins/dev-tools.md
+    - SDD Tools: plugins/sdd-tools.md
+    - TDD Tools: plugins/tdd-tools.md
+    - Git Tools: plugins/git-tools.md
+  - Task Manager: task-manager.md
+  - VS Code Extension: vscode-extension.md
+  - Configuration: configuration.md
+  - Contributing: contributing.md
