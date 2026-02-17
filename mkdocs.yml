@@ -60,6 +60,7 @@ nav:
     - SDD Tools: plugins/sdd-tools.md
     - TDD Tools: plugins/tdd-tools.md
     - Git Tools: plugins/git-tools.md
+    - Plugin Tools: plugins/plugin-tools.md
   - Task Manager: task-manager.md
   - VS Code Extension: vscode-extension.md
   - Configuration: configuration.md

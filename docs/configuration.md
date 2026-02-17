@@ -73,6 +73,16 @@ Under the `tdd` key:
 | `test-review-threshold` | `70` | `0`-`100` | Minimum test quality score |
 | `test-review-on-generate` | `false` | `true`, `false` | Auto-run test-reviewer after `/generate-tests` |
 
+### Plugin Tools Settings
+
+Under the `plugin-tools.dependency-checker` key:
+
+| Setting | Default | Options | Description |
+|---------|---------|---------|-------------|
+| `severity-threshold` | `low` | `critical`, `high`, `medium`, `low` | Minimum severity level to include in report |
+| `check-docs-drift` | `true` | `true`, `false` | Run Phase 4 CLAUDE.md/README cross-referencing |
+| `line-count-tolerance` | `10` | `0`-`100` | Percentage tolerance for line count drift detection |
+
 ## Precedence Rules
 
 Settings follow this precedence order (highest to lowest):
@@ -112,6 +122,11 @@ Settings follow this precedence order (highest to lowest):
       coverage-threshold: 90
       strictness: strict
       test-review-on-generate: true
+    plugin-tools:
+      dependency-checker:
+        severity-threshold: medium
+        check-docs-drift: true
+        line-count-tolerance: 15
     ---
     ```
 

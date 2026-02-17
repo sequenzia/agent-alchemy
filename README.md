@@ -4,7 +4,7 @@ A plugin suite and developer toolkit that extends Claude Code into a structured 
 
 ## What is Agent Alchemy?
 
-Agent Alchemy is an open-source toolkit for AI and software engineers who use Claude Code. It adds structured development workflows on top of Claude Code through four plugins, a real-time task manager, and a VS Code extension — all designed to work together as an integrated pipeline.
+Agent Alchemy is an open-source toolkit for AI and software engineers who use Claude Code. It adds structured development workflows on top of Claude Code through six plugins, a real-time task manager, and a VS Code extension — all designed to work together as an integrated pipeline.
 
 Everything is built with Claude Code for Claude Code. The plugins are plain markdown — readable, editable, and version-controlled like any other code.
 
@@ -12,14 +12,16 @@ Everything is built with Claude Code for Claude Code. The plugins are plain mark
 
 ### Claude Code Plugins
 
-Four plugin groups providing 15 skills and 9 agents:
+Six plugin groups providing 24 skills and 13 agents:
 
 | Plugin | Description |
 |--------|-------------|
 | **[SDD Tools](claude/sdd-tools/)** | Spec-Driven Development — turn ideas into specs, specs into tasks, and tasks into autonomous execution |
 | **[Dev Tools](claude/dev-tools/)** | Feature development, code review, architecture patterns, documentation, and changelog management |
 | **[Core Tools](claude/core-tools/)** | Codebase analysis, deep exploration with multi-agent teams, and language patterns |
+| **[TDD Tools](claude/tdd-tools/)** | Test-Driven Development — RED-GREEN-REFACTOR workflows, test generation, and coverage analysis |
 | **[Git Tools](claude/git-tools/)** | Conventional Commits automation |
+| **[Plugin Tools](claude/plugin-tools/)** | Plugin porting, adapter validation, ported plugin maintenance, and ecosystem health analysis |
 
 ### [Task Manager](apps/task-manager/)
 
@@ -49,6 +51,8 @@ claude plugins install agent-alchemy/agent-alchemy-sdd-tools
 claude plugins install agent-alchemy/agent-alchemy-dev-tools
 claude plugins install agent-alchemy/agent-alchemy-core-tools
 claude plugins install agent-alchemy/agent-alchemy-git-tools
+claude plugins install agent-alchemy/agent-alchemy-tdd-tools
+claude plugins install agent-alchemy/agent-alchemy-plugin-tools
 ```
 
 ### Run Task Manager
@@ -110,7 +114,9 @@ claude/                          # Plugins (markdown-as-code)
 ├── core-tools/                  # Analysis & exploration
 ├── dev-tools/                   # Development lifecycle
 ├── sdd-tools/                   # Spec-Driven Development
-└── git-tools/                   # Git automation
+├── tdd-tools/                   # Test-Driven Development
+├── git-tools/                   # Git automation
+└── plugin-tools/                # Plugin porting & ecosystem health
 
 apps/task-manager/               # Real-time dashboard
 ├── src/lib/fileWatcher.ts       # Chokidar -> SSE

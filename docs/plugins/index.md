@@ -1,6 +1,6 @@
 # Plugin Overview
 
-Agent Alchemy extends Claude Code through five plugin groups, each targeting a different phase of the development lifecycle. Plugins are installed independently — pick only what you need.
+Agent Alchemy extends Claude Code through six plugin groups, each targeting a different phase of the development lifecycle. Plugins are installed independently — pick only what you need.
 
 ## At a Glance
 
@@ -11,6 +11,7 @@ Agent Alchemy extends Claude Code through five plugin groups, each targeting a d
 | [SDD Tools](sdd-tools.md) | Spec-Driven Development pipeline | 6 | 3 | 0.1.2 |
 | [TDD Tools](tdd-tools.md) | Test-Driven Development workflows | 3 | 3 | 0.1.0 |
 | [Git Tools](git-tools.md) | Git commit automation | 1 | 0 | 0.1.0 |
+| [Plugin Tools](plugin-tools.md) | Plugin porting and ecosystem health | 4 | 1 | 0.1.0 |
 
 ## How Plugins Work
 
@@ -46,6 +47,9 @@ claude plugins install agent-alchemy/agent-alchemy-tdd-tools
 
 # Git commit automation
 claude plugins install agent-alchemy/agent-alchemy-git-tools
+
+# Plugin porting, validation, and ecosystem analysis
+claude plugins install agent-alchemy/agent-alchemy-plugin-tools
 ```
 
 ## Plugin Groups
@@ -90,6 +94,14 @@ Lightweight git automation. A single skill that analyzes staged changes and gene
 
 [Read the full Git Tools guide →](git-tools.md)
 
+### Plugin Tools
+
+Plugin lifecycle management. Ports Agent Alchemy plugins to other platforms using an adapter framework with live research, validates adapters against current platform documentation, applies incremental updates to ported plugins, and analyzes ecosystem health across all plugin groups.
+
+**Key skills:** `/port-plugin`, `/validate-adapter`, `/dependency-checker`
+
+[Read the full Plugin Tools guide →](plugin-tools.md)
+
 ## Cross-Plugin Dependencies
 
 Plugins are designed to be independent, but some skills compose across boundaries:
@@ -104,6 +116,11 @@ graph TD
     CTT["create-tdd-tasks<br/>(sdd-tools)"] -.->|"requires"| TDD["tdd-executor<br/>(tdd-tools)"]
     ETT["execute-tdd-tasks<br/>(sdd-tools)"] -.->|"requires"| TDD
 
+    DC["dependency-checker<br/>(plugin-tools)"] -.->|"reads all"| DA
+    DC -.->|"reads all"| FD
+    DC -.->|"reads all"| CS
+    DC -.->|"reads all"| TDD
+
     style DA fill:#7c4dff,color:#fff
     style CA fill:#7c4dff,color:#fff
     style FD fill:#00bcd4,color:#fff
@@ -112,10 +129,12 @@ graph TD
     style CTT fill:#f44336,color:#fff
     style ETT fill:#f44336,color:#fff
     style TDD fill:#4caf50,color:#fff
+    style DC fill:#ff9800,color:#fff
 ```
 
 - **deep-analysis** (core-tools) is loaded by 4 skills across core-tools, dev-tools, and sdd-tools
 - **TDD variant skills** (sdd-tools) require the tdd-tools plugin for the `tdd-executor` agent
+- **dependency-checker** (plugin-tools) reads all plugin groups to build its dependency graph
 - All other cross-references are optional — skills degrade gracefully when dependencies are missing
 
 ## Model Usage
@@ -125,5 +144,5 @@ Plugins use three model tiers to balance quality and cost:
 | Tier | Model | Used For | Examples |
 |------|-------|----------|----------|
 | High | Opus | Synthesis, architecture, review | code-synthesizer, code-architect, code-reviewer, tdd-executor |
-| Medium | Sonnet | Exploration, parallel workers | code-explorer, test-writer |
+| Medium | Sonnet | Exploration, parallel workers | code-explorer, test-writer, researcher (plugin-tools) |
 | Low | Haiku | Simple, fast tasks | git-commit |

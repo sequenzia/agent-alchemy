@@ -139,14 +139,14 @@ dependency-checker -> reads all plugin groups -> builds dependency graph -> 7 an
 |------|-------|------|
 | `claude/core-tools/skills/deep-analysis/SKILL.md` | 521 | Keystone skill — hub-and-spoke team engine loaded by 4 other skills |
 | `claude/plugin-tools/skills/port-plugin/SKILL.md` | ~2750 | Largest skill — cross-platform plugin porting with 7-phase (+4.5) workflow |
-| `claude/plugin-tools/skills/validate-adapter/SKILL.md` | ~350 | Adapter validation against live platform docs (4 phases) |
-| `claude/plugin-tools/skills/update-ported-plugin/SKILL.md` | ~700 | Incremental ported plugin updates with dual-track change detection (5 phases) |
+| `claude/plugin-tools/skills/validate-adapter/SKILL.md` | 625 | Adapter validation against live platform docs (4 phases) |
+| `claude/plugin-tools/skills/update-ported-plugin/SKILL.md` | 793 | Incremental ported plugin updates with dual-track change detection (5 phases) |
 | `claude/sdd-tools/skills/create-spec/SKILL.md` | 664 | Adaptive interview with depth-aware questioning |
 | `claude/sdd-tools/skills/create-tasks/SKILL.md` | 653 | Spec-to-task decomposition with `task_uid` merge mode |
 | `claude/sdd-tools/skills/execute-tasks/SKILL.md` | 262 | Wave-based parallel execution with session management |
-| `claude/dev-tools/skills/feature-dev/SKILL.md` | 271 | 7-phase lifecycle spawning architect + reviewer agent teams |
-| `claude/tdd-tools/skills/tdd-cycle/SKILL.md` | 718 | 7-phase RED-GREEN-REFACTOR TDD workflow |
-| `claude/tdd-tools/skills/generate-tests/SKILL.md` | 513 | Test generation from acceptance criteria or source code |
+| `claude/dev-tools/skills/feature-dev/SKILL.md` | 273 | 7-phase lifecycle spawning architect + reviewer agent teams |
+| `claude/tdd-tools/skills/tdd-cycle/SKILL.md` | 727 | 7-phase RED-GREEN-REFACTOR TDD workflow |
+| `claude/tdd-tools/skills/generate-tests/SKILL.md` | 524 | Test generation from acceptance criteria or source code |
 | `claude/sdd-tools/skills/create-tdd-tasks/SKILL.md` | 687 | SDD-to-TDD task pair transformation |
 | `claude/sdd-tools/skills/execute-tdd-tasks/SKILL.md` | 630 | TDD-aware wave execution with agent routing |
 | `claude/plugin-tools/skills/dependency-checker/SKILL.md` | 651 | Ecosystem dependency analysis with 7 detection passes + doc drift |

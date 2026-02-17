@@ -93,11 +93,11 @@ plugin-tools/
 │   ├── port-plugin/
 │   │   └── SKILL.md            # Conversion wizard (~2,750 lines)
 │   ├── validate-adapter/
-│   │   └── SKILL.md            # Adapter validation (~350 lines)
+│   │   └── SKILL.md            # Adapter validation (~625 lines)
 │   ├── update-ported-plugin/
-│   │   └── SKILL.md            # Incremental updater (~700 lines)
+│   │   └── SKILL.md            # Incremental updater (~800 lines)
 │   └── dependency-checker/
-│       └── SKILL.md            # Ecosystem health analyzer (~550 lines)
+│       └── SKILL.md            # Ecosystem health analyzer (~650 lines)
 └── README.md
 ```
 
