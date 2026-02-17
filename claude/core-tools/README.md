@@ -17,6 +17,7 @@ Foundational skills and agents for codebase analysis, deep exploration, and lang
 |-------|-------|---------|
 | `code-explorer` | Sonnet | Focused area exploration worker. Reads files, searches patterns, produces structured reports. Used by deep-analysis as parallel workers. |
 | `code-synthesizer` | Opus | Merges exploration findings into unified analysis. Has Bash access for git history, dependency trees, and static analysis. Can query explorers for follow-ups. |
+| `code-architect` | Opus | Designs implementation blueprints with minimal, flexible, and project-aligned approaches. Read-only agent spawned by feature-dev (dev-tools) for architecture design. |
 
 ## How It Works
 
@@ -35,6 +36,7 @@ This skill is loaded by `feature-dev`, `codebase-analysis`, `docs-manager`, and 
 ```
 core-tools/
 ├── agents/
+│   ├── code-architect.md       # Opus blueprint design agent
 │   ├── code-explorer.md        # Sonnet exploration worker
 │   └── code-synthesizer.md     # Opus synthesis agent
 ├── skills/

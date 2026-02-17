@@ -2482,7 +2482,7 @@ Group them into a single entry with a sub-list of affected components rather tha
 ```markdown
 ### SendMessage (Critical) — 4 components affected
 
-- **Components:** code-explorer, code-synthesizer, code-architect, code-reviewer
+- **Components:** code-explorer, code-synthesizer, code-architect (all core-tools), code-reviewer (dev-tools)
 - **Why:** No inter-agent messaging equivalent on {TARGET_PLATFORM}
 - **Workaround:** Remove inter-agent references; restructure as independent workflows
 - **Manual steps:** Refactor each agent to operate independently without message passing

@@ -44,11 +44,11 @@ agent-alchemy/
 │   ├── .claude-plugin/            # Plugin marketplace registry
 │   ├── core-tools/                # Codebase analysis, deep exploration
 │   │   ├── skills/                # deep-analysis, codebase-analysis, ...
-│   │   ├── agents/                # code-explorer, code-synthesizer
+│   │   ├── agents/                # code-explorer, code-synthesizer, code-architect
 │   │   └── hooks/                 # Lifecycle hooks (auto-approve)
 │   ├── dev-tools/                 # Feature dev, code review, docs
 │   │   ├── skills/                # feature-dev, docs-manager, ...
-│   │   └── agents/                # code-architect, code-reviewer, ...
+│   │   └── agents/                # code-reviewer, changelog-manager, ...
 │   ├── sdd-tools/                 # Spec-Driven Development pipeline
 │   │   ├── skills/                # create-spec, create-tasks, execute-tasks, ...
 │   │   └── agents/                # researcher, spec-analyzer, task-executor
@@ -236,8 +236,8 @@ Agents enforce separation of concerns through their tool permissions. Architect 
 |-------|-------|-------|-------------|
 | `code-explorer` | Sonnet | Read, Glob, Grep, Bash, SendMessage | Read-only |
 | `code-synthesizer` | Opus | Read, Glob, Grep, Bash, SendMessage | Read-only |
-| `code-architect` | Opus | Read, Glob, Grep, SendMessage | Read-only |
-| `code-reviewer` | Opus | Read, Glob, Grep, SendMessage | Read-only |
+| `code-architect` (core-tools) | Opus | Read, Glob, Grep, SendMessage | Read-only |
+| `code-reviewer` (dev-tools) | Opus | Read, Glob, Grep, SendMessage | Read-only |
 | `task-executor` | — | Read, Write, Edit, Glob, Grep, Bash | Full access |
 | `tdd-executor` | Opus | Read, Write, Edit, Glob, Grep, Bash | Full access |
 
@@ -311,7 +311,7 @@ graph TD
     DM -->|codebase understanding| DA
     CS -.->|optional: new feature specs| DA
 
-    FD -->|Phase 4| AR[code-architect x2-3]
+    FD -->|Phase 4| AR[code-architect x2-3<br/><i>core-tools</i>]
     FD -->|Phase 6| CR[code-reviewer x3]
     DA -->|spawns| EX[code-explorer x N]
     DA -->|spawns| SY[code-synthesizer x 1]
@@ -332,7 +332,7 @@ feature-dev
   └─ deep-analysis (Phase 2)
        ├─ code-explorer (Sonnet) x N  — parallel exploration
        └─ code-synthesizer (Opus) x 1 — merge + investigate
-  └─ code-architect (Opus) x 2-3     — competing designs (Phase 4)
+  └─ code-architect (core-tools, Opus) x 2-3 — competing designs (Phase 4)
   └─ code-reviewer (Opus) x 3        — parallel review focuses (Phase 6)
 
 create-spec

@@ -227,6 +227,8 @@ agents/
   code-synthesizer
     -> binds: project-conventions, language-patterns
     <- spawned by: deep-analysis (core-tools)
+  code-architect
+    <- spawned by: feature-dev (dev-tools)
 hooks/
   hooks.json (PreToolUse: Write|Edit|Bash)
     -> runs: auto-approve-da-session.sh
@@ -241,7 +243,7 @@ skills/
   feature-dev
     -> loads: deep-analysis (core-tools), language-patterns (core-tools),
               architecture-patterns (dev-tools), code-quality (dev-tools)
-    -> spawns: code-architect (dev-tools), code-reviewer (dev-tools)
+    -> spawns: code-architect (core-tools), code-reviewer (dev-tools)
     -> loads ref: adr-template.md, changelog-entry-template.md
   docs-manager
     -> loads: deep-analysis (core-tools)
@@ -257,8 +259,6 @@ skills/
   release-python-package
     -> spawns: changelog-manager (dev-tools)
 agents/
-  code-architect
-    <- spawned by: feature-dev
   code-reviewer
     <- spawned by: feature-dev
   changelog-manager

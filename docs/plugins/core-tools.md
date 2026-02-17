@@ -8,7 +8,7 @@ Core Tools (v0.1.1) provides the foundational analysis and exploration capabilit
 |---|---|
 | **Version** | 0.1.1 |
 | **Skills** | 4 (2 user-invocable, 2 agent-loaded) |
-| **Agents** | 2 (code-explorer, code-synthesizer) |
+| **Agents** | 3 (code-explorer, code-synthesizer, code-architect) |
 | **Hooks** | 1 (auto-approve session file operations) |
 
 Core Tools is the most composed plugin in Agent Alchemy. Its `deep-analysis` skill is loaded by four other skills across three different plugin groups, making it the engine behind every workflow that needs to understand a codebase before acting on it.
@@ -292,6 +292,30 @@ The skill also provides a **Convention Application Checklist** covering code sty
 
 ## Agents
 
+### code-architect (Opus)
+
+The blueprint designer. Spawned by feature-dev (dev-tools) to generate competing implementation approaches.
+
+| Property | Value |
+|---|---|
+| **Model** | Opus |
+| **Tools** | Read, Glob, Grep, SendMessage, TaskUpdate, TaskGet, TaskList |
+| **Loaded Skills** | None |
+| **Source** | `claude/core-tools/agents/code-architect.md` |
+
+!!! warning "Read-Only by Design"
+    Like the explorer and synthesizer, the architect has no Write or Edit access. It designs blueprints but never modifies code — only the lead (feature-dev) applies changes.
+
+**Design approaches:**
+
+1. **Minimal/Simple** — Fewest files changed, direct implementation, inline solutions
+2. **Flexible/Extensible** — Abstractions where reuse is likely, extension points
+3. **Project-Aligned** — Match existing patterns exactly, follow team conventions
+
+**Output format:** Implementation blueprints with files to create/modify, data flow, API changes, error handling, risks/mitigations, and testing strategy.
+
+---
+
 ### code-explorer (Sonnet)
 
 The exploration workhorse of the deep-analysis team. Each instance is assigned a single focus area and works independently.
@@ -510,6 +534,7 @@ Deep-analysis includes structured error handling at every phase:
 ```
 claude/core-tools/
 ├── agents/
+│   ├── code-architect.md             # Opus — blueprint design agent
 │   ├── code-explorer.md              # Sonnet — exploration worker
 │   └── code-synthesizer.md           # Opus — synthesis agent
 ├── hooks/

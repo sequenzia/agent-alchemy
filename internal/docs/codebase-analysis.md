@@ -69,7 +69,7 @@ The three pillars connect through Claude Code's native task system: plugins crea
 - **Hub-and-Spoke Team Coordination**: `deep-analysis` creates teams with N explorers (Sonnet, read-only) + 1 synthesizer (Opus, read + Bash). Workers explore independently in parallel; only the synthesizer communicates with workers for follow-ups.
 - **Phase Workflows with Completeness Enforcement**: Complex skills use numbered phases with `CRITICAL: Complete ALL N phases` directives. This prevents LLMs from stopping prematurely. Feature-dev (7 phases), create-spec (6 phases), tdd-cycle (7 phases).
 - **Progressive Knowledge Loading**: 33 reference files (up to 776 lines each) are loaded on-demand within specific phases rather than upfront, managing context window usage.
-- **Agent Tool Restrictions**: Read-only agents (`code-explorer`, `code-architect`, `code-reviewer`) vs full-capability agents (`task-executor`, `tdd-executor`, `test-writer`). Enforces separation of concerns.
+- **Agent Tool Restrictions**: Read-only agents (`code-explorer`, `code-architect` [core-tools], `code-reviewer` [dev-tools]) vs full-capability agents (`task-executor`, `tdd-executor`, `test-writer`). Enforces separation of concerns.
 - **Hook-Based Auto-Approval**: `PreToolUse` hooks with bash scripts auto-approve file operations targeting session directories, enabling autonomous execution.
 - **GlobalThis Singleton**: Task manager persists `FileWatcher` across HMR via `globalThis` — only stored in dev mode.
 - **AskUserQuestion Enforcement**: All interactive skills route user interaction through `AskUserQuestion`, never plain text output. Provides structured UI with options.
@@ -106,7 +106,7 @@ marketplace.json ──registers──→ 5 plugin groups
     │   └── code-synthesizer (Opus) ←spawned-by── deep-analysis
     │
     ├── dev-tools/
-    │   ├── feature-dev ──spawns──→ code-architect (Opus) x2-3, code-reviewer (Opus) x3
+    │   ├── feature-dev ──spawns──→ code-architect (core-tools, Opus) x2-3, code-reviewer (Opus) x3
     │   ├── docs-manager ──spawns──→ docs-writer (Opus)
     │   └── release-python-package ──spawns──→ changelog-manager
     │
@@ -153,7 +153,7 @@ create-spec → spec file → analyze-spec → quality report → create-tasks �
 
 ```
 feature-dev → deep-analysis → code-explorer (Sonnet) x N + code-synthesizer (Opus) x 1
-feature-dev → code-architect (Opus) x 2-3 → code-reviewer (Opus) x 3
+feature-dev → code-architect (core-tools, Opus) x 2-3 → code-reviewer (Opus) x 3
 
 create-spec → deep-analysis (optional, for "new feature" type)
 create-spec → researcher agent (for technical research)
@@ -200,8 +200,8 @@ generate-tests → test-writer (Sonnet) x N parallel (criteria-driven or code-an
 
 | Group | Skills | Agents | Version |
 |-------|--------|--------|---------|
-| core-tools | deep-analysis, codebase-analysis, language-patterns, project-conventions | code-explorer, code-synthesizer | 0.1.1 |
-| dev-tools | feature-dev, architecture-patterns, code-quality, changelog-format, docs-manager, release-python-package | code-architect, code-reviewer, changelog-manager, docs-writer | 0.1.1 |
+| core-tools | deep-analysis, codebase-analysis, language-patterns, project-conventions | code-explorer, code-synthesizer, code-architect | 0.1.1 |
+| dev-tools | feature-dev, architecture-patterns, code-quality, changelog-format, docs-manager, release-python-package | code-reviewer, changelog-manager, docs-writer | 0.1.1 |
 | sdd-tools | create-spec, analyze-spec, create-tasks, execute-tasks, create-tdd-tasks, execute-tdd-tasks | researcher, spec-analyzer, task-executor | 0.1.2 |
 | tdd-tools | generate-tests, tdd-cycle, analyze-coverage | test-writer, tdd-executor, test-reviewer | 0.1.0 |
 | git-tools | git-commit | — | 0.1.0 |

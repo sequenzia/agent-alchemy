@@ -58,7 +58,7 @@ pnpm lint                      # Lint all packages
 - **Hub-and-Spoke Teams**: `deep-analysis` spawns N explorer agents (Sonnet) + 1 synthesizer (Opus); explorers work independently, synthesizer merges with follow-ups + Bash investigation
 - **Phase Workflows**: Complex skills use numbered phases with `"CRITICAL: Complete ALL N phases"` directives to prevent premature stopping
 - **Reference Materials**: Large knowledge bases externalized into `references/` subdirectories (~6,000 lines total), loaded progressively when needed
-- **Agent Tool Restrictions**: Architect/reviewer agents are read-only (Glob, Grep, Read only); executor agents can write — enforces separation of concerns
+- **Agent Tool Restrictions**: Architect (core-tools) and reviewer (dev-tools) agents are read-only (Glob, Grep, Read only); executor agents can write — enforces separation of concerns
 - **AskUserQuestion Enforcement**: All interactive skills route user interaction through `AskUserQuestion`, never plain text output
 
 ### Cross-Plugin Dependencies
@@ -81,7 +81,7 @@ pnpm lint                      # Lint all packages
 
 ```
 feature-dev -> deep-analysis -> code-explorer (sonnet) x N + code-synthesizer (opus) x 1
-feature-dev -> code-architect (opus) x 2-3 -> code-reviewer (opus) x 3
+feature-dev -> code-architect (core-tools, opus) x 2-3 -> code-reviewer (opus) x 3
 
 create-spec -> deep-analysis (optional, for "new feature" type)
 create-spec -> researcher agent (for technical research)
@@ -126,8 +126,8 @@ dependency-checker -> reads all plugin groups -> builds dependency graph -> 7 an
 
 | Group | Skills | Agents | Version |
 |-------|--------|--------|---------|
-| core-tools | deep-analysis, codebase-analysis, language-patterns, project-conventions | code-explorer, code-synthesizer | 0.1.1 |
-| dev-tools | feature-dev, architecture-patterns, code-quality, changelog-format, docs-manager, release-python-package | code-architect, code-reviewer, changelog-manager, docs-writer | 0.1.1 |
+| core-tools | deep-analysis, codebase-analysis, language-patterns, project-conventions | code-explorer, code-synthesizer, code-architect | 0.1.1 |
+| dev-tools | feature-dev, architecture-patterns, code-quality, changelog-format, docs-manager, release-python-package | code-reviewer, changelog-manager, docs-writer | 0.1.1 |
 | sdd-tools | create-spec, analyze-spec, create-tasks, execute-tasks, create-tdd-tasks, execute-tdd-tasks | researcher, spec-analyzer, task-executor | 0.1.2 |
 | tdd-tools | generate-tests, tdd-cycle, analyze-coverage | test-writer, tdd-executor, test-reviewer | 0.1.0 |
 | git-tools | git-commit | — | 0.1.0 |

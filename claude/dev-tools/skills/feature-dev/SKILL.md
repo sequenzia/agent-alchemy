@@ -91,7 +91,7 @@ Execute these phases in order, completing ALL of them:
    Agent 3: Design an approach optimized for the project's existing patterns (if applicable)
    ```
 
-   Use the Task tool with `subagent_type: "code-architect"`:
+   Use the Task tool with `subagent_type: "agent-alchemy-core-tools:code-architect"`:
    ```
    Feature: [feature description]
    Design approach: [specific approach for this agent]
@@ -257,13 +257,14 @@ If any phase fails:
 
 Exploration and synthesis agent coordination is handled by the `deep-analysis` skill in Phase 2, which uses Agent Teams with hub-and-spoke coordination. Deep-analysis performs reconnaissance, composes a team plan (auto-approved when invoked by another skill), assembles the team, and manages the exploration/synthesis lifecycle. See that skill for team setup, approval flow, agent model tiers, and failure handling details.
 
-When launching other parallel agents (code-architect, code-reviewer):
+When launching other parallel agents (code-architect from core-tools, code-reviewer):
 - Give each agent a distinct focus area
 - Wait for all agents to complete before proceeding
 - Handle agent failures gracefully (continue with partial results)
 
 When calling Task tool for agents:
-- Use `model: "opus"` for code-architect and code-reviewer agents
+- Use `subagent_type: "agent-alchemy-core-tools:code-architect"` (cross-plugin, from core-tools)
+- Use `subagent_type: "code-reviewer"` for review agents (same plugin)
 - Code-explorer and code-synthesizer models are managed by deep-analysis
 
 ## Additional Resources

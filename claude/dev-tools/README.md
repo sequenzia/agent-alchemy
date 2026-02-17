@@ -17,10 +17,11 @@ Developer agents and skills for the full feature development lifecycle — from 
 
 | Agent | Model | Purpose |
 |-------|-------|---------|
-| `code-architect` | Opus | Generates implementation blueprints with minimal, flexible, and project-aligned approaches. Spawned 2-3x in parallel by feature-dev. |
 | `code-reviewer` | Opus | Quality review with confidence-scored findings. Spawned 3x in parallel by feature-dev for independent review perspectives. |
 | `changelog-manager` | — | Manages CHANGELOG.md entries following Keep a Changelog format. |
 | `docs-writer` | — | Generates and updates documentation files. |
+
+> **Note:** `code-architect` (Opus) is now provided by **core-tools** and spawned cross-plugin by feature-dev using the fully-qualified name `agent-alchemy-core-tools:code-architect`.
 
 ## Feature Development Workflow
 
@@ -29,7 +30,7 @@ The **feature-dev** skill orchestrates a complete development lifecycle:
 1. **Discovery**: Understand requirements and scope
 2. **Exploration**: Load deep-analysis to explore relevant codebase areas
 3. **Questions**: Clarify requirements with the user via AskUserQuestion
-4. **Architecture**: Spawn 2-3 code-architect agents in parallel for competing designs
+4. **Architecture**: Spawn 2-3 code-architect agents (from core-tools) in parallel for competing designs
 5. **Implementation**: Apply the selected architectural approach
 6. **Review**: Spawn 3 code-reviewer agents for independent quality assessment
 7. **Summary**: Present results with changelog entry
@@ -39,7 +40,6 @@ The **feature-dev** skill orchestrates a complete development lifecycle:
 ```
 dev-tools/
 ├── agents/
-│   ├── code-architect.md       # Opus design agent
 │   ├── code-reviewer.md        # Opus review agent
 │   ├── changelog-manager.md    # Changelog automation
 │   └── docs-writer.md          # Documentation agent

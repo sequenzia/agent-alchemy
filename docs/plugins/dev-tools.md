@@ -1,6 +1,6 @@
 # Dev Tools
 
-**Version:** 0.1.1 | **Skills:** 6 | **Agents:** 4
+**Version:** 0.1.1 | **Skills:** 6 | **Agents:** 3
 
 Dev Tools provides the development lifecycle toolkit — from feature implementation through code review, documentation, and changelog management.
 
@@ -28,7 +28,7 @@ The primary skill for implementing new features or significant changes. Runs a s
     feature-dev orchestrates multiple agent teams:
 
     - **Phase 2:** Loads deep-analysis for codebase exploration (code-explorer x N + code-synthesizer x 1)
-    - **Phase 4:** Spawns 2-3 code-architect agents for blueprint design
+    - **Phase 4:** Spawns 2-3 code-architect agents (from core-tools) for blueprint design
     - **Phase 6:** Spawns 3 code-reviewer agents for quality review
 
 ### `/docs-manager` — Documentation Management
@@ -65,13 +65,14 @@ These skills are not directly invoked — they're loaded by agents as reference 
 
 | Agent | Model | Tools | Purpose |
 |-------|-------|-------|---------|
-| **code-architect** | Opus | Read, Glob, Grep (read-only) | Designs implementation blueprints from exploration findings |
 | **code-reviewer** | Opus | Read, Glob, Grep (read-only) | Reviews code for correctness, security, maintainability with confidence scores |
 | **changelog-manager** | Sonnet | Bash, Read, Edit, Glob, Grep | Analyzes git history and updates CHANGELOG.md |
 | **docs-writer** | Opus | Read, Glob, Grep, Bash | Generates MkDocs or GitHub-flavored markdown documentation |
 
+> **Note:** `code-architect` (Opus, read-only) has moved to **[Core Tools](core-tools.md)**. Feature-dev spawns it cross-plugin using the qualified name `agent-alchemy-core-tools:code-architect`.
+
 !!! note "Read-Only Enforcement"
-    The code-architect and code-reviewer agents intentionally have no write tools. This enforces separation of concerns — architects design, reviewers audit, but neither modifies code directly. Only the lead (feature-dev) applies changes.
+    The code-reviewer agent intentionally has no write tools. This enforces separation of concerns — reviewers audit but don't modify code directly. The code-architect agent (now in core-tools) follows the same pattern. Only the lead (feature-dev) applies changes.
 
 ## Composition Chains
 
@@ -80,7 +81,7 @@ graph LR
     FD["/feature-dev"] --> DA["deep-analysis"]
     DA --> CE["code-explorer x N"]
     DA --> CS["code-synthesizer x 1"]
-    FD --> CA["code-architect x 2-3"]
+    FD --> CA["code-architect x 2-3<br/>(core-tools)"]
     FD --> CR["code-reviewer x 3"]
     DM["/docs-manager"] --> DA
     DM --> DW["docs-writer x N"]
