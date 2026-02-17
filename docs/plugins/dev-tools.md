@@ -11,7 +11,7 @@ Dev Tools provides the development lifecycle toolkit — from feature implementa
 The primary skill for implementing new features or significant changes. Runs a structured **7-phase workflow**:
 
 1. **Discovery** — Understand feature requirements from user input
-2. **Codebase Exploration** — Deep-analysis maps relevant code areas (loads [Core Tools deep-analysis](core-tools.md#deep-analysis))
+2. **Codebase Exploration** — Deep-analysis maps relevant code areas (loads [Core Tools deep-analysis](core-tools.md#deep-analysis-the-keystone-skill))
 3. **Clarifying Questions** — Resolve ambiguities with the user
 4. **Architecture Design** — Spawn code-architect agents (Opus) to design implementation blueprints
 5. **Implementation** — Build the feature following the approved architecture
