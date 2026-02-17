@@ -54,12 +54,12 @@
       "license": "MIT"
     },
     {
-      "name": "agent-alchemy-port-tools",
-      "version": "0.1.0",
-      "description": "Port tools for AI agents — cross-platform plugin conversion with adapter framework and interactive workflows",
-      "source": "./port-tools",
-      "homepage": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/port-tools",
-      "repository": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/port-tools",
+      "name": "agent-alchemy-plugin-tools",
+      "version": "0.2.0",
+      "description": "Plugin lifecycle tools for AI agents — cross-platform porting, adapter validation, and ported plugin maintenance",
+      "source": "./plugin-tools",
+      "homepage": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/plugin-tools",
+      "repository": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/plugin-tools",
       "license": "MIT"
     }
   ]

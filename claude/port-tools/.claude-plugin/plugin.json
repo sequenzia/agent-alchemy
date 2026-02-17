@@ -1,9 +1,0 @@
-{
-  "name": "agent-alchemy-port-tools",
-  "version": "0.1.0",
-  "description": "Port tools for AI agents — cross-platform plugin conversion with adapter framework, research, and interactive workflows",
-  "author": {
-    "name": "Stephen Sequenzia",
-    "email": "sequenzia@gmail.com"
-  }
-}

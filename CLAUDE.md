@@ -14,7 +14,8 @@ agent-alchemy/
 │   ├── dev-tools/             # Feature dev, code review, docs, changelog
 │   ├── sdd-tools/             # Spec-Driven Development pipeline
 │   ├── tdd-tools/             # TDD workflows: test generation, RED-GREEN-REFACTOR, coverage
-│   └── git-tools/             # Git commit automation
+│   ├── git-tools/             # Git commit automation
+│   └── plugin-tools/          # Plugin porting, adapter validation, ported plugin maintenance
 ├── apps/
 │   └── task-manager/          # Next.js 16 real-time Kanban dashboard
 ├── extensions/
@@ -92,6 +93,10 @@ tdd-cycle -> tdd-executor (opus) x 1 per feature (6-phase RED-GREEN-REFACTOR)
 generate-tests -> test-writer (sonnet) x N parallel (criteria-driven or code-analysis)
 create-tdd-tasks -> reads existing tasks -> generates TDD pairs (test blocks impl)
 execute-tdd-tasks -> tdd-executor for TDD tasks, task-executor for non-TDD tasks
+
+port-plugin -> researcher (sonnet) x 1 -> interactive conversion with shared references
+validate-adapter -> researcher (sonnet) x 1 -> compare adapter sections against research
+update-ported-plugin -> validate-adapter (phases 1-3) + git diff -> incremental re-conversion
 ```
 
 ### Task Manager (apps/task-manager/)
@@ -124,14 +129,16 @@ execute-tdd-tasks -> tdd-executor for TDD tasks, task-executor for non-TDD tasks
 | sdd-tools | create-spec, analyze-spec, create-tasks, execute-tasks, create-tdd-tasks, execute-tdd-tasks | researcher, spec-analyzer, task-executor | 0.1.2 |
 | tdd-tools | generate-tests, tdd-cycle, analyze-coverage | test-writer, tdd-executor, test-reviewer | 0.1.0 |
 | git-tools | git-commit | — | 0.1.0 |
-| port-tools | plugin-porter | researcher | 0.1.0 |
+| plugin-tools | port-plugin, validate-adapter, update-ported-plugin | researcher | 0.2.0 |
 
 ## Critical Plugin Files
 
 | File | Lines | Role |
 |------|-------|------|
 | `claude/core-tools/skills/deep-analysis/SKILL.md` | 521 | Keystone skill — hub-and-spoke team engine loaded by 4 other skills |
-| `claude/port-tools/skills/plugin-porter/SKILL.md` | 2728 | Largest skill — cross-platform plugin porting with 7-phase (+4.5) workflow |
+| `claude/plugin-tools/skills/port-plugin/SKILL.md` | ~2750 | Largest skill — cross-platform plugin porting with 7-phase (+4.5) workflow |
+| `claude/plugin-tools/skills/validate-adapter/SKILL.md` | ~350 | Adapter validation against live platform docs (4 phases) |
+| `claude/plugin-tools/skills/update-ported-plugin/SKILL.md` | ~700 | Incremental ported plugin updates with dual-track change detection (5 phases) |
 | `claude/sdd-tools/skills/create-spec/SKILL.md` | 664 | Adaptive interview with depth-aware questioning |
 | `claude/sdd-tools/skills/create-tasks/SKILL.md` | 653 | Spec-to-task decomposition with `task_uid` merge mode |
 | `claude/sdd-tools/skills/execute-tasks/SKILL.md` | 262 | Wave-based parallel execution with session management |
@@ -148,7 +155,7 @@ execute-tdd-tasks -> tdd-executor for TDD tasks, task-executor for non-TDD tasks
 | Cross-plugin `${CLAUDE_PLUGIN_ROOT}` inconsistency | Resolved | Standardized to `/../{source-dir-name}/` pattern. Convention documented above in Cross-Plugin Dependencies. |
 | Zero test coverage for VS Code extension | High | Validator is the most critical component — Ajv compilation, path detection, and line-number mapping are all untested. |
 | Schema drift risk | Medium | JSON schemas manually maintained. No CI validation ensures schemas match actual plugin frontmatter usage. |
-| Large reference files | Medium | port-tools has 6 reference files totaling ~3,300 lines + SKILL.md (2,728 lines). Largest single reference is mcp-converter.md (713 lines). |
+| Large reference files | Medium | plugin-tools has 6 reference files totaling ~3,300 lines + port-plugin SKILL.md (~2,750 lines). Largest single reference is mcp-converter.md (713 lines). |
 
 ## Settings
 

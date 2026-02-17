@@ -1,5 +1,5 @@
 ---
-name: plugin-porter
+name: port-plugin
 description: |
   Converts Agent Alchemy plugins into formats compatible with other AI coding platforms.
   Uses an extensible adapter framework, platform research, and interactive conversion workflows.
@@ -106,10 +106,10 @@ Set `DRY_RUN` from `--dry-run` flag (default: `false`).
 
 ### Step 2: Load Settings
 
-Check if `.claude/agent-alchemy.local.md` exists and read for any `port-tools` section with settings:
+Check if `.claude/agent-alchemy.local.md` exists and read for any `plugin-tools` section with settings:
 
 ```markdown
-- **port-tools**:
+- **plugin-tools**:
   - **default-target**: opencode
   - **default-output-dir**: ported/
   - **auto-research**: true
@@ -121,7 +121,7 @@ If settings exist, apply them as defaults (CLI arguments override settings file 
 
 Check that an adapter file exists for the target platform:
 
-1. Use `Glob` to check `${CLAUDE_PLUGIN_ROOT}/skills/plugin-porter/references/adapters/{TARGET_PLATFORM}.md`
+1. Use `Glob` to check `${CLAUDE_PLUGIN_ROOT}/references/adapters/{TARGET_PLATFORM}.md`
 2. If the adapter file exists, read it and store as `ADAPTER`
 3. If no adapter file exists:
    - Inform the user: "No adapter file found for '{TARGET_PLATFORM}'. The research agent will investigate the platform from scratch, and a new adapter file can be created from the findings."
@@ -144,7 +144,7 @@ Parse the `plugins` array. Each entry has:
 
 Build a list of available plugin groups, extracting the short group name from the source path (e.g., `core-tools` from `./core-tools`).
 
-**Exclude `port-tools` from the selection list** — the porter should not attempt to port itself.
+**Exclude `plugin-tools` from the selection list** — the porter should not attempt to port itself.
 
 ---
 
@@ -676,7 +676,7 @@ Before spawning the research agent, gather the context it needs:
    - `mcp_count` — number of MCP config components
 
 2. **Extract adapter content** (if `ADAPTER` exists):
-   - Read the full content of the adapter file at `${CLAUDE_PLUGIN_ROOT}/skills/plugin-porter/references/adapters/{TARGET_PLATFORM}.md`
+   - Read the full content of the adapter file at `${CLAUDE_PLUGIN_ROOT}/references/adapters/{TARGET_PLATFORM}.md`
    - Store the raw content as `ADAPTER_CONTENT` for inclusion in the research prompt
    - Extract the adapter's `target_platform_version` field from the Adapter Version section
 
@@ -959,7 +959,7 @@ AskUserQuestion:
 - **"Proceed with existing adapter"**: Set `STALENESS_STATUS.user_decision = "proceed"`. Continue to Phase 5 using `CONVERSION_KNOWLEDGE` as already merged (research takes precedence for stale mappings per the precedence rules in Step 3). Log: "User chose to proceed with existing adapter. Research findings will supplement stale mappings during conversion."
 
 - **"Update adapter file first"**: Set `STALENESS_STATUS.user_decision = "update"`. Before continuing to Phase 5:
-  1. Read the current adapter file at `${CLAUDE_PLUGIN_ROOT}/skills/plugin-porter/references/adapters/{TARGET_PLATFORM}.md`
+  1. Read the current adapter file at `${CLAUDE_PLUGIN_ROOT}/references/adapters/{TARGET_PLATFORM}.md`
   2. Apply research findings to update stale mappings in-place:
      - For each entry in `STALE_MAPPINGS`: update the mapping value in the adapter to match the research finding
      - For each entry in `NEW_FEATURES`: add the feature to the appropriate adapter section
@@ -1455,7 +1455,7 @@ Store the result in `CONVERTED_COMPONENTS` with:
 
 ### Step 4: Agent Conversion
 
-For each agent component (`type: "agent"`), read `${CLAUDE_PLUGIN_ROOT}/skills/plugin-porter/references/agent-converter.md` and follow its procedures. The agent converter reference covers:
+For each agent component (`type: "agent"`), read `${CLAUDE_PLUGIN_ROOT}/references/agent-converter.md` and follow its procedures. The agent converter reference covers:
 - Frontmatter parsing and mapping (4a)
 - Model tier and tool list transformation (4b)
 - Body transformation reusing skill conversion steps (4c)
@@ -1503,7 +1503,7 @@ If no hooks could be mapped, skip file generation and add a comprehensive gap en
 
 ### Step 6: Reference File Conversion
 
-For each reference file associated with a selected skill, read `${CLAUDE_PLUGIN_ROOT}/skills/plugin-porter/references/reference-converter.md` and follow its procedures. The reference converter covers:
+For each reference file associated with a selected skill, read `${CLAUDE_PLUGIN_ROOT}/references/reference-converter.md` and follow its procedures. The reference converter covers:
 - Discovery of reference files from selected skills
 - Strategy determination based on adapter directory structure and composition mechanism
 - Path transformation for standalone reference files
@@ -1515,7 +1515,7 @@ Store results in `CONVERTED_COMPONENTS` using the same structure as skill conver
 
 ### Step 7: MCP Config Conversion
 
-For each MCP config component (`type: "mcp"`), read `${CLAUDE_PLUGIN_ROOT}/skills/plugin-porter/references/mcp-converter.md` and follow its procedures. The MCP config converter reference covers:
+For each MCP config component (`type: "mcp"`), read `${CLAUDE_PLUGIN_ROOT}/references/mcp-converter.md` and follow its procedures. The MCP config converter reference covers:
 - Parsing `.mcp.json` files and extracting server configurations (transport type, command, args, env, paths)
 - Determining target platform MCP support level (native or none)
 - Transforming server configs for MCP-native platforms (path resolution, naming conventions, transport mapping)
@@ -1528,7 +1528,7 @@ Store results in `CONVERTED_COMPONENTS` using the same structure as skill conver
 
 ### Step 8: Incompatibility Resolution
 
-Throughout Steps 3-7, whenever a feature has no direct equivalent (mapping is `null` and the feature is non-trivial), the incompatibility resolver handles detection, user interaction, and decision tracking. Read `${CLAUDE_PLUGIN_ROOT}/skills/plugin-porter/references/incompatibility-resolver.md` and follow its procedures.
+Throughout Steps 3-7, whenever a feature has no direct equivalent (mapping is `null` and the feature is non-trivial), the incompatibility resolver handles detection, user interaction, and decision tracking. Read `${CLAUDE_PLUGIN_ROOT}/references/incompatibility-resolver.md` and follow its procedures.
 
 Initialize these session-level structures before the first component is converted:
 
@@ -2391,7 +2391,33 @@ The following files could not be written:
 - `GAP-REPORT.md` -- conversion gap analysis
 ```
 
-#### 6c: Write Migration Guide
+#### 6c: Append PORT-METADATA Block
+
+After assembling all migration guide sections, append a machine-readable metadata block at the very end of the migration guide content. This block enables the `update-ported-plugin` skill to detect what was ported and when.
+
+Get the current git commit hash via Bash: `git rev-parse HEAD`
+
+Append the following HTML comment block to the end of the migration guide content:
+
+```markdown
+
+<!-- PORT-METADATA
+source_commit: {current_HEAD_hash}
+port_date: {current_date}
+adapter_version: {ADAPTER.adapter_version or "none"}
+target_platform: {TARGET_PLATFORM}
+target_platform_version: {ADAPTER.target_platform_version or RESEARCH_FINDINGS.platform_version or "unknown"}
+components:
+{For each entry in CONVERTED_COMPONENTS:}
+  - source: {component.source_path}
+    target: {component.target_path}
+    fidelity: {component.fidelity_score}
+PORT-METADATA -->
+```
+
+This block **must** be the last content in the file. It is parsed by `update-ported-plugin` to detect source drift and determine which components need re-conversion.
+
+#### 6d: Write Migration Guide
 
 Write the assembled migration guide to `{OUTPUT_DIR}/MIGRATION-GUIDE.md` using the `Write` tool.
 
@@ -2719,10 +2745,10 @@ If any phase fails:
 
 ## Reference Files
 
-- `references/adapter-format.md` — Adapter file format specification (9 mapping sections)
-- `references/agent-converter.md` — Agent conversion logic (frontmatter mapping, body transformation, gap handling, fidelity scoring)
-- `references/hook-converter.md` — Hook conversion logic (event mapping, behavioral classification, workaround strategies)
-- `references/reference-converter.md` — Reference file conversion logic (discovery, path transformation, flattening)
-- `references/mcp-converter.md` — MCP config conversion logic (server mapping, transport types, tool reference renaming, platform support detection)
-- `references/incompatibility-resolver.md` — Incompatibility detection, interactive resolution, batch handling, decision tracking
-- `references/adapters/` — Directory for per-platform adapter files (one markdown file per target platform)
+- `${CLAUDE_PLUGIN_ROOT}/references/adapter-format.md` — Adapter file format specification (9 mapping sections)
+- `${CLAUDE_PLUGIN_ROOT}/references/agent-converter.md` — Agent conversion logic (frontmatter mapping, body transformation, gap handling, fidelity scoring)
+- `${CLAUDE_PLUGIN_ROOT}/references/hook-converter.md` — Hook conversion logic (event mapping, behavioral classification, workaround strategies)
+- `${CLAUDE_PLUGIN_ROOT}/references/reference-converter.md` — Reference file conversion logic (discovery, path transformation, flattening)
+- `${CLAUDE_PLUGIN_ROOT}/references/mcp-converter.md` — MCP config conversion logic (server mapping, transport types, tool reference renaming, platform support detection)
+- `${CLAUDE_PLUGIN_ROOT}/references/incompatibility-resolver.md` — Incompatibility detection, interactive resolution, batch handling, decision tracking
+- `${CLAUDE_PLUGIN_ROOT}/references/adapters/` — Directory for per-platform adapter files (one markdown file per target platform)
