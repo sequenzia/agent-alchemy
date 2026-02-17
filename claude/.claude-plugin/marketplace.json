@@ -52,6 +52,15 @@
       "homepage": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/tdd-tools",
       "repository": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/tdd-tools",
       "license": "MIT"
+    },
+    {
+      "name": "agent-alchemy-port-tools",
+      "version": "0.1.0",
+      "description": "Port tools for AI agents — cross-platform plugin conversion with adapter framework and interactive workflows",
+      "source": "./port-tools",
+      "homepage": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/port-tools",
+      "repository": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/port-tools",
+      "license": "MIT"
     }
   ]
 }

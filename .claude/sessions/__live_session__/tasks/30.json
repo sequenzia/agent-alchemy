@@ -1,0 +1,21 @@
+{
+  "id": "30",
+  "subject": "Create port-tools plugin group scaffold",
+  "description": "Create the `claude/port-tools/` directory structure following Agent Alchemy plugin conventions.\n\nDirectory structure:\n```\nclaude/port-tools/\n\u251c\u2500\u2500 skills/\n\u2502   \u2514\u2500\u2500 plugin-porter/\n\u2502       \u251c\u2500\u2500 SKILL.md          (placeholder - built in Phase 2)\n\u2502       \u2514\u2500\u2500 references/\n\u2502           \u2514\u2500\u2500 adapters/     (adapter files go here)\n\u251c\u2500\u2500 agents/\n\u2502   \u2514\u2500\u2500 researcher.md         (placeholder - built separately)\n\u2514\u2500\u2500 hooks/                    (if needed)\n```\n\nRegister the plugin group:\n- Create or update `claude/.claude-plugin/marketplace.json` entry for `port-tools`\n- Include plugin.json with name, version (0.1.0), description\n- Follow existing plugin group patterns (see core-tools, dev-tools for reference)\n\n**Acceptance Criteria:**\n\n_Functional:_\n- [ ] `claude/port-tools/` directory exists with skills/, agents/, references/ subdirectories\n- [ ] `plugin.json` created with correct metadata (name: \"agent-alchemy-port-tools\", version: \"0.1.0\")\n- [ ] Plugin registered in marketplace.json\n- [ ] `skills/plugin-porter/` directory created with references/adapters/ subdirectory\n\n_Edge Cases:_\n- [ ] Follows exact naming conventions of existing plugin groups\n- [ ] Does not conflict with existing plugin group names\n\n**Testing Requirements:**\n\u2022 Manual: Verify directory structure matches existing plugin group patterns\n\u2022 Manual: Verify plugin.json validates against VS Code extension schema\n\nSource: internal/specs/plugin-porting-SPEC.md Section 7.1, 9.1",
+  "activeForm": "Creating port-tools plugin scaffold",
+  "status": "completed",
+  "blocks": [
+    "34"
+  ],
+  "blockedBy": [],
+  "metadata": {
+    "priority": "critical",
+    "complexity": "S",
+    "source_section": "7.1, 9.1",
+    "spec_path": "internal/specs/plugin-porting-SPEC.md",
+    "feature_name": "Platform Adapter Framework",
+    "task_uid": "internal/specs/plugin-porting-SPEC.md:adapter-framework:scaffold:001",
+    "task_group": "plugin-porting",
+    "phase": 1
+  }
+}

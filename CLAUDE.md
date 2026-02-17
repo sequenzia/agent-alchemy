@@ -124,13 +124,15 @@ execute-tdd-tasks -> tdd-executor for TDD tasks, task-executor for non-TDD tasks
 | sdd-tools | create-spec, analyze-spec, create-tasks, execute-tasks, create-tdd-tasks, execute-tdd-tasks | researcher, spec-analyzer, task-executor | 0.1.2 |
 | tdd-tools | generate-tests, tdd-cycle, analyze-coverage | test-writer, tdd-executor, test-reviewer | 0.1.0 |
 | git-tools | git-commit | — | 0.1.0 |
+| port-tools | plugin-porter | researcher | 0.1.0 |
 
 ## Critical Plugin Files
 
 | File | Lines | Role |
 |------|-------|------|
 | `claude/core-tools/skills/deep-analysis/SKILL.md` | 521 | Keystone skill — hub-and-spoke team engine loaded by 4 other skills |
-| `claude/sdd-tools/skills/create-spec/SKILL.md` | 664 | Largest skill — adaptive interview with depth-aware questioning |
+| `claude/port-tools/skills/plugin-porter/SKILL.md` | 2728 | Largest skill — cross-platform plugin porting with 7-phase (+4.5) workflow |
+| `claude/sdd-tools/skills/create-spec/SKILL.md` | 664 | Adaptive interview with depth-aware questioning |
 | `claude/sdd-tools/skills/create-tasks/SKILL.md` | 653 | Spec-to-task decomposition with `task_uid` merge mode |
 | `claude/sdd-tools/skills/execute-tasks/SKILL.md` | 262 | Wave-based parallel execution with session management |
 | `claude/dev-tools/skills/feature-dev/SKILL.md` | 271 | 7-phase lifecycle spawning architect + reviewer agent teams |
@@ -146,7 +148,7 @@ execute-tdd-tasks -> tdd-executor for TDD tasks, task-executor for non-TDD tasks
 | Cross-plugin `${CLAUDE_PLUGIN_ROOT}` inconsistency | Resolved | Standardized to `/../{source-dir-name}/` pattern. Convention documented above in Cross-Plugin Dependencies. |
 | Zero test coverage for VS Code extension | High | Validator is the most critical component — Ajv compilation, path detection, and line-number mapping are all untested. |
 | Schema drift risk | Medium | JSON schemas manually maintained. No CI validation ensures schemas match actual plugin frontmatter usage. |
-| Large reference files | Medium | Largest reference (776 lines) + skill (718 lines) can exceed 1,500 lines before codebase context is added. |
+| Large reference files | Medium | port-tools has 6 reference files totaling ~3,300 lines + SKILL.md (2,728 lines). Largest single reference is mcp-converter.md (713 lines). |
 
 ## Settings
 

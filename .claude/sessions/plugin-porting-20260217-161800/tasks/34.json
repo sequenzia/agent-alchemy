@@ -1,0 +1,29 @@
+{
+  "id": "34",
+  "subject": "Implement porter skill with plugin selection wizard",
+  "description": "Create the main porter skill at `claude/port-tools/skills/plugin-porter/SKILL.md` with the plugin selection wizard as the first workflow phase.\n\nThe porter skill is the orchestrator for the entire conversion workflow (similar to `create-spec` or `feature-dev`). This task focuses on:\n\n1. **YAML Frontmatter**: Define skill metadata\n   - name: plugin-porter\n   - description: Convert Agent Alchemy plugins to other AI coding platforms\n   - model: opus (orchestration/synthesis task)\n   - user-invocable: true\n   - allowed-tools: Read, Glob, Grep, Write, AskUserQuestion, Task, WebSearch, WebFetch\n   - argument-hint: Target platform name (e.g., \"opencode\")\n\n2. **Phase 1 - Target Platform Selection**:\n   - Accept target platform as argument or prompt via AskUserQuestion\n   - Validate adapter file exists for the target platform\n   - Load adapter file from `references/adapters/{platform}.md`\n\n3. **Phase 2 - Plugin Selection Wizard**:\n   - Read `claude/.claude-plugin/marketplace.json` to enumerate available plugin groups\n   - Display all groups (core-tools, dev-tools, sdd-tools, tdd-tools, git-tools) with component counts\n   - Use AskUserQuestion for group-level multi-selection\n   - For selected groups, scan for individual components (skills, agents, hooks, references, MCP configs)\n   - Use AskUserQuestion for component-level multi-selection\n   - Display brief descriptions for informed selection\n\nFollow the phase workflow pattern with `\"CRITICAL: Complete ALL phases\"` directive used in deep-analysis and tdd-cycle.\n\n**Acceptance Criteria:**\n\n_Functional:_\n- [ ] SKILL.md has valid YAML frontmatter with all required fields\n- [ ] Accepts target platform as skill argument\n- [ ] Reads marketplace.json to enumerate plugin groups\n- [ ] Displays all 5 plugin groups with component counts and descriptions\n- [ ] Supports group-level multi-selection via AskUserQuestion\n- [ ] Supports component-level multi-selection within selected groups\n- [ ] Scans for all component types: skills, agents, hooks, references, MCP configs\n- [ ] Loads the correct adapter file for the selected target platform\n\n_Edge Cases:_\n- [ ] Handles empty plugin group (no components): skips with message\n- [ ] Handles \"select all\" at group level\n- [ ] Handles unknown target platform (no adapter file): error with suggestion\n\n_Error Handling:_\n- [ ] Clear error if marketplace.json not found\n- [ ] Clear error if adapter file not found for target platform\n\n**Testing Requirements:**\n• Manual: Verify SKILL.md validates against skill frontmatter schema\n• Manual: Test selection wizard flow with different group/component combinations\n• Manual: Verify component discovery finds all types in existing plugin groups\n\nSource: internal/specs/plugin-porting-SPEC.md Section 5.1, 5.8, 9.2",
+  "activeForm": "Implementing porter skill selection wizard",
+  "status": "completed",
+  "blocks": [
+    "35",
+    "36",
+    "37",
+    "38",
+    "40",
+    "41",
+    "42"
+  ],
+  "blockedBy": [
+    "30"
+  ],
+  "metadata": {
+    "priority": "critical",
+    "complexity": "L",
+    "source_section": "5.1, 9.2",
+    "spec_path": "internal/specs/plugin-porting-SPEC.md",
+    "feature_name": "Plugin Selection Wizard",
+    "task_uid": "internal/specs/plugin-porting-SPEC.md:selection-wizard:porter-skill:001",
+    "task_group": "plugin-porting",
+    "phase": 2
+  }
+}
