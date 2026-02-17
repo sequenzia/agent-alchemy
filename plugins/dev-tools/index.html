@@ -853,6 +853,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../plugin-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plugin Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1098,7 +1126,7 @@
 
 
 <h1 id="dev-tools">Dev Tools<a class="headerlink" href="#dev-tools" title="Permanent link">&para;</a></h1>
-<p><strong>Version:</strong> 0.1.1 | <strong>Skills:</strong> 6 | <strong>Agents:</strong> 4</p>
+<p><strong>Version:</strong> 0.1.1 | <strong>Skills:</strong> 6 | <strong>Agents:</strong> 3</p>
 <p>Dev Tools provides the development lifecycle toolkit — from feature implementation through code review, documentation, and changelog management.</p>
 <h2 id="skills">Skills<a class="headerlink" href="#skills" title="Permanent link">&para;</a></h2>
 <h3 id="feature-dev-feature-development-workflow"><code>/feature-dev</code> — Feature Development Workflow<a class="headerlink" href="#feature-dev-feature-development-workflow" title="Permanent link">&para;</a></h3>
@@ -1121,7 +1149,7 @@
 <p>feature-dev orchestrates multiple agent teams:</p>
 <ul>
 <li><strong>Phase 2:</strong> Loads deep-analysis for codebase exploration (code-explorer x N + code-synthesizer x 1)</li>
-<li><strong>Phase 4:</strong> Spawns 2-3 code-architect agents for blueprint design</li>
+<li><strong>Phase 4:</strong> Spawns 2-3 code-architect agents (from core-tools) for blueprint design</li>
 <li><strong>Phase 6:</strong> Spawns 3 code-reviewer agents for quality review</li>
 </ul>
 </div>
@@ -1177,12 +1205,6 @@
 </thead>
 <tbody>
 <tr>
-<td><strong>code-architect</strong></td>
-<td>Opus</td>
-<td>Read, Glob, Grep (read-only)</td>
-<td>Designs implementation blueprints from exploration findings</td>
-</tr>
-<tr>
 <td><strong>code-reviewer</strong></td>
 <td>Opus</td>
 <td>Read, Glob, Grep (read-only)</td>
@@ -1202,16 +1224,19 @@
 </tr>
 </tbody>
 </table>
+<blockquote>
+<p><strong>Note:</strong> <code>code-architect</code> (Opus, read-only) has moved to <strong><a href="../core-tools/">Core Tools</a></strong>. Feature-dev spawns it cross-plugin using the qualified name <code>agent-alchemy-core-tools:code-architect</code>.</p>
+</blockquote>
 <div class="admonition note">
 <p class="admonition-title">Read-Only Enforcement</p>
-<p>The code-architect and code-reviewer agents intentionally have no write tools. This enforces separation of concerns — architects design, reviewers audit, but neither modifies code directly. Only the lead (feature-dev) applies changes.</p>
+<p>The code-reviewer agent intentionally has no write tools. This enforces separation of concerns — reviewers audit but don't modify code directly. The code-architect agent (now in core-tools) follows the same pattern. Only the lead (feature-dev) applies changes.</p>
 </div>
 <h2 id="composition-chains">Composition Chains<a class="headerlink" href="#composition-chains" title="Permanent link">&para;</a></h2>
 <pre class="mermaid"><code>graph LR
     FD["/feature-dev"] --&gt; DA["deep-analysis"]
     DA --&gt; CE["code-explorer x N"]
     DA --&gt; CS["code-synthesizer x 1"]
-    FD --&gt; CA["code-architect x 2-3"]
+    FD --&gt; CA["code-architect x 2-3&lt;br/&gt;(core-tools)"]
     FD --&gt; CR["code-reviewer x 3"]
     DM["/docs-manager"] --&gt; DA
     DM --&gt; DW["docs-writer x N"]</code></pre>

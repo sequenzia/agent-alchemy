@@ -1106,6 +1106,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../plugins/plugin-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plugin Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1643,11 +1671,11 @@
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>│   ├── .claude-plugin/            # Plugin marketplace registry
 </span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>│   ├── core-tools/                # Codebase analysis, deep exploration
 </span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>│   │   ├── skills/                # deep-analysis, codebase-analysis, ...
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>│   │   ├── agents/                # code-explorer, code-synthesizer
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>│   │   ├── agents/                # code-explorer, code-synthesizer, code-architect
 </span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>│   │   └── hooks/                 # Lifecycle hooks (auto-approve)
 </span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>│   ├── dev-tools/                 # Feature dev, code review, docs
 </span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>│   │   ├── skills/                # feature-dev, docs-manager, ...
-</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>│   │   └── agents/                # code-architect, code-reviewer, ...
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>│   │   └── agents/                # code-reviewer, changelog-manager, ...
 </span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>│   ├── sdd-tools/                 # Spec-Driven Development pipeline
 </span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>│   │   ├── skills/                # create-spec, create-tasks, execute-tasks, ...
 </span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>│   │   └── agents/                # researcher, spec-analyzer, task-executor
@@ -1843,13 +1871,13 @@
 <td>Read-only</td>
 </tr>
 <tr>
-<td><code>code-architect</code></td>
+<td><code>code-architect</code> (core-tools)</td>
 <td>Opus</td>
 <td>Read, Glob, Grep, SendMessage</td>
 <td>Read-only</td>
 </tr>
 <tr>
-<td><code>code-reviewer</code></td>
+<td><code>code-reviewer</code> (dev-tools)</td>
 <td>Opus</td>
 <td>Read, Glob, Grep, SendMessage</td>
 <td>Read-only</td>
@@ -1951,7 +1979,7 @@
     DM --&gt;|codebase understanding| DA
     CS -.-&gt;|optional: new feature specs| DA
 
-    FD --&gt;|Phase 4| AR[code-architect x2-3]
+    FD --&gt;|Phase 4| AR[code-architect x2-3&lt;br/&gt;&lt;i&gt;core-tools&lt;/i&gt;]
     FD --&gt;|Phase 6| CR[code-reviewer x3]
     DA --&gt;|spawns| EX[code-explorer x N]
     DA --&gt;|spawns| SY[code-synthesizer x 1]
@@ -1967,7 +1995,7 @@
 </span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>  └─ deep-analysis (Phase 2)
 </span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>       ├─ code-explorer (Sonnet) x N  — parallel exploration
 </span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>       └─ code-synthesizer (Opus) x 1 — merge + investigate
-</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>  └─ code-architect (Opus) x 2-3     — competing designs (Phase 4)
+</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>  └─ code-architect (core-tools, Opus) x 2-3 — competing designs (Phase 4)
 </span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>  └─ code-reviewer (Opus) x 3        — parallel review focuses (Phase 6)
 </span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>
 </span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>create-spec

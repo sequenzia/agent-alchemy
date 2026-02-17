@@ -720,6 +720,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../plugins/plugin-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plugin Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -925,6 +953,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#plugin-tools-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Plugin Tools Settings
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1085,6 +1124,17 @@
     <span class="md-ellipsis">
       
         TDD Settings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plugin-tools-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Plugin Tools Settings
       
     </span>
   </a>
@@ -1289,6 +1339,38 @@
 </tr>
 </tbody>
 </table>
+<h3 id="plugin-tools-settings">Plugin Tools Settings<a class="headerlink" href="#plugin-tools-settings" title="Permanent link">&para;</a></h3>
+<p>Under the <code>plugin-tools.dependency-checker</code> key:</p>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Default</th>
+<th>Options</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>severity-threshold</code></td>
+<td><code>low</code></td>
+<td><code>critical</code>, <code>high</code>, <code>medium</code>, <code>low</code></td>
+<td>Minimum severity level to include in report</td>
+</tr>
+<tr>
+<td><code>check-docs-drift</code></td>
+<td><code>true</code></td>
+<td><code>true</code>, <code>false</code></td>
+<td>Run Phase 4 CLAUDE.md/README cross-referencing</td>
+</tr>
+<tr>
+<td><code>line-count-tolerance</code></td>
+<td><code>10</code></td>
+<td><code>0</code>-<code>100</code></td>
+<td>Percentage tolerance for line count drift detection</td>
+</tr>
+</tbody>
+</table>
 <h2 id="precedence-rules">Precedence Rules<a class="headerlink" href="#precedence-rules" title="Permanent link">&para;</a></h2>
 <p>Settings follow this precedence order (highest to lowest):</p>
 <ol>
@@ -1325,7 +1407,12 @@
 </span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="w">  </span><span class="nt">coverage-threshold</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">90</span>
 </span><span id="__span-3-14"><a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="w">  </span><span class="nt">strictness</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">strict</span>
 </span><span id="__span-3-15"><a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="w">  </span><span class="nt">test-review-on-generate</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-</span><span id="__span-3-16"><a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="nn">---</span>
+</span><span id="__span-3-16"><a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="nt">plugin-tools</span><span class="p">:</span>
+</span><span id="__span-3-17"><a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="w">  </span><span class="nt">dependency-checker</span><span class="p">:</span>
+</span><span id="__span-3-18"><a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a><span class="w">    </span><span class="nt">severity-threshold</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">medium</span>
+</span><span id="__span-3-19"><a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a><span class="w">    </span><span class="nt">check-docs-drift</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</span><span id="__span-3-20"><a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a><span class="w">    </span><span class="nt">line-count-tolerance</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">15</span>
+</span><span id="__span-3-21"><a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a><span class="nn">---</span>
 </span></code></pre></div>
 </div>
 <div class="tabbed-block">

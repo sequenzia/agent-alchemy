@@ -721,6 +721,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#plugin-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Plugin Tools
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -884,6 +895,34 @@
     
   
     Git Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="plugin-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plugin Tools
   
 
     
@@ -1138,6 +1177,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#plugin-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Plugin Tools
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1186,7 +1236,7 @@
 
 
 <h1 id="plugin-overview">Plugin Overview<a class="headerlink" href="#plugin-overview" title="Permanent link">&para;</a></h1>
-<p>Agent Alchemy extends Claude Code through five plugin groups, each targeting a different phase of the development lifecycle. Plugins are installed independently — pick only what you need.</p>
+<p>Agent Alchemy extends Claude Code through six plugin groups, each targeting a different phase of the development lifecycle. Plugins are installed independently — pick only what you need.</p>
 <h2 id="at-a-glance">At a Glance<a class="headerlink" href="#at-a-glance" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -1203,14 +1253,14 @@
 <td><a href="core-tools/">Core Tools</a></td>
 <td>Codebase analysis and exploration</td>
 <td>4</td>
-<td>2</td>
+<td>3</td>
 <td>0.1.1</td>
 </tr>
 <tr>
 <td><a href="dev-tools/">Dev Tools</a></td>
 <td>Feature development, review, docs</td>
 <td>6</td>
-<td>4</td>
+<td>3</td>
 <td>0.1.1</td>
 </tr>
 <tr>
@@ -1232,6 +1282,13 @@
 <td>Git commit automation</td>
 <td>1</td>
 <td>0</td>
+<td>0.1.0</td>
+</tr>
+<tr>
+<td><a href="plugin-tools/">Plugin Tools</a></td>
+<td>Plugin porting and ecosystem health</td>
+<td>4</td>
+<td>1</td>
 <td>0.1.0</td>
 </tr>
 </tbody>
@@ -1287,6 +1344,9 @@
 </span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>
 </span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="c1"># Git commit automation</span>
 </span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>claude<span class="w"> </span>plugins<span class="w"> </span>install<span class="w"> </span>agent-alchemy/agent-alchemy-git-tools
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="c1"># Plugin porting, validation, and ecosystem analysis</span>
+</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>claude<span class="w"> </span>plugins<span class="w"> </span>install<span class="w"> </span>agent-alchemy/agent-alchemy-plugin-tools
 </span></code></pre></div>
 <h2 id="plugin-groups">Plugin Groups<a class="headerlink" href="#plugin-groups" title="Permanent link">&para;</a></h2>
 <h3 id="core-tools">Core Tools<a class="headerlink" href="#core-tools" title="Permanent link">&para;</a></h3>
@@ -1309,6 +1369,10 @@
 <p>Lightweight git automation. A single skill that analyzes staged changes and generates conventional commit messages using the Haiku model for fast, low-cost operation.</p>
 <p><strong>Key skill:</strong> <code>/git-commit</code></p>
 <p><a href="git-tools/">Read the full Git Tools guide →</a></p>
+<h3 id="plugin-tools">Plugin Tools<a class="headerlink" href="#plugin-tools" title="Permanent link">&para;</a></h3>
+<p>Plugin lifecycle management. Ports Agent Alchemy plugins to other platforms using an adapter framework with live research, validates adapters against current platform documentation, applies incremental updates to ported plugins, and analyzes ecosystem health across all plugin groups.</p>
+<p><strong>Key skills:</strong> <code>/port-plugin</code>, <code>/validate-adapter</code>, <code>/dependency-checker</code></p>
+<p><a href="plugin-tools/">Read the full Plugin Tools guide →</a></p>
 <h2 id="cross-plugin-dependencies">Cross-Plugin Dependencies<a class="headerlink" href="#cross-plugin-dependencies" title="Permanent link">&para;</a></h2>
 <p>Plugins are designed to be independent, but some skills compose across boundaries:</p>
 <pre class="mermaid"><code>graph TD
@@ -1320,6 +1384,11 @@
     CTT["create-tdd-tasks&lt;br/&gt;(sdd-tools)"] -.-&gt;|"requires"| TDD["tdd-executor&lt;br/&gt;(tdd-tools)"]
     ETT["execute-tdd-tasks&lt;br/&gt;(sdd-tools)"] -.-&gt;|"requires"| TDD
 
+    DC["dependency-checker&lt;br/&gt;(plugin-tools)"] -.-&gt;|"reads all"| DA
+    DC -.-&gt;|"reads all"| FD
+    DC -.-&gt;|"reads all"| CS
+    DC -.-&gt;|"reads all"| TDD
+
     style DA fill:#7c4dff,color:#fff
     style CA fill:#7c4dff,color:#fff
     style FD fill:#00bcd4,color:#fff
@@ -1327,10 +1396,12 @@
     style CS fill:#f44336,color:#fff
     style CTT fill:#f44336,color:#fff
     style ETT fill:#f44336,color:#fff
-    style TDD fill:#4caf50,color:#fff</code></pre>
+    style TDD fill:#4caf50,color:#fff
+    style DC fill:#ff9800,color:#fff</code></pre>
 <ul>
 <li><strong>deep-analysis</strong> (core-tools) is loaded by 4 skills across core-tools, dev-tools, and sdd-tools</li>
 <li><strong>TDD variant skills</strong> (sdd-tools) require the tdd-tools plugin for the <code>tdd-executor</code> agent</li>
+<li><strong>dependency-checker</strong> (plugin-tools) reads all plugin groups to build its dependency graph</li>
 <li>All other cross-references are optional — skills degrade gracefully when dependencies are missing</li>
 </ul>
 <h2 id="model-usage">Model Usage<a class="headerlink" href="#model-usage" title="Permanent link">&para;</a></h2>
@@ -1355,7 +1426,7 @@
 <td>Medium</td>
 <td>Sonnet</td>
 <td>Exploration, parallel workers</td>
-<td>code-explorer, test-writer</td>
+<td>code-explorer, test-writer, researcher (plugin-tools)</td>
 </tr>
 <tr>
 <td>Low</td>

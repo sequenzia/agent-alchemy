@@ -845,6 +845,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#code-architect-opus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        code-architect (Opus)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#code-explorer-sonnet" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1073,6 +1084,34 @@
     
   
     Git Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../plugin-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plugin Tools
   
 
     
@@ -1423,6 +1462,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#code-architect-opus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        code-architect (Opus)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#code-explorer-sonnet" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1584,7 +1634,7 @@
 </tr>
 <tr>
 <td><strong>Agents</strong></td>
-<td>2 (code-explorer, code-synthesizer)</td>
+<td>3 (code-explorer, code-synthesizer, code-architect)</td>
 </tr>
 <tr>
 <td><strong>Hooks</strong></td>
@@ -1894,6 +1944,46 @@
 <p><strong>Source:</strong> <code>claude/core-tools/skills/project-conventions/SKILL.md</code></p>
 <hr />
 <h2 id="agents">Agents<a class="headerlink" href="#agents" title="Permanent link">&para;</a></h2>
+<h3 id="code-architect-opus">code-architect (Opus)<a class="headerlink" href="#code-architect-opus" title="Permanent link">&para;</a></h3>
+<p>The blueprint designer. Spawned by feature-dev (dev-tools) to generate competing implementation approaches.</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Model</strong></td>
+<td>Opus</td>
+</tr>
+<tr>
+<td><strong>Tools</strong></td>
+<td>Read, Glob, Grep, SendMessage, TaskUpdate, TaskGet, TaskList</td>
+</tr>
+<tr>
+<td><strong>Loaded Skills</strong></td>
+<td>None</td>
+</tr>
+<tr>
+<td><strong>Source</strong></td>
+<td><code>claude/core-tools/agents/code-architect.md</code></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition warning">
+<p class="admonition-title">Read-Only by Design</p>
+<p>Like the explorer and synthesizer, the architect has no Write or Edit access. It designs blueprints but never modifies code — only the lead (feature-dev) applies changes.</p>
+</div>
+<p><strong>Design approaches:</strong></p>
+<ol>
+<li><strong>Minimal/Simple</strong> — Fewest files changed, direct implementation, inline solutions</li>
+<li><strong>Flexible/Extensible</strong> — Abstractions where reuse is likely, extension points</li>
+<li><strong>Project-Aligned</strong> — Match existing patterns exactly, follow team conventions</li>
+</ol>
+<p><strong>Output format:</strong> Implementation blueprints with files to create/modify, data flow, API changes, error handling, risks/mitigations, and testing strategy.</p>
+<hr />
 <h3 id="code-explorer-sonnet">code-explorer (Sonnet)<a class="headerlink" href="#code-explorer-sonnet" title="Permanent link">&para;</a></h3>
 <p>The exploration workhorse of the deep-analysis team. Each instance is assigned a single focus area and works independently.</p>
 <table>
@@ -2264,24 +2354,25 @@
 <h2 id="directory-structure">Directory Structure<a class="headerlink" href="#directory-structure" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>claude/core-tools/
 </span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>├── agents/
-</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>│   ├── code-explorer.md              # Sonnet — exploration worker
-</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>│   └── code-synthesizer.md           # Opus — synthesis agent
-</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>├── hooks/
-</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>│   ├── hooks.json                    # Hook registration
-</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>│   └── auto-approve-da-session.sh    # Auto-approve session file ops
-</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>├── skills/
-</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>│   ├── deep-analysis/
-</span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>│   │   └── SKILL.md                  # Keystone skill (521 lines)
-</span><span id="__span-4-11"><a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>│   ├── codebase-analysis/
-</span><span id="__span-4-12"><a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>│   │   ├── SKILL.md                  # 3-phase analysis wrapper
-</span><span id="__span-4-13"><a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>│   │   └── references/
-</span><span id="__span-4-14"><a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>│   │       ├── report-template.md    # Structured report format
-</span><span id="__span-4-15"><a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>│   │       └── actionable-insights-template.md
-</span><span id="__span-4-16"><a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>│   ├── language-patterns/
-</span><span id="__span-4-17"><a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>│   │   └── SKILL.md                  # TS/Python/React patterns
-</span><span id="__span-4-18"><a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>│   └── project-conventions/
-</span><span id="__span-4-19"><a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>│       └── SKILL.md                  # Convention discovery guide
-</span><span id="__span-4-20"><a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>└── README.md
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>│   ├── code-architect.md             # Opus — blueprint design agent
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>│   ├── code-explorer.md              # Sonnet — exploration worker
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>│   └── code-synthesizer.md           # Opus — synthesis agent
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>├── hooks/
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>│   ├── hooks.json                    # Hook registration
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>│   └── auto-approve-da-session.sh    # Auto-approve session file ops
+</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>├── skills/
+</span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>│   ├── deep-analysis/
+</span><span id="__span-4-11"><a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>│   │   └── SKILL.md                  # Keystone skill (521 lines)
+</span><span id="__span-4-12"><a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>│   ├── codebase-analysis/
+</span><span id="__span-4-13"><a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>│   │   ├── SKILL.md                  # 3-phase analysis wrapper
+</span><span id="__span-4-14"><a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>│   │   └── references/
+</span><span id="__span-4-15"><a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>│   │       ├── report-template.md    # Structured report format
+</span><span id="__span-4-16"><a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>│   │       └── actionable-insights-template.md
+</span><span id="__span-4-17"><a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>│   ├── language-patterns/
+</span><span id="__span-4-18"><a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>│   │   └── SKILL.md                  # TS/Python/React patterns
+</span><span id="__span-4-19"><a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>│   └── project-conventions/
+</span><span id="__span-4-20"><a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>│       └── SKILL.md                  # Convention discovery guide
+</span><span id="__span-4-21"><a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a>└── README.md
 </span></code></pre></div>
 
 
