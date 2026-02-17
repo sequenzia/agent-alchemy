@@ -1,6 +1,6 @@
 # Agent Alchemy Plugin Tools
 
-Plugin lifecycle tools for AI agents -- cross-platform porting, adapter validation, and ported plugin maintenance with an extensible adapter framework, real-time platform research, and interactive workflows.
+Plugin lifecycle tools for AI agents -- cross-platform porting, adapter validation, ported plugin maintenance, and ecosystem health analysis with an extensible adapter framework, real-time platform research, and interactive workflows.
 
 ## Skills
 
@@ -9,6 +9,7 @@ Plugin lifecycle tools for AI agents -- cross-platform porting, adapter validati
 | `/port-plugin` | Yes | Guided conversion wizard that ports plugins to target platforms. Uses adapter framework for mappings, spawns research agent for live documentation, and interactively resolves incompatibilities. |
 | `/validate-adapter` | Yes | Validates adapter files against live platform documentation to detect stale mappings, missing features, and outdated version information. Can optionally apply updates in-place. |
 | `/update-ported-plugin` | Yes | Updates previously-ported plugins when source plugins change or the target platform evolves. Detects source diffs and platform changes, applies incremental updates, and refreshes metadata. |
+| `/dependency-checker` | Yes | Analyzes the plugin ecosystem to detect dependency issues — circular deps, missing components, broken paths, orphaned files, agent-skill mismatches, marketplace inconsistencies, and documentation drift. |
 
 ## Agents
 
@@ -49,6 +50,16 @@ Multi-phase conversion workflow:
 4. **Apply Platform Changes** -- Update ported files for stale mappings, apply additive features
 5. **Output & Refresh** -- Write updated files, refresh PORT-METADATA, update gap report
 
+### dependency-checker
+
+5-phase ecosystem analysis:
+
+1. **Load & Discover** -- Parse arguments, load settings, enumerate all skills/agents/references/hooks across plugin groups
+2. **Build Dependency Graph** -- Extract dependency edges from path patterns, agent spawning, skill bindings, hook scripts
+3. **Analyze** -- 7 detection passes: circular deps, missing deps, broken paths, orphaned components, agent-skill mismatches, marketplace consistency, hook integrity
+4. **Cross-Reference Documentation** -- Compare graph against CLAUDE.md and README files for inventory/chain/line-count drift
+5. **Report** -- Interactive findings browser with severity grouping, plugin filtering, graph visualization, and optional markdown export
+
 ## Shared References
 
 | File | Description |
@@ -83,8 +94,10 @@ plugin-tools/
 │   │   └── SKILL.md            # Conversion wizard (~2,750 lines)
 │   ├── validate-adapter/
 │   │   └── SKILL.md            # Adapter validation (~350 lines)
-│   └── update-ported-plugin/
-│       └── SKILL.md            # Incremental updater (~700 lines)
+│   ├── update-ported-plugin/
+│   │   └── SKILL.md            # Incremental updater (~700 lines)
+│   └── dependency-checker/
+│       └── SKILL.md            # Ecosystem health analyzer (~550 lines)
 └── README.md
 ```
 

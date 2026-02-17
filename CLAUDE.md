@@ -15,7 +15,7 @@ agent-alchemy/
 │   ├── sdd-tools/             # Spec-Driven Development pipeline
 │   ├── tdd-tools/             # TDD workflows: test generation, RED-GREEN-REFACTOR, coverage
 │   ├── git-tools/             # Git commit automation
-│   └── plugin-tools/          # Plugin porting, adapter validation, ported plugin maintenance
+│   └── plugin-tools/          # Plugin porting, adapter validation, ported plugin maintenance, ecosystem health
 ├── apps/
 │   └── task-manager/          # Next.js 16 real-time Kanban dashboard
 ├── extensions/
@@ -97,6 +97,8 @@ execute-tdd-tasks -> tdd-executor for TDD tasks, task-executor for non-TDD tasks
 port-plugin -> researcher (sonnet) x 1 -> interactive conversion with shared references
 validate-adapter -> researcher (sonnet) x 1 -> compare adapter sections against research
 update-ported-plugin -> validate-adapter (phases 1-3) + git diff -> incremental re-conversion
+
+dependency-checker -> reads all plugin groups -> builds dependency graph -> 7 analysis passes + doc drift checks
 ```
 
 ### Task Manager (apps/task-manager/)
@@ -129,7 +131,7 @@ update-ported-plugin -> validate-adapter (phases 1-3) + git diff -> incremental 
 | sdd-tools | create-spec, analyze-spec, create-tasks, execute-tasks, create-tdd-tasks, execute-tdd-tasks | researcher, spec-analyzer, task-executor | 0.1.2 |
 | tdd-tools | generate-tests, tdd-cycle, analyze-coverage | test-writer, tdd-executor, test-reviewer | 0.1.0 |
 | git-tools | git-commit | — | 0.1.0 |
-| plugin-tools | port-plugin, validate-adapter, update-ported-plugin | researcher | 0.2.0 |
+| plugin-tools | port-plugin, validate-adapter, update-ported-plugin, dependency-checker | researcher | 0.3.0 |
 
 ## Critical Plugin Files
 
@@ -147,6 +149,7 @@ update-ported-plugin -> validate-adapter (phases 1-3) + git diff -> incremental 
 | `claude/tdd-tools/skills/generate-tests/SKILL.md` | 513 | Test generation from acceptance criteria or source code |
 | `claude/sdd-tools/skills/create-tdd-tasks/SKILL.md` | 687 | SDD-to-TDD task pair transformation |
 | `claude/sdd-tools/skills/execute-tdd-tasks/SKILL.md` | 630 | TDD-aware wave execution with agent routing |
+| `claude/plugin-tools/skills/dependency-checker/SKILL.md` | 651 | Ecosystem dependency analysis with 7 detection passes + doc drift |
 
 ## Known Challenges
 
@@ -170,3 +173,6 @@ User preferences are stored in `.claude/agent-alchemy.local.md` (not committed):
 - `tdd.strictness`: RED phase enforcement level (`strict` | `normal` | `relaxed`, default: `normal`)
 - `tdd.test-review-threshold`: Minimum test quality score (0-100, default: `70`)
 - `tdd.test-review-on-generate`: Auto-run test-reviewer after generate-tests (default: `false`)
+- `plugin-tools.dependency-checker.severity-threshold`: Minimum severity to show (`critical` | `high` | `medium` | `low`, default: `low`)
+- `plugin-tools.dependency-checker.check-docs-drift`: Run Phase 4 CLAUDE.md/README cross-referencing (default: `true`)
+- `plugin-tools.dependency-checker.line-count-tolerance`: Percentage tolerance for line count drift in CLAUDE.md tables (default: `10`)

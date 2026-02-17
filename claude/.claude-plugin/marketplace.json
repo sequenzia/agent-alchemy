@@ -55,8 +55,8 @@
     },
     {
       "name": "agent-alchemy-plugin-tools",
-      "version": "0.2.0",
-      "description": "Plugin lifecycle tools for AI agents — cross-platform porting, adapter validation, and ported plugin maintenance",
+      "version": "0.3.0",
+      "description": "Plugin lifecycle tools for AI agents — cross-platform porting, adapter validation, ported plugin maintenance, and ecosystem health analysis",
       "source": "./plugin-tools",
       "homepage": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/plugin-tools",
       "repository": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/plugin-tools",
