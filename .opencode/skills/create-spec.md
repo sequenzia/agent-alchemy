@@ -1,5 +1,5 @@
 ---
-description: Create a new specification through an adaptive interview process with proactive recommendations and optional research. Use when user says "create spec", "new spec", "generate spec", or wants to start a specification document.
+description: 'Create a new specification through an adaptive interview process with proactive recommendations and optional research. Use when user says "create spec", "new spec", "generate spec", or wants to start a specification document.'
 user-invocable: true
 ---
 

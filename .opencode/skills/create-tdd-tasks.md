@@ -1,5 +1,5 @@
 ---
-description: Transform SDD tasks into test-first TDD task pairs. Reads existing tasks from /create-tasks and generates paired test tasks with RED-GREEN dependencies. Use when user says "create tdd tasks", "add tdd pairs", "convert to tdd", or wants to apply test-first ordering to SDD tasks.
+description: 'Transform SDD tasks into test-first TDD task pairs. Reads existing tasks from /create-tasks and generates paired test tasks with RED-GREEN dependencies. Use when user says "create tdd tasks", "add tdd pairs", "convert to tdd", or wants to apply test-first ordering to SDD tasks.'
 user-invocable: true
 ---
 

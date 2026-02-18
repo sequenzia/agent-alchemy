@@ -1,5 +1,5 @@
 ---
-description: Feature development workflow with exploration, architecture, implementation, and review phases. Use for implementing new features or significant changes. Note: per-skill tool restrictions are not supported in opencode; tool access is controlled at the agent level.
+description: 'Feature development workflow with exploration, architecture, implementation, and review phases. Use for implementing new features or significant changes. Note: per-skill tool restrictions are not supported in opencode; tool access is controlled at the agent level.'
 user-invocable: true
 ---
 

@@ -1,5 +1,5 @@
 ---
-description: Deep exploration and synthesis workflow using parallel task agents with dynamic planning and hub-and-spoke coordination. Use when asked for "deep analysis", "deep understanding", "analyze codebase", "explore and analyze", or "investigate codebase".
+description: 'Deep exploration and synthesis workflow using parallel task agents with dynamic planning and hub-and-spoke coordination. Use when asked for "deep analysis", "deep understanding", "analyze codebase", "explore and analyze", or "investigate codebase".'
 user-invocable: true
 ---
 

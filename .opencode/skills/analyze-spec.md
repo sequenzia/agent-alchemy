@@ -1,5 +1,5 @@
 ---
-description: Analyze an existing spec for inconsistencies, missing information, ambiguities, and structure issues. Use when user says "analyze spec", "review spec", "spec quality check", "validate requirements", "audit spec", or "check spec quality".
+description: 'Analyze an existing spec for inconsistencies, missing information, ambiguities, and structure issues. Use when user says "analyze spec", "review spec", "spec quality check", "validate requirements", "audit spec", or "check spec quality".'
 user-invocable: true
 ---
 

@@ -1,5 +1,5 @@
 ---
-description: Execute TDD task pairs autonomously with RED-GREEN-REFACTOR verification. Orchestrates wave-based execution with strategic parallelism, routing TDD tasks to tdd-executor agents and non-TDD tasks to standard task-executor. Use when user says "execute tdd tasks", "run tdd tasks", "start tdd execution", or wants to execute TDD-paired tasks from create-tdd-tasks. Note: this skill requires a primary-agent context — the question tool used for plan confirmation is not available in subagent contexts.
+description: 'Execute TDD task pairs autonomously with RED-GREEN-REFACTOR verification. Orchestrates wave-based execution with strategic parallelism, routing TDD tasks to tdd-executor agents and non-TDD tasks to standard task-executor. Use when user says "execute tdd tasks", "run tdd tasks", "start tdd execution", or wants to execute TDD-paired tasks from create-tdd-tasks. Note: this skill requires a primary-agent context — the question tool used for plan confirmation is not available in subagent contexts.'
 user-invocable: true
 ---
 
