@@ -2,7 +2,7 @@
 
 Plugin Tools provides lifecycle management for cross-platform plugin porting, adapter validation, incremental updates to ported plugins, and ecosystem health analysis. It uses an extensible adapter framework with real-time platform research and interactive workflows.
 
-**Plugin:** `agent-alchemy-plugin-tools` | **Version:** 0.1.0 | **Skills:** 5 | **Agents:** 1
+**Plugin:** `agent-alchemy-plugin-tools` | **Version:** 0.1.1 | **Skills:** 5 | **Agents:** 1
 
 ## Plugin Inventory
 
