@@ -2,8 +2,6 @@
 name: port-plugin
 description: |
   Converts Agent Alchemy plugins into formats compatible with other AI coding platforms.
-  Uses an extensible adapter framework, platform research, and interactive conversion workflows.
-  MVP target: OpenCode.
 user-invocable: true
 disable-model-invocation: true
 argument-hint: "[--target opencode] [--dry-run]"

@@ -2,9 +2,6 @@
 name: dependency-checker
 description: |
   Analyzes the Agent Alchemy plugin ecosystem to detect dependency issues across all plugin groups.
-  Identifies circular dependencies, missing components, broken cross-plugin paths, orphaned
-  skills/agents/references, agent-skill mismatches, marketplace inconsistencies, and documentation
-  drift. Produces a structured health report with severity-ranked findings and fix recommendations.
 user-invocable: true
 disable-model-invocation: true
 argument-hint: "[--plugin <group>] [--verbose] [--report-file <path>]"

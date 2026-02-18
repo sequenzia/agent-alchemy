@@ -1,11 +1,7 @@
 ---
 name: bump-plugin-version
 description: |
-  Bumps plugin versions across the Agent Alchemy ecosystem. Scans all version
-  locations for drift, lets you multi-select plugins and bump level (patch/minor/major),
-  then updates marketplace.json, CLAUDE.md, and all docs files in one pass. Adds a
-  CHANGELOG entry and creates a conventional commit. Use when you say "bump version",
-  "release plugin", "update plugin version", or "version bump".
+  Bumps plugin versions across the Agent Alchemy ecosystem.
 user-invocable: true
 disable-model-invocation: true
 argument-hint: "[--plugin <group,...>] [--level patch|minor|major] [--dry-run]"
