@@ -94,7 +94,7 @@ generate-tests -> test-writer (sonnet) x N parallel (criteria-driven or code-ana
 create-tdd-tasks -> reads existing tasks -> generates TDD pairs (test blocks impl)
 execute-tdd-tasks -> tdd-executor for TDD tasks, task-executor for non-TDD tasks
 
-port-plugin -> researcher (sonnet) x 1 -> interactive conversion with shared references
+port-plugin -> researcher (sonnet) x 1 -> port-converter (sonnet) x N per wave -> orchestrator resolves incompatibilities between waves
 validate-adapter -> researcher (sonnet) x 1 -> compare adapter sections against research
 update-ported-plugin -> validate-adapter (phases 1-3) + git diff -> incremental re-conversion
 
@@ -131,14 +131,14 @@ dependency-checker -> reads all plugin groups -> builds dependency graph -> 7 an
 | sdd-tools | create-spec, analyze-spec, create-tasks, execute-tasks, create-tdd-tasks, execute-tdd-tasks | researcher, spec-analyzer, task-executor | 0.1.2 |
 | tdd-tools | generate-tests, tdd-cycle, analyze-coverage | test-writer, tdd-executor, test-reviewer | 0.1.0 |
 | git-tools | git-commit | — | 0.1.0 |
-| plugin-tools | port-plugin, validate-adapter, update-ported-plugin, dependency-checker | researcher | 0.1.0 |
+| plugin-tools | port-plugin, validate-adapter, update-ported-plugin, dependency-checker | researcher, port-converter | 0.1.0 |
 
 ## Critical Plugin Files
 
 | File | Lines | Role |
 |------|-------|------|
 | `claude/core-tools/skills/deep-analysis/SKILL.md` | 521 | Keystone skill — hub-and-spoke team engine loaded by 4 other skills |
-| `claude/plugin-tools/skills/port-plugin/SKILL.md` | ~2750 | Largest skill — cross-platform plugin porting with 7-phase (+4.5) workflow |
+| `claude/plugin-tools/skills/port-plugin/SKILL.md` | ~2575 | Largest skill — cross-platform plugin porting with 7-phase (+4.5) workflow, wave-based agent team conversion |
 | `claude/plugin-tools/skills/validate-adapter/SKILL.md` | 625 | Adapter validation against live platform docs (4 phases) |
 | `claude/plugin-tools/skills/update-ported-plugin/SKILL.md` | 793 | Incremental ported plugin updates with dual-track change detection (5 phases) |
 | `claude/sdd-tools/skills/create-spec/SKILL.md` | 664 | Adaptive interview with depth-aware questioning |
@@ -158,7 +158,7 @@ dependency-checker -> reads all plugin groups -> builds dependency graph -> 7 an
 | Cross-plugin `${CLAUDE_PLUGIN_ROOT}` inconsistency | Resolved | Standardized to `/../{source-dir-name}/` pattern. Convention documented above in Cross-Plugin Dependencies. |
 | Zero test coverage for VS Code extension | High | Validator is the most critical component — Ajv compilation, path detection, and line-number mapping are all untested. |
 | Schema drift risk | Medium | JSON schemas manually maintained. No CI validation ensures schemas match actual plugin frontmatter usage. |
-| Large reference files | Medium | plugin-tools has 6 reference files totaling ~3,300 lines + port-plugin SKILL.md (~2,750 lines). Largest single reference is mcp-converter.md (713 lines). |
+| Large reference files | Medium | plugin-tools has 6 reference files totaling ~3,300 lines + port-plugin SKILL.md (~2,575 lines) + port-converter agent (~390 lines) + session-format.md (~200 lines). Largest single reference is mcp-converter.md (713 lines). Context isolation via wave-based agents mitigates the port-plugin context pressure. |
 
 ## Settings
 

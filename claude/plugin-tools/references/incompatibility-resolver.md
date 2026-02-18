@@ -532,6 +532,33 @@ RESOLUTION_CACHE --> Conversion Session State
 
 ---
 
+## Agent vs. Orchestrator Responsibility
+
+When Phase 5 runs as a wave-based agent team (port-converter agents coordinated by the orchestrator), the incompatibility resolver's responsibilities split between two execution contexts:
+
+### Converter Agent Responsibility (per-component, isolated context)
+
+1. **Detection**: Identify all 5 categories of incompatibilities during conversion (unmapped tool, unmapped field, unsupported composition, unsupported hook, general gap)
+2. **Severity classification**: Apply the severity heuristics (critical/functional/cosmetic) based on body occurrence count and role centrality
+3. **Cosmetic auto-resolution**: Auto-resolve cosmetic gaps that have a suggested workaround with confidence "high" or "medium". Apply the workaround directly in the converted content. Record with `resolution_mode: "auto"` in the result file's Decisions table.
+4. **Cache lookup**: Read `resolution_cache.md` and auto-apply any cached decision where `apply_globally = true`. Record with `resolution_mode: "cached"`.
+5. **Inline marking**: For all remaining non-cosmetic incompatibilities (not cached or cached with `apply_globally = false`), insert inline markers in the converted content: `<!-- UNRESOLVED: {group_key} | {severity} | {feature_name} | {workaround_or_none} -->`
+6. **Result file reporting**: List all unresolved incompatibilities in the result file's Unresolved Incompatibilities table with full context (group_key, feature, severity, category, reason, suggested workaround, confidence, affected location count)
+7. **Workaround suggestion generation**: Build `suggested_workaround` entries using the same source priority (adapter notes > research findings > pattern-based inference) and confidence levels documented in this reference
+
+### Orchestrator Responsibility (cross-component, main context)
+
+1. **Batch collection**: After each wave completes, read all result files and collect `Unresolved Incompatibilities` across all agents in that wave
+2. **Grouping**: Group collected incompatibilities by `group_key` across all wave results
+3. **Cache check**: For each group, check `resolution_cache.md` for cached decisions not yet applied (entries with `apply_globally = false`)
+4. **User interaction**: Present remaining unresolved incompatibilities to the user via `AskUserQuestion`, using the same resolution flow (individual for 5 or fewer groups, batch for more) documented in this reference
+5. **Resolution application**: Replace `<!-- UNRESOLVED: ... -->` inline markers in result files with the applied resolution (workaround text, omission cleanup, or TODO comment)
+6. **Cache management**: Update `resolution_cache.md` with new decisions. When a user chooses "Apply to this and all future occurrences", set `apply_globally = true` so subsequent waves auto-apply.
+7. **Cascade impact detection**: Check the dependency graph for components in later waves that depend on the current wave's resolved components. Flag cascading impacts before applying resolutions.
+8. **Decision review checkpoints**: Offer periodic decision reviews (after every 10 decisions, after a wave with 3+ individual resolutions, at wave transitions) as documented in the Decision Review section of this reference
+
+---
+
 ## Integration with Conversion Engine
 
 The incompatibility resolver is invoked by the porter skill's Phase 5 conversion engine. The integration points are:

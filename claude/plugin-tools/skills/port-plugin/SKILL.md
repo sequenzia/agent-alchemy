@@ -85,7 +85,7 @@ Execute these phases in order, completing ALL of them:
 3. **Dependency Validation** - Build dependency graph and detect missing references
 4. **Platform Research** - Spawn research agent to investigate target platform
 4.5. **Dry-Run Preview** - Optional preview of expected output before conversion
-5. **Interactive Conversion** - Convert components with incompatibility resolution
+5. **Wave-Based Conversion** - Convert components via parallel agent team with incompatibility resolution
 6. **Output & Reporting** - Write converted files, migration guide, and gap report
 7. **Summary** - Present results and next steps
 
@@ -1270,447 +1270,273 @@ AskUserQuestion:
 
 ---
 
-## Phase 5: Interactive Conversion
+## Phase 5: Wave-Based Conversion
 
-**Goal:** Convert each selected component one at a time, in dependency order, resolving incompatibilities interactively.
+**Goal:** Convert each selected component using a wave-based agent team, where each `port-converter` agent (Sonnet) handles a single component in an isolated context. The orchestrator (this skill, Opus) manages session files, spawns agent waves, resolves incompatibilities between waves, and consolidates results.
 
-Initialize the following tracking structures before conversion begins:
+This phase consumes `SELECTED_COMPONENTS`, `CONVERSION_ORDER`, `DEPENDENCY_GRAPH`, and `CONVERSION_KNOWLEDGE` from Phases 2-4.
 
-- `CONVERTED_COMPONENTS` -- list of converted component results, each containing: `{ component, converted_content, target_path, fidelity_score, band, status, fidelity_report, decisions[], gaps[] }`
-- `CONVERSION_DECISIONS` -- flat list of all decisions made across all components, each containing: `{ component, feature, decision_type, original, converted, rationale }`
-- `CONVERSION_GAPS` -- flat list of all gaps across all components, each containing: `{ component, feature, reason, severity, workaround }`
+### Step 1: Initialize Session
 
-### Step 1: Load Conversion Mappings
+Create the session directory and write shared files that converter agents will read.
 
-Build a unified mapping lookup from `CONVERSION_KNOWLEDGE` (merged adapter + research from Phase 4). For each of the 9 adapter sections, extract the mapping data:
+#### 1a: Create Session Directory
 
-1. **Parse each section** by its H2 header name (e.g., `## Tool Name Mappings`, `## Model Tier Mappings`)
-2. **For each mapping table**, extract rows into key-value pairs:
-   - Tool mappings: `{ claude_tool -> { target, notes } }`
-   - Model mappings: `{ claude_model -> { target, notes } }`
-   - Frontmatter mappings (skill): `{ claude_field -> { target_field, notes } }`
-   - Frontmatter mappings (agent): `{ claude_field -> { target_field, notes } }`
-   - Hook event mappings: `{ claude_event -> { target_event, notes } }`
-3. **Parse non-table sections** into structured data:
-   - Directory Structure: `{ plugin_root, skill_dir, agent_dir, hook_dir, reference_dir, config_dir, file_extension, naming_convention, notes }`
-   - Composition Mechanism: `{ mechanism, syntax, supports_cross_plugin, supports_recursive, max_depth, notes }`
-   - Path Resolution: `{ root_variable, resolution_strategy, same_plugin_pattern, cross_plugin_pattern, notes }`
-
-Store the unified mappings as `MAPPINGS`.
-
-### Step 2: Convert Components in Dependency Order
-
-Process each component in `SELECTED_COMPONENTS` using `CONVERSION_ORDER` from `DEPENDENCY_GRAPH` (Phase 3, Step 5a). For each component:
-
-1. Read the source component file
-2. Determine the component type (`skill`, `agent`, `hooks`, `mcp`, `reference`)
-3. Route to the appropriate conversion sub-procedure (Steps 3-7 below)
-4. Record the conversion result in `CONVERTED_COMPONENTS`
-
-Display progress as each component is converted:
-
-```
-Converting [{n}/{total}]: {component.type} -- {component.name} ({component.group})
+```bash
+mkdir -p .claude/sessions/__port_live__/results
 ```
 
-### Step 3: Skill Conversion
+**If `.claude/sessions/__port_live__/` already exists** (stale session from a previous interrupted run):
+1. Archive the stale session: `mv .claude/sessions/__port_live__ .claude/sessions/port-interrupted-{YYYYMMDD}-{HHMMSS}`
+2. Recreate: `mkdir -p .claude/sessions/__port_live__/results`
+3. Log: "Archived stale porting session to .claude/sessions/port-interrupted-{timestamp}/"
 
-For each skill component (`type: "skill"`):
+#### 1b: Serialize Conversion Knowledge
 
-#### 3a: Parse Source Frontmatter
+Write `CONVERSION_KNOWLEDGE` to `.claude/sessions/__port_live__/conversion_knowledge.md` following the format specified in `${CLAUDE_PLUGIN_ROOT}/skills/port-plugin/references/session-format.md`.
 
-Read the SKILL.md file and split into two parts:
-- **Frontmatter**: The YAML block between the opening `---` and closing `---`
-- **Body**: Everything after the closing `---`
+The file contains all 9 adapter mapping sections (tool names, model tiers, skill frontmatter, agent frontmatter, hook events, directory structure, composition mechanism, path resolution, known limitations) serialized as markdown tables and key-value sections.
 
-Parse the frontmatter YAML to extract all fields: `name`, `description`, `argument-hint`, `user-invocable`, `disable-model-invocation`, `allowed-tools`, `model` (if present).
+**This file is written once and not modified during conversion.**
 
-#### 3b: Transform Frontmatter
+#### 1c: Serialize Dependency Graph
 
-For each frontmatter field, look up its target equivalent in `MAPPINGS.frontmatter_skill`:
+Write `DEPENDENCY_GRAPH` to `.claude/sessions/__port_live__/dependency_graph.md` following the session format reference.
 
-- **If target field is a string** (direct mapping): Rename the field to the target name and keep the value
-- **If target field is `null`**: The field has no equivalent. Record in `CONVERSION_DECISIONS` with `decision_type: "omitted"`. Do not include in output.
-- **If target field is `embedded:{location}`**: The information must be placed elsewhere in the output (e.g., in the filename, in the body). Record a `decision_type: "relocated"` entry. Apply the relocation during body transformation.
+Include: conversion order with wave assignments, dependency edges, circular references (if any), external dependencies, and classification counts.
 
-For the `allowed-tools` field (list type):
-1. Iterate each tool in the list
-2. Look up each tool in `MAPPINGS.tool_names`
-3. If the target is a tool name string: replace with the target name
-4. If the target is `null`: remove from the list, add to `CONVERSION_GAPS` with `severity: "functional"` if the skill body references this tool, or `severity: "cosmetic"` if it only appears in the tool list
-5. If the target is `partial:{name}`: use the target name, record in `CONVERSION_DECISIONS` with `decision_type: "partial"`
-6. If the target is `composite:{tool1}+{tool2}`: expand into the component tools, record in `CONVERSION_DECISIONS` with `decision_type: "composite"`
+**This file is written once and not modified during conversion.**
 
-For the `model` field (if present):
-1. Look up the value in `MAPPINGS.model_tiers`
-2. If the target is a model identifier string: replace the value
-3. If the target is `generic`: replace with the generic label
-4. If the target is `null`: omit the field, record in `CONVERSION_GAPS`
+#### 1d: Initialize Resolution Cache
 
-#### 3c: Transform Tool References in Body
+Write an empty resolution cache to `.claude/sessions/__port_live__/resolution_cache.md`:
 
-Scan the skill body text for references to Claude Code tools. For each tool reference found:
+```markdown
+# Resolution Cache
 
-1. Check if the tool appears as a capitalized word matching a known Claude Code tool name (e.g., `Read`, `Glob`, `Grep`, `Edit`, `Write`, `Bash`, `Task`, `AskUserQuestion`)
-2. Look up the tool in `MAPPINGS.tool_names`
-3. If a direct mapping exists: replace the tool name in the body text
-4. If `null`: flag the usage. If the tool reference is in instructional text (e.g., "Use Glob to find files"), replace with a TODO comment: `<!-- TODO: {tool_name} has no equivalent on {TARGET_PLATFORM}. {adapter_notes} -->`
-5. If `partial:{name}`: replace the name and add an inline comment noting the limitation
+## Cached Decisions
 
-**Context-aware replacement**: Only replace tool names when they appear as tool references, not as ordinary English words. Use surrounding context to determine if a word is a tool reference:
-- Preceded by "Use ", "Run ", "Call ", "the ", or appears in a code block/backticks
-- Appears in a tool invocation pattern (e.g., `Tool:`, `tool_name:`, backtick-wrapped)
-- Is part of the `allowed-tools` list or appears in a YAML code block under a tool-related key
-
-#### 3d: Transform Skill Composition Patterns
-
-Scan the body for skill composition references -- patterns where one skill loads another:
-
-**Pattern 1 -- Same-plugin skill loading:**
-```
-Read ${CLAUDE_PLUGIN_ROOT}/skills/{skill-name}/SKILL.md
+| Group Key | Decision Type | Workaround Applied | First Component | Apply Globally |
+|-----------|-------------|-------------------|-----------------|---------------|
 ```
 
-**Pattern 2 -- Cross-plugin skill loading:**
-```
-Read ${CLAUDE_PLUGIN_ROOT}/../{source-dir-name}/skills/{skill-name}/SKILL.md
-```
+This file grows between waves as the orchestrator resolves incompatibilities.
 
-**Pattern 3 -- Reference file loading:**
-```
-Read ${CLAUDE_PLUGIN_ROOT}/skills/{skill-name}/references/{file-name}
-```
+#### 1e: Compute Wave Assignments
 
-For each composition reference found, apply the transformation based on `MAPPINGS.composition`:
+Using `CONVERSION_ORDER` from Phase 3's topological sort, assign each component to a wave:
 
-- **If `mechanism` is `import` or `include`**: Replace the `Read ${CLAUDE_PLUGIN_ROOT}/...` pattern with the target platform's composition syntax (from `MAPPINGS.composition.syntax`). Adjust the path using `MAPPINGS.path_resolution` to convert to the target's path format.
+- **Wave 1**: Components with zero dependencies on other selected components (leaf nodes)
+- **Wave 2**: Components whose dependencies are all in Wave 1
+- **Wave N**: Components whose dependencies are all in Waves 1 through N-1
 
-- **If `mechanism` is `inline`**: The referenced content must be flattened into this file. Record a `decision_type: "flattened"` entry. During output generation (Phase 6), the referenced file's content will be inserted at this location. Mark the insertion point with a comment: `<!-- INLINE: {original_reference_path} -->`. If the referenced file is in `SELECTED_COMPONENTS`, use its converted content; otherwise, use the raw source content.
+Cap each wave at 5 concurrent agents (matching the `execute-tasks` pattern).
 
-- **If `mechanism` is `reference`**: Replace the path-based reference with a name/ID-based reference using the target's syntax.
+If a wave has more than 5 components, split it into sub-waves of up to 5, maintaining the same dependency level.
 
-- **If `mechanism` is `none`**: The target has no composition at all. All referenced content must be inlined. Follow the same procedure as `inline` above, but additionally add a gap entry noting the platform limitation.
+#### 1f: Display Execution Plan
 
-For cross-plugin references (`Pattern 2`), also check `MAPPINGS.composition.supports_cross_plugin`:
-- If `true`: Convert using the target's cross-plugin path pattern from `MAPPINGS.path_resolution.cross_plugin_pattern`
-- If `false`: Flag as a conversion gap. Offer the user a choice via `AskUserQuestion`:
-
-```yaml
-AskUserQuestion:
-  questions:
-    - header: "Cross-Plugin Reference"
-      question: "{component.name} references {referenced_skill} from {referenced_group}. The target platform does not support cross-plugin composition. How should this be handled?"
-      options:
-        - label: "Inline the referenced content"
-          description: "Flatten the referenced skill's content into this file"
-        - label: "Omit the reference"
-          description: "Remove the reference and add a TODO comment"
-        - label: "Add as TODO"
-          description: "Keep a placeholder comment explaining the missing reference"
-      multiSelect: false
-```
-
-#### 3e: Transform Path References
-
-Scan the body for all remaining `${CLAUDE_PLUGIN_ROOT}` path references not already handled by composition pattern transformation:
-
-1. For each `${CLAUDE_PLUGIN_ROOT}` occurrence:
-   - If `MAPPINGS.path_resolution.root_variable` is a string: replace `${CLAUDE_PLUGIN_ROOT}` with the target variable
-   - If `MAPPINGS.path_resolution.root_variable` is `null`: convert to a relative path or the target's `same_plugin_pattern` format
-2. For any `/../{group}/` cross-plugin path segments:
-   - If `MAPPINGS.path_resolution.cross_plugin_pattern` exists: apply the cross-plugin path pattern
-   - If `null`: flag as a gap and add a TODO comment
-
-#### 3f: Transform AskUserQuestion Patterns
-
-Scan the body for `AskUserQuestion` usage patterns -- both YAML code blocks showing invocations and prose instructions referencing the tool:
-
-1. Look up `AskUserQuestion` in `MAPPINGS.tool_names`
-2. **If a direct equivalent exists**: Replace `AskUserQuestion` references with the target tool name. Adjust YAML code block examples to use the target tool's syntax if the adapter or research findings document the target's interaction format.
-3. **If `null` (no equivalent)**: The target platform has no structured user interaction tool. Apply this transformation:
-   - Replace YAML code block examples with prose instructions directing the user to provide input. Convert the structured question format into natural language instructions in the body text.
-   - For multiSelect questions: convert to a bulleted list of options with instructions like "List your selections from the options below"
-   - For single-select questions: convert to a numbered list with instructions like "Choose one of the following options"
-   - For confirmation questions: convert to a yes/no instruction
-   - Record each transformation in `CONVERSION_DECISIONS` with `decision_type: "interaction_downgraded"`
-   - Add a gap entry noting the loss of structured interaction
-
-#### 3g: Assemble Converted Skill
-
-Build the converted skill output:
-
-1. If the target platform uses frontmatter (check `MAPPINGS.frontmatter_skill` -- if any field maps to a non-null, non-embedded value): reconstruct the frontmatter block with mapped field names and transformed values
-2. If the target platform uses a different metadata format: construct metadata in that format
-3. If the target platform embeds metadata in the filename or body: apply those conventions
-4. Append the transformed body content
-5. Apply the target platform's file extension from `MAPPINGS.directory_structure.file_extension`
-6. Apply the target's naming convention from `MAPPINGS.directory_structure.naming_convention` to determine the output filename
-7. Determine the output path: `{MAPPINGS.directory_structure.plugin_root}/{MAPPINGS.directory_structure.skill_dir}/{converted_filename}`
-
-Store the result in `CONVERTED_COMPONENTS` with:
-- `converted_content`: the full file content
-- `target_path`: the output file path relative to the output directory
-- `decisions[]`: all decisions made during this component's conversion
-- `gaps[]`: all gaps identified during this component's conversion
-
-### Step 4: Agent Conversion
-
-For each agent component (`type: "agent"`), read `${CLAUDE_PLUGIN_ROOT}/references/agent-converter.md` and follow its procedures. The agent converter reference covers:
-- Frontmatter parsing and mapping (4a)
-- Model tier and tool list transformation (4b)
-- Body transformation reusing skill conversion steps (4c)
-- Output format determination when target has no agent concept (4d)
-- Assembly and path generation (4e)
-
-Store results in `CONVERTED_COMPONENTS` using the same structure as skill conversion.
-
-### Step 5: Hook Conversion
-
-For each hooks component (`type: "hooks"`):
-
-#### 5a: Parse Source Hooks
-
-Read the `hooks.json` file and parse the JSON structure. For each event type key (`PreToolUse`, `PostToolUse`, `Stop`, `SessionStart`, `Notification`), extract the hook entries.
-
-Each hook entry has:
-- `matcher` -- pattern matching criteria (e.g., tool name pattern)
-- `command` -- shell command to execute
-- `timeout` (optional) -- execution timeout
-
-#### 5b: Map Hook Events
-
-For each hook event, look up in `MAPPINGS.hook_events`:
-
-- **If the Hook/Lifecycle section is present in the adapter:**
-  - For each Claude Code event with a non-null target: map the event type and construct the hook in the target's configuration format
-  - For each Claude Code event with `null` target: record as a gap
-- **If the Hook/Lifecycle section is omitted from the adapter**: treat all hooks as unsupported. Add the entire hooks configuration to the gap report with `severity: "functional"`.
-
-#### 5c: Transform Hook Commands
-
-For hooks with mapped events, also transform:
-- `${CLAUDE_PLUGIN_ROOT}` paths in `command` fields using path resolution mappings
-- Tool matcher patterns to target tool names
-- Script file references: check if referenced scripts exist and include them in the output, adjusting paths
-
-#### 5d: Assemble Converted Hooks
-
-If any hooks were successfully mapped:
-1. Build the hooks configuration in the target platform's format (from `MAPPINGS.hook_events` Hook Configuration section)
-2. Write to the target's `hook_dir` (or `plugin_root` if no dedicated hook directory)
-
-If no hooks could be mapped, skip file generation and add a comprehensive gap entry.
-
-### Step 6: Reference File Conversion
-
-For each reference file associated with a selected skill, read `${CLAUDE_PLUGIN_ROOT}/references/reference-converter.md` and follow its procedures. The reference converter covers:
-- Discovery of reference files from selected skills
-- Strategy determination based on adapter directory structure and composition mechanism
-- Path transformation for standalone reference files
-- Content transformation (tool names, model tiers, path references)
-- Inlining logic for platforms without reference directory support
-- Output path generation
-
-Store results in `CONVERTED_COMPONENTS` using the same structure as skill conversion.
-
-### Step 7: MCP Config Conversion
-
-For each MCP config component (`type: "mcp"`), read `${CLAUDE_PLUGIN_ROOT}/references/mcp-converter.md` and follow its procedures. The MCP config converter reference covers:
-- Parsing `.mcp.json` files and extracting server configurations (transport type, command, args, env, paths)
-- Determining target platform MCP support level (native or none)
-- Transforming server configs for MCP-native platforms (path resolution, naming conventions, transport mapping)
-- Generating MCP tool reference mappings for skill and agent converters
-- Handling platforms with no MCP support (gap report entries, migration guide, alternative suggestions)
-- Detecting runtime dependencies (Node.js, Python, etc.) for MCP server commands
-- Error handling for malformed configs and unsupported transport types
-
-Store results in `CONVERTED_COMPONENTS` using the same structure as skill conversion.
-
-### Step 8: Incompatibility Resolution
-
-Throughout Steps 3-7, whenever a feature has no direct equivalent (mapping is `null` and the feature is non-trivial), the incompatibility resolver handles detection, user interaction, and decision tracking. Read `${CLAUDE_PLUGIN_ROOT}/references/incompatibility-resolver.md` and follow its procedures.
-
-Initialize these session-level structures before the first component is converted:
-
-- `RESOLUTION_CACHE` -- stores decisions keyed by incompatibility type for cross-component batch resolution
-- `DECISION_COUNTER` -- running total of decisions made, used to trigger periodic review checkpoints
-
-#### 8a: Incompatibility Detection
-
-The resolver detects 5 categories of incompatibilities:
-
-1. **Unmapped tool** -- Tool in `allowed-tools` or body maps to `null` in `MAPPINGS.tool_names`
-2. **Unmapped frontmatter field** -- Field maps to `null` in frontmatter mappings
-3. **Unsupported composition** -- Composition mechanism is `none` or cross-plugin not supported
-4. **Unsupported hook event** -- Event maps to `null` in `MAPPINGS.hook_events` or entire hook system unsupported
-5. **General feature gap** -- Both adapter and research report no equivalent (e.g., inter-agent communication, task management tools)
-
-During each conversion sub-step, when a mapping returns `null`, create an incompatibility entry with: category, feature name, original content, reason, severity (critical/functional/cosmetic), adapter notes, research notes, suggested workaround (with confidence level), affected locations, and a `group_key` for batch grouping.
-
-#### 8b: Resolution Flow
-
-After collecting all incompatibilities for a component, the resolver:
-
-1. **Groups by `group_key`** -- same tool/field/pattern across locations becomes one resolution item
-2. **Auto-resolves cosmetic gaps** -- cosmetic items with high/medium confidence workarounds are applied automatically
-3. **Determines resolution path**:
-   - **5 or fewer unique groups** (after auto-resolution): present each individually via `AskUserQuestion`
-   - **More than 5 unique groups**: present a batch summary first with options to review individually, auto-apply workarounds + TODO, omit all, or review critical/functional only
-
-For each incompatibility presented individually:
-
-```yaml
-AskUserQuestion:
-  questions:
-    - header: "Incompatible Feature: {feature_name}"
-      question: "{component.name}: '{feature_name}' has no direct equivalent on {TARGET_PLATFORM}. {reason}{If workaround: '\n\nSuggested workaround ({confidence}): {workaround.description}'}"
-      options:
-        - label: "Use workaround"
-          description: "{workaround.description} [{confidence} confidence, source: {source}]"
-        - label: "Omit this feature"
-          description: "Remove from converted output -- documented in gap report"
-        - label: "Add as TODO comment"
-          description: "Leave a placeholder: <!-- TODO [{TARGET_PLATFORM}]: {feature_name} -- {reason} -->"
-      multiSelect: false
-```
-
-When no workaround is available, present only "Omit" and "TODO" options.
-
-#### 8c: Applying Resolutions
-
-Based on the user's choice:
-
-- **"Use workaround"**: Apply the workaround transformation at each affected location. Record in `CONVERSION_DECISIONS` with `decision_type: "workaround"`, `rationale` set to the workaround description, and `confidence` level from the suggestion source.
-- **"Omit this feature"**: Remove the feature cleanly from the converted output (delete field, remove list entry, delete body reference, clean up orphaned formatting). Record in `CONVERSION_DECISIONS` with `decision_type: "omitted"`. Add to `CONVERSION_GAPS` with `user_acknowledged: true`.
-- **"Add as TODO comment"**: Insert a TODO comment at the relevant location: `<!-- TODO [{TARGET_PLATFORM}]: {feature_name} -- {reason}. Original: {original_content_snippet} -->`. Truncate original content to 200 characters. Record in `CONVERSION_DECISIONS` with `decision_type: "todo"`. Add to `CONVERSION_GAPS`.
-
-#### 8d: Batch Resolution for Repeated Types
-
-When the same incompatibility type recurs across components (same `group_key` in `RESOLUTION_CACHE`):
-
-1. After the first resolution of a `group_key`, store the decision in `RESOLUTION_CACHE`
-2. When the same `group_key` appears in a subsequent component, offer to reuse the previous decision:
-
-```yaml
-AskUserQuestion:
-  questions:
-    - header: "Repeated Incompatibility"
-      question: "'{feature_name}' was already resolved in {previous_component} (decision: {decision_type}). Apply the same decision to {current_component}?"
-      options:
-        - label: "Apply same decision"
-          description: "{previous_decision_description}"
-        - label: "Apply to this and all future occurrences"
-          description: "Use '{decision_type}' for all remaining '{feature_name}' incompatibilities"
-        - label: "Choose differently for this component"
-          description: "Open full resolution options for this instance"
-      multiSelect: false
-```
-
-If "Apply to this and all future occurrences", set the cache entry's `apply_globally = true` and skip prompts for all future occurrences of that `group_key`.
-
-#### 8e: Cascading Impact Detection
-
-Before applying a resolution, check whether the affected feature is referenced by other selected components (using the dependency graph from Phase 3). If dependents reference the feature, present a warning:
-
-```yaml
-AskUserQuestion:
-  questions:
-    - header: "Cascading Impact Warning"
-      question: "Your decision on '{feature_name}' in {component.name} may affect {count} other component(s):\n\n{list of dependent components and how they reference the feature}\n\nProceed?"
-      options:
-        - label: "Proceed"
-          description: "Apply resolution -- cascading effects handled during dependent conversion"
-        - label: "Choose differently"
-          description: "Go back and select a different resolution"
-      multiSelect: false
-```
-
-#### 8f: Decision Tracking and Review
-
-All decisions are tracked in `CONVERSION_DECISIONS` and `CONVERSION_GAPS` as append-only structures that survive if later conversion steps fail.
-
-The resolver offers a decision review checkpoint:
-- After every 10 decisions (across all components)
-- After completing a component with 3 or more individual resolutions
-
-The review presents a summary of decisions by type (workaround/omit/TODO), severity (critical/functional/cosmetic), and confidence level. This is informational -- past decisions cannot be changed, but the user can adjust strategy for remaining components.
-
-See `references/incompatibility-resolver.md` for the full specification including: incompatibility collection structure, workaround suggestion generation with pattern-based defaults and confidence levels, detailed resolution flow algorithms, cascading impact detection, and decision persistence guarantees.
-
-### Step 9: Fidelity Scoring
-
-After converting each component, calculate its fidelity score. The scoring system provides per-component scores and an overall weighted score, each labeled with a color band indicating the level of manual work required.
-
-#### 9a: Feature Tracking
-
-During conversion (Steps 3-7), track a `FIDELITY_COUNTERS` structure for each component. Every discrete feature in the source component must be classified into exactly one of these four categories:
-
-- `direct_count` -- features with a direct target equivalent (1:1 mapping, no loss of functionality)
-- `workaround_count` -- features mapped via `partial:`, `composite:`, workarounds, or `decision_type: "workaround"` / `"interaction_downgraded"` / `"flattened"` / `"relocated"` (functional but with reduced fidelity or behavioral differences)
-- `todo_count` -- features converted to TODO placeholder comments (`decision_type: "todo"`)
-- `omitted_count` -- features removed entirely with no output representation (`decision_type: "omitted"`)
-
-A "discrete feature" is any individually mappable element from the source:
-- Each frontmatter field (e.g., `name`, `description`, `user-invocable`, `model`)
-- Each entry in the `allowed-tools` list
-- Each composition reference (skill loading pattern)
-- Each path reference (`${CLAUDE_PLUGIN_ROOT}` occurrence)
-- Each interaction pattern (AskUserQuestion invocation)
-- Each hook event entry
-- Each MCP server configuration
-
-Calculate `total_features`:
+Present the wave-based execution plan:
 
 ```
-total_features = direct_count + workaround_count + todo_count + omitted_count
+## Phase 5: Wave-Based Conversion
+
+**Session directory:** .claude/sessions/__port_live__/
+**Total components:** {count}
+**Waves:** {wave_count}
+**Max concurrent agents per wave:** 5
+
+### Execution Plan
+
+| Wave | Components | Types |
+|------|-----------|-------|
+| 1 | {component_list} | {type_summary} |
+| 2 | {component_list} | {type_summary} |
+| ... | ... | ... |
+
+### Session Files Written
+- conversion_knowledge.md — {line_count} lines (merged adapter + research)
+- dependency_graph.md — {line_count} lines (serialized graph)
+- resolution_cache.md — initialized (empty)
+- results/ — empty directory for agent output
 ```
 
-#### 9b: Per-Component Score Calculation
+### Step 2: Execute Waves
 
-Calculate the fidelity score using weighted feature contributions:
+Process components wave by wave. For each wave, spawn `port-converter` agents in parallel, then resolve incompatibilities between waves.
 
-| Mapping Type | Weight | Rationale |
-|-------------|--------|-----------|
-| Direct mapping | 1.0 (100%) | Full functional parity -- no loss |
-| Workaround mapping | 0.7 (70%) | Functional but with behavioral differences or complexity |
-| TODO placeholder | 0.2 (20%) | Placeholder preserves intent but requires manual implementation |
-| Omitted | 0.0 (0%) | Feature is absent from the converted output |
+#### 2a: Wave Loop
 
+For each wave (starting with Wave 1):
+
+**Display wave start:**
 ```
-fidelity_score = ((direct_count * 1.0) + (workaround_count * 0.7) + (todo_count * 0.2) + (omitted_count * 0.0)) / total_features * 100
+### Wave {n}/{total_waves}: {component_count} component(s)
 ```
 
-Round to the nearest integer.
+**Spawn converter agents** using the Task tool with up to 5 parallel calls in a single turn:
 
-**Edge case -- No mappable features:** If `total_features == 0` (component has no discrete features to map, or all features are unrecognized), set `fidelity_score = 0` and add to `CONVERSION_GAPS` with `severity: "functional"` and `reason: "Component has no mappable features"`. Do not divide by zero.
+For each component in the current wave, launch a `port-converter` agent:
 
-**Edge case -- Unknown feature count:** If a component's total feature count cannot be determined precisely (e.g., adapter does not provide a clear feature enumeration), estimate `total_features` from the features the converter actually encountered during processing. Log: `"Feature count estimated from conversion scan ({total_features} features detected)"`.
+```
+Task tool:
+  subagent_type: "agent-alchemy-plugin-tools:port-converter"
+  model: "sonnet"
+  prompt: |
+    Convert this component to {TARGET_PLATFORM} format.
 
-#### 9c: Score Color Bands
+    ## Component Details
+    - **Type:** {component.type}
+    - **Group:** {component.group}
+    - **Name:** {component.name}
+    - **Source path:** {component.path}
+    - **Component ID:** {component.type}-{component.group}-{component.name}
 
-Label each component's score with a severity band indicating the expected manual effort:
+    ## Session Directory
+    {absolute_path_to}/.claude/sessions/__port_live__/
 
-| Score Range | Band | Label | Meaning |
-|-------------|------|-------|---------|
-| 80-100% | Green | High fidelity | Minimal manual work needed -- component is well-represented on target |
-| 50-79% | Yellow | Moderate fidelity | Some manual work needed -- core behavior preserved but notable gaps exist |
-| 0-49% | Red | Low fidelity | Significant manual work needed -- major features missing or placeholder-only |
+    ## Target Platform
+    {TARGET_PLATFORM}
 
-Set `status` and `band` on the converted component result:
-- Score >= 80: `status = "full"`, `band = "green"`
-- Score 50-79: `status = "partial"`, `band = "yellow"`
-- Score < 50: `status = "limited"`, `band = "red"`
+    ## Converter Reference to Load
+    {If type == "agent": "${CLAUDE_PLUGIN_ROOT}/references/agent-converter.md"}
+    {If type == "hooks": "${CLAUDE_PLUGIN_ROOT}/references/hook-converter.md"}
+    {If type == "reference": "${CLAUDE_PLUGIN_ROOT}/references/reference-converter.md"}
+    {If type == "mcp": "${CLAUDE_PLUGIN_ROOT}/references/mcp-converter.md"}
+    {If type == "skill": "None — skill conversion logic is built into the agent"}
 
-**Edge case -- All workarounds, no directs:** A component where every feature is mapped via workaround (zero direct, zero TODO, zero omitted) scores exactly 70%, landing in the Yellow band. This correctly reflects that the component is functional but every feature required adaptation.
+    ## Session Format Reference
+    Read ${CLAUDE_PLUGIN_ROOT}/skills/port-plugin/references/session-format.md for the result file format specification.
+```
 
-#### 9d: Overall Weighted Score
+**CRITICAL:** Launch all agents in a wave as parallel Task tool calls in a single message. Do not wait for one agent to finish before launching the next within the same wave. This is the key to context isolation — each agent gets its own context window.
 
-After all components are converted, calculate the overall conversion fidelity as a weighted average. Components are weighted by type to reflect their relative complexity and importance:
+**Wait for all agents in the wave to complete** before proceeding.
+
+#### 2b: Collect Wave Results
+
+After all agents in a wave return:
+
+1. **Read all result files** from `.claude/sessions/__port_live__/results/` for this wave's components:
+   ```
+   Read: .claude/sessions/__port_live__/results/result-{component-id}.md
+   ```
+
+2. **Parse each result file** extracting: metadata, converted content, fidelity report, decisions, gaps, and unresolved incompatibilities
+
+3. **Handle missing or error results**: If an agent failed to write a result file, or the result file has `Status = error`:
+   - Log: "WARNING: Conversion failed for {component_id}: {error_reason}"
+   - Create a placeholder entry in `CONVERTED_COMPONENTS` with `status = "error"` and `fidelity_score = 0`
+   - Add a gap entry: `{ component, feature: "entire_component", reason: "Conversion agent failed", severity: "critical" }`
+
+#### 2c: Resolve Incompatibilities
+
+After collecting all wave results, process unresolved incompatibilities:
+
+1. **Collect all unresolved incompatibilities** from the wave's result files (from the Unresolved Incompatibilities tables)
+
+2. **Group by `group_key`** across all results in the wave
+
+3. **Check resolution cache**: Read `.claude/sessions/__port_live__/resolution_cache.md`. For each group:
+   - If `group_key` found with `apply_globally = true`: auto-apply the cached decision to the result file's converted content by replacing the inline marker with the resolution. Record with `resolution_mode: "cached"`.
+   - If found with `apply_globally = false`: offer to reuse via AskUserQuestion (see below)
+   - If not found: present for user resolution
+
+4. **Present remaining incompatibilities to user** using the resolution flow from `${CLAUDE_PLUGIN_ROOT}/references/incompatibility-resolver.md`:
+
+   - **5 or fewer unique groups** (after cache and auto-resolution): present each individually via `AskUserQuestion`
+   - **More than 5 unique groups**: present batch summary with options to review individually, auto-apply workarounds + TODO, omit all, or review critical/functional only
+
+   For repeated `group_key` values (same incompatibility seen in a previous wave):
+
+   ```yaml
+   AskUserQuestion:
+     questions:
+       - header: "Repeated Incompatibility"
+         question: "'{feature_name}' was already resolved in {previous_component} (decision: {decision_type}). Apply the same decision to {current_component}?"
+         options:
+           - label: "Apply same decision"
+             description: "{previous_decision_description}"
+           - label: "Apply to this and all future occurrences"
+             description: "Use '{decision_type}' for all remaining '{feature_name}' incompatibilities"
+           - label: "Choose differently for this component"
+             description: "Open full resolution options"
+         multiSelect: false
+   ```
+
+5. **Apply resolutions to result files**: For each resolved incompatibility, update the result file's converted content by replacing the `<!-- UNRESOLVED: ... -->` inline marker with the applied resolution:
+   - **Workaround**: Replace marker with the workaround text
+   - **Omitted**: Remove the marker and clean up surrounding content
+   - **TODO**: Replace marker with `<!-- TODO [{TARGET_PLATFORM}]: {feature_name} -- {reason} -->`
+
+   Use the `Edit` tool to modify result files in place.
+
+6. **Update resolution cache**: Write new decisions to `.claude/sessions/__port_live__/resolution_cache.md` by appending rows to the Cached Decisions table.
+
+7. **Cascade impact check**: Using `DEPENDENCY_GRAPH`, check whether any resolved incompatibility affects components in later waves. If so, log a note:
+   ```
+   Note: Resolution for '{feature_name}' may affect {count} component(s) in later waves: {component_list}
+   ```
+   Cached resolutions will propagate automatically to later waves via the resolution cache.
+
+#### 2d: Display Wave Summary
+
+After resolving incompatibilities:
+
+```
+Wave {n} complete: {component_count} component(s) converted
+| Component | Type | Fidelity | Band |
+|-----------|------|----------|------|
+| {name} | {type} | {score}% | {band} |
+
+Incompatibilities: {resolved_count} resolved, {auto_count} auto-resolved, {cached_count} from cache
+```
+
+**Decision review checkpoint**: If total decisions across all waves so far exceeds 10, or this wave had 3+ individual resolutions, offer a brief decision review summary (informational only — past decisions cannot be changed).
+
+#### 2e: Advance to Next Wave
+
+After completing the current wave:
+
+1. Check if there are remaining waves
+2. If yes: proceed to the next wave (return to 2a)
+3. If no: proceed to Step 3 (Consolidation)
+
+### Step 3: Consolidation
+
+After all waves are complete, consolidate results from all converter agents into the tracking structures that Phase 6 consumes.
+
+#### 3a: Read All Result Files
+
+Read all result files from `.claude/sessions/__port_live__/results/`:
+
+```
+Glob: .claude/sessions/__port_live__/results/result-*.md
+```
+
+For each result file, parse:
+- **Metadata**: component identification, fidelity score, band, status, target path
+- **Converted Content**: the full converted file content
+- **Fidelity Report**: scoring breakdown (direct, workaround, todo, omitted counts)
+- **Decisions**: all conversion decisions with rationale
+- **Gaps**: all identified gaps with severity
+
+#### 3b: Build Tracking Structures
+
+Assemble the data structures that Phase 6 expects:
+
+- `CONVERTED_COMPONENTS` — list of converted component results, each containing: `{ component, converted_content, target_path, fidelity_score, band, status, fidelity_report, decisions[], gaps[] }`
+- `CONVERSION_DECISIONS` — flat list of all decisions made across all components (concatenated from all result files), each containing: `{ component, feature, decision_type, original, converted, rationale, confidence, resolution_mode }`
+- `CONVERSION_GAPS` — flat list of all gaps across all components (concatenated from all result files), each containing: `{ component, feature, reason, severity, workaround, user_acknowledged }`
+
+#### 3c: Calculate Overall Weighted Fidelity Score
+
+Compute the overall conversion fidelity as a weighted average across all components:
 
 | Component Type | Weight | Rationale |
 |----------------|--------|-----------|
-| `skill` | 3 | Most complex -- largest content, most features, primary deliverable |
-| `agent` | 2 | Significant complexity -- frontmatter, tools, body, model config |
+| `skill` | 3 | Most complex — largest content, most features, primary deliverable |
+| `agent` | 2 | Significant complexity — frontmatter, tools, body, model config |
 | `hooks` | 1 | Configuration-oriented, typically fewer features |
 | `reference` | 1 | Supporting content, complexity varies |
 | `mcp` | 1 | Configuration mapping, typically straightforward |
@@ -1719,39 +1545,21 @@ After all components are converted, calculate the overall conversion fidelity as
 overall_score = sum(component.fidelity_score * component.weight) / sum(component.weight)
 ```
 
-Round to the nearest integer. Apply the same color band classification to the overall score.
+Round to the nearest integer. Apply color band classification:
+- Score >= 80: `band = "green"`, label = "High fidelity"
+- Score 50-79: `band = "yellow"`, label = "Moderate fidelity"
+- Score < 50: `band = "red"`, label = "Low fidelity"
 
-#### 9e: Score Breakdown for Migration Guide
+### Step 4: Conversion Summary
 
-For each component, prepare a score breakdown record for inclusion in the migration guide (Phase 6):
-
-```
-FIDELITY_REPORT = {
-  component: "{type}:{group}/{name}",
-  score: {fidelity_score},
-  band: "{green/yellow/red}",
-  label: "{High/Moderate/Low} fidelity",
-  breakdown: {
-    direct: { count: {n}, weight: 1.0, contribution: {n * 1.0} },
-    workaround: { count: {n}, weight: 0.7, contribution: {n * 0.7} },
-    todo: { count: {n}, weight: 0.2, contribution: {n * 0.2} },
-    omitted: { count: {n}, weight: 0.0, contribution: 0 }
-  },
-  total_features: {n},
-  notes: ["{any estimation notes or edge case flags}"]
-}
-```
-
-Store each `FIDELITY_REPORT` in the component's `CONVERTED_COMPONENTS` entry for Phase 6 to consume.
-
-### Step 10: Conversion Summary
-
-After all components are converted, display the conversion results with color-banded scores:
+Display the consolidated conversion results:
 
 ```
-## Phase 5 Complete: Interactive Conversion
+## Phase 5 Complete: Wave-Based Conversion
 
 **Components converted:** {count}/{total}
+**Waves executed:** {wave_count}
+**Session directory:** .claude/sessions/__port_live__/
 
 | Component | Type | Group | Fidelity | Band | Status | Gaps |
 |-----------|------|-------|----------|------|--------|------|
@@ -1762,6 +1570,8 @@ After all components are converted, display the conversion results with color-ba
 - Workarounds applied: {workaround_count}
 - TODO placeholders: {todo_count}
 - Features omitted: {omitted_count}
+- Auto-resolved (cosmetic): {auto_count}
+- Cached resolutions: {cached_count}
 
 **Overall fidelity:** {overall_score}% ({Green/Yellow/Red} -- {High/Moderate/Low} fidelity)
 ```
@@ -1772,7 +1582,7 @@ Proceed to Phase 6.
 
 ## Phase 6: Output & Reporting
 
-**Goal:** Write converted files, migration guide, and gap report to the output directory. This phase consumes `CONVERTED_COMPONENTS`, `CONVERSION_DECISIONS`, `CONVERSION_GAPS`, `STALENESS_STATUS`, `MAPPINGS`, and `FIDELITY_REPORT` from earlier phases.
+**Goal:** Write converted files, migration guide, and gap report to the output directory. This phase consumes `CONVERTED_COMPONENTS`, `CONVERSION_DECISIONS`, `CONVERSION_GAPS`, `STALENESS_STATUS`, and `CONVERSION_KNOWLEDGE` from earlier phases. All conversion results come from the session result files consolidated in Phase 5 Step 3. `MAPPINGS` for directory structure can be re-parsed from `.claude/sessions/__port_live__/conversion_knowledge.md` if needed.
 
 ### Note: Dry-Run Preview
 
@@ -2719,6 +2529,16 @@ Present recommended next steps:
 5. Update the adapter file if research revealed new platform features
 ```
 
+### Step 3: Session Cleanup
+
+Archive the live session directory to preserve the conversion record:
+
+1. Generate a timestamped archive name: `port-{TARGET_PLATFORM}-{YYYYMMDD}-{HHMMSS}`
+2. Move the session: `mv .claude/sessions/__port_live__ .claude/sessions/{archive_name}`
+3. Log: "Session archived to .claude/sessions/{archive_name}/"
+
+**On error or cancellation**: If the workflow is cancelled or fails at any point after the session directory was created (Phase 5 Step 1), still archive the session directory so partial results are preserved for debugging. Use the same archive procedure but append `-interrupted` to the name: `port-{TARGET_PLATFORM}-{YYYYMMDD}-{HHMMSS}-interrupted`.
+
 ---
 
 ## Error Handling
@@ -2750,5 +2570,6 @@ If any phase fails:
 - `${CLAUDE_PLUGIN_ROOT}/references/hook-converter.md` — Hook conversion logic (event mapping, behavioral classification, workaround strategies)
 - `${CLAUDE_PLUGIN_ROOT}/references/reference-converter.md` — Reference file conversion logic (discovery, path transformation, flattening)
 - `${CLAUDE_PLUGIN_ROOT}/references/mcp-converter.md` — MCP config conversion logic (server mapping, transport types, tool reference renaming, platform support detection)
-- `${CLAUDE_PLUGIN_ROOT}/references/incompatibility-resolver.md` — Incompatibility detection, interactive resolution, batch handling, decision tracking
+- `${CLAUDE_PLUGIN_ROOT}/references/incompatibility-resolver.md` — Incompatibility detection, interactive resolution, batch handling, decision tracking (includes agent vs. orchestrator responsibility split)
 - `${CLAUDE_PLUGIN_ROOT}/references/adapters/` — Directory for per-platform adapter files (one markdown file per target platform)
+- `${CLAUDE_PLUGIN_ROOT}/skills/port-plugin/references/session-format.md` — Session file format contract between orchestrator and port-converter agents
