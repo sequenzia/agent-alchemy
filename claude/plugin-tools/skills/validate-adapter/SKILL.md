@@ -1,8 +1,6 @@
 ---
 name: validate-adapter
-description: |
-  Validates adapter files against live platform documentation to detect stale mappings,
-  missing features, and outdated version information. Can optionally apply updates in-place.
+description: Validates adapter files against live platform documentation to detect stale mappings,missing features, and outdated version information
 user-invocable: true
 disable-model-invocation: true
 argument-hint: "--target <platform> [--update]"

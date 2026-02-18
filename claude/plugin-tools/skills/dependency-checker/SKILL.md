@@ -1,7 +1,6 @@
 ---
 name: dependency-checker
-description: |
-  Analyzes the Agent Alchemy plugin ecosystem to detect dependency issues across all plugin groups.
+description: Analyzes the Agent Alchemy plugin ecosystem to detect dependency issues across all plugin groups
 user-invocable: true
 disable-model-invocation: true
 argument-hint: "[--plugin <group>] [--verbose] [--report-file <path>]"

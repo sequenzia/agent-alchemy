@@ -1,7 +1,6 @@
 ---
 name: port-plugin
-description: |
-  Converts Agent Alchemy plugins into formats compatible with other AI coding platforms.
+description: Converts Agent Alchemy plugins into formats compatible with other AI coding platforms
 user-invocable: true
 disable-model-invocation: true
 argument-hint: "[--target opencode] [--dry-run]"

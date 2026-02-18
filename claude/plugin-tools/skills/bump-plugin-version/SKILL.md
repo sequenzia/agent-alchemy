@@ -1,7 +1,6 @@
 ---
 name: bump-plugin-version
-description: |
-  Bumps plugin versions across the Agent Alchemy ecosystem.
+description: Bumps plugin versions across the Agent Alchemy ecosystem
 user-invocable: true
 disable-model-invocation: true
 argument-hint: "[--plugin <group,...>] [--level patch|minor|major] [--dry-run]"
