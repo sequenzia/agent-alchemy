@@ -1029,6 +1029,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#bump-plugin-version-bump-plugin-version" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bump Plugin Version (/bump-plugin-version)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Bump Plugin Version (/bump-plugin-version)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#six-phase-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Six-Phase Workflow
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#agents" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1045,6 +1073,17 @@
     <span class="md-ellipsis">
       
         researcher (Sonnet)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#port-converter-sonnet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        port-converter (Sonnet)
       
     </span>
   </a>
@@ -1468,6 +1507,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#bump-plugin-version-bump-plugin-version" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bump Plugin Version (/bump-plugin-version)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Bump Plugin Version (/bump-plugin-version)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#six-phase-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Six-Phase Workflow
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#agents" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1484,6 +1551,17 @@
     <span class="md-ellipsis">
       
         researcher (Sonnet)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#port-converter-sonnet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        port-converter (Sonnet)
       
     </span>
   </a>
@@ -1539,7 +1617,7 @@
 
 <h1 id="plugin-tools">Plugin Tools<a class="headerlink" href="#plugin-tools" title="Permanent link">&para;</a></h1>
 <p>Plugin Tools provides lifecycle management for cross-platform plugin porting, adapter validation, incremental updates to ported plugins, and ecosystem health analysis. It uses an extensible adapter framework with real-time platform research and interactive workflows.</p>
-<p><strong>Plugin:</strong> <code>agent-alchemy-plugin-tools</code> | <strong>Version:</strong> 0.1.0 | <strong>Skills:</strong> 4 | <strong>Agents:</strong> 1</p>
+<p><strong>Plugin:</strong> <code>agent-alchemy-plugin-tools</code> | <strong>Version:</strong> 0.1.1 | <strong>Skills:</strong> 5 | <strong>Agents:</strong> 2</p>
 <h2 id="plugin-inventory">Plugin Inventory<a class="headerlink" href="#plugin-inventory" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -1576,10 +1654,22 @@
 <td>Ecosystem health analysis with 7 detection passes and doc drift checks</td>
 </tr>
 <tr>
+<td><code>bump-plugin-version</code></td>
+<td>Skill</td>
+<td>--</td>
+<td>Version bumping across all ecosystem files with drift detection and changelog</td>
+</tr>
+<tr>
 <td><code>researcher</code></td>
 <td>Agent</td>
 <td>Sonnet</td>
 <td>Investigates target platform plugin architectures via web search and documentation</td>
+</tr>
+<tr>
+<td><code>port-converter</code></td>
+<td>Agent</td>
+<td>Sonnet</td>
+<td>Converts a single plugin component to a target platform format</td>
 </tr>
 </tbody>
 </table>
@@ -1792,6 +1882,27 @@
 </tbody>
 </table>
 <hr />
+<h2 id="bump-plugin-version-bump-plugin-version">Bump Plugin Version (<code>/bump-plugin-version</code>)<a class="headerlink" href="#bump-plugin-version-bump-plugin-version" title="Permanent link">&para;</a></h2>
+<p>Automates version bumping across all ecosystem files. Scans 5 version locations per plugin for drift, applies consistent updates, generates a CHANGELOG entry, and creates a conventional commit.</p>
+<h3 id="six-phase-workflow">Six-Phase Workflow<a class="headerlink" href="#six-phase-workflow" title="Permanent link">&para;</a></h3>
+<pre class="mermaid"><code>flowchart LR
+    A["Discovery"] --&gt; B["Drift Check"]
+    B --&gt; C["Selection"]
+    C --&gt; D["Bump"]
+    D --&gt; E["Changelog"]
+    E --&gt; F["Commit"]
+
+    style B fill:#ff9800,color:#fff
+    style D fill:#7c4dff,color:#fff</code></pre>
+<ol>
+<li><strong>Discovery</strong> -- Reads <code>marketplace.json</code> and builds a plugin inventory with current versions.</li>
+<li><strong>Drift Check</strong> -- Scans all 5 version locations for inconsistencies against the marketplace registry. Offers to fix, skip, or abort on drift.</li>
+<li><strong>Selection</strong> -- Multi-select plugins to bump and choose bump level (patch/minor/major). Computes new versions and displays a bump plan. Supports <code>--dry-run</code> to stop here.</li>
+<li><strong>Bump</strong> -- Edits all 5 locations per plugin: marketplace.json, root CLAUDE.md, docs/index.md, docs/plugins/index.md, and per-plugin doc files.</li>
+<li><strong>Changelog</strong> -- Adds grouped entries under <code>## [Unreleased]</code> in CHANGELOG.md.</li>
+<li><strong>Commit</strong> -- Stages only modified files and creates a conventional commit (<code>chore(marketplace): bump ...</code>).</li>
+</ol>
+<hr />
 <h2 id="agents">Agents<a class="headerlink" href="#agents" title="Permanent link">&para;</a></h2>
 <h3 id="researcher-sonnet">researcher (Sonnet)<a class="headerlink" href="#researcher-sonnet" title="Permanent link">&para;</a></h3>
 <p>A platform research specialist that investigates target platform plugin architectures. Spawned by <code>port-plugin</code>, <code>validate-adapter</code>, and <code>update-ported-plugin</code> to gather live documentation.</p>
@@ -1800,7 +1911,20 @@
 <li>Model: <strong>Sonnet</strong> (parallelizable research tasks)</li>
 <li>Tools: WebSearch, WebFetch, Read, Glob, Grep, Context7</li>
 <li>Produces structured platform profiles with section-by-section findings</li>
-<li>Used by three of the four skills in this plugin</li>
+<li>Used by three of the five skills in this plugin</li>
+</ul>
+<h3 id="port-converter-sonnet">port-converter (Sonnet)<a class="headerlink" href="#port-converter-sonnet" title="Permanent link">&para;</a></h3>
+<p>A component conversion specialist that transforms a single Claude Code plugin component to a target platform format. Spawned by <code>port-plugin</code> as part of a wave-based conversion team — multiple converters run in parallel for independent components.</p>
+<p><strong>Key characteristics:</strong></p>
+<ul>
+<li>Model: <strong>Sonnet</strong> (parallelizable conversion tasks)</li>
+<li>Tools: Read, Glob, Grep, Write</li>
+<li>Reads shared session files (<code>conversion_knowledge.md</code>, <code>resolution_cache.md</code>, <code>dependency_graph.md</code>) for conversion context</li>
+<li>Loads type-specific converter references on demand (agent-converter, hook-converter, reference-converter, mcp-converter)</li>
+<li>Handles 5 component types: skills, agents, hooks, references, and MCP configs</li>
+<li>Detects incompatibilities and classifies them by severity (critical, functional, cosmetic)</li>
+<li>Calculates per-component fidelity scores with a weighted formula</li>
+<li>Works autonomously — defers user decisions to the orchestrator via inline markers</li>
 </ul>
 <hr />
 <h2 id="shared-references">Shared References<a class="headerlink" href="#shared-references" title="Permanent link">&para;</a></h2>
@@ -1853,26 +1977,29 @@
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>├── .claude-plugin/
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>│   └── plugin.json             # Plugin manifest
 </span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>├── agents/
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>│   └── researcher.md           # Platform research agent
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>├── references/                 # Shared reference files
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>│   ├── adapter-format.md
-</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>│   ├── agent-converter.md
-</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>│   ├── hook-converter.md
-</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>│   ├── incompatibility-resolver.md
-</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>│   ├── mcp-converter.md
-</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>│   ├── reference-converter.md
-</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>│   └── adapters/
-</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>│       └── opencode.md         # OpenCode platform adapter
-</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>├── skills/
-</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>│   ├── port-plugin/
-</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>│   │   └── SKILL.md            # Conversion wizard (~2,750 lines)
-</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>│   ├── validate-adapter/
-</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>│   │   └── SKILL.md            # Adapter validation (~625 lines)
-</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>│   ├── update-ported-plugin/
-</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>│   │   └── SKILL.md            # Incremental updater (~800 lines)
-</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>│   └── dependency-checker/
-</span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>│       └── SKILL.md            # Ecosystem health analyzer (~650 lines)
-</span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>└── README.md
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>│   ├── port-converter.md       # Component conversion agent
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>│   └── researcher.md           # Platform research agent
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>├── references/                 # Shared reference files
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>│   ├── adapter-format.md
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>│   ├── agent-converter.md
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>│   ├── hook-converter.md
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>│   ├── incompatibility-resolver.md
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>│   ├── mcp-converter.md
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>│   ├── reference-converter.md
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>│   └── adapters/
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>│       └── opencode.md         # OpenCode platform adapter
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>├── skills/
+</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>│   ├── port-plugin/
+</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>│   │   └── SKILL.md            # Conversion wizard (~2,750 lines)
+</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>│   ├── validate-adapter/
+</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>│   │   └── SKILL.md            # Adapter validation (~625 lines)
+</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>│   ├── update-ported-plugin/
+</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>│   │   └── SKILL.md            # Incremental updater (~800 lines)
+</span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>│   ├── dependency-checker/
+</span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>│   │   └── SKILL.md            # Ecosystem health analyzer (~650 lines)
+</span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>│   └── bump-plugin-version/
+</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>│       └── SKILL.md            # Version bumper (~380 lines)
+</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>└── README.md
 </span></code></pre></div>
 
 
