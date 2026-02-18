@@ -19,8 +19,8 @@ The file uses YAML frontmatter with nested key-value pairs:
 author: Your Name
 spec-output-path: specs/
 deep-analysis:
-  - direct-approval: true
-  - cross-skill-approval: false
+  - direct-invocation-approval: true
+  - invocation-by-skill-approval: false
 execute-tasks:
   - max_parallel: 5
 tdd:
@@ -47,8 +47,8 @@ Under the `deep-analysis` key:
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| `direct-approval` | `true` | Require user approval of the team plan when invoking `/deep-analysis` directly |
-| `cross-skill-approval` | `false` | Require approval when deep-analysis is loaded by another skill |
+| `direct-invocation-approval` | `true` | Require user approval of the team plan when invoking `/deep-analysis` directly |
+| `invocation-by-skill-approval` | `false` | Require approval when deep-analysis is loaded by another skill |
 | `cache-ttl-hours` | `24` | Hours before exploration cache expires. Set to `0` to disable caching. |
 | `enable-checkpointing` | `true` | Write session checkpoints at phase boundaries for recovery |
 | `enable-progress-indicators` | `true` | Display `[Phase N/6]` progress messages during execution |
@@ -111,8 +111,8 @@ Settings follow this precedence order (highest to lowest):
     author: Jane Smith
     spec-output-path: docs/specs/
     deep-analysis:
-      - direct-approval: true
-      - cross-skill-approval: true
+      - direct-invocation-approval: true
+      - invocation-by-skill-approval: true
       - cache-ttl-hours: 48
       - enable-checkpointing: true
     execute-tasks:
@@ -135,8 +135,8 @@ Settings follow this precedence order (highest to lowest):
     ```yaml
     ---
     deep-analysis:
-      - direct-approval: false
-      - cross-skill-approval: false
+      - direct-invocation-approval: false
+      - invocation-by-skill-approval: false
       - enable-progress-indicators: false
     execute-tasks:
       - max_parallel: 1

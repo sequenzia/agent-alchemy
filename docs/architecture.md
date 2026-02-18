@@ -55,8 +55,11 @@ agent-alchemy/
 │   ├── tdd-tools/                 # Test-Driven Development workflows
 │   │   ├── skills/                # tdd-cycle, generate-tests, analyze-coverage
 │   │   └── agents/                # tdd-executor, test-writer, test-reviewer
-│   └── git-tools/                 # Git commit automation
-│       └── skills/                # git-commit
+│   ├── git-tools/                 # Git commit automation
+│   │   └── skills/                # git-commit
+│   └── plugin-tools/              # Plugin porting and ecosystem health
+│       ├── skills/                # port-plugin, validate-adapter, ...
+│       └── agents/                # researcher, port-converter
 ├── apps/
 │   └── task-manager/              # Next.js 16 real-time Kanban dashboard
 ├── extensions/
@@ -149,7 +152,7 @@ claude/sdd-tools/skills/create-spec/
 ```
 
 !!! info "Plugin Inventory"
-    The platform ships with **5 plugin groups**, **20 skills**, **12 agents**, and **30+ reference files**. See the [Plugins](plugins/index.md) documentation for the full catalog.
+    The platform ships with **6 plugin groups**, **25 skills**, **14 agents**, and **30+ reference files**. See the [Plugins](plugins/index.md) documentation for the full catalog.
 
 ---
 

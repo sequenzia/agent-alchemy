@@ -2,7 +2,7 @@
 
 Plugin Tools provides lifecycle management for cross-platform plugin porting, adapter validation, incremental updates to ported plugins, and ecosystem health analysis. It uses an extensible adapter framework with real-time platform research and interactive workflows.
 
-**Plugin:** `agent-alchemy-plugin-tools` | **Version:** 0.1.1 | **Skills:** 5 | **Agents:** 1
+**Plugin:** `agent-alchemy-plugin-tools` | **Version:** 0.1.1 | **Skills:** 5 | **Agents:** 2
 
 ## Plugin Inventory
 
@@ -14,6 +14,7 @@ Plugin Tools provides lifecycle management for cross-platform plugin porting, ad
 | `dependency-checker` | Skill | -- | Ecosystem health analysis with 7 detection passes and doc drift checks |
 | `bump-plugin-version` | Skill | -- | Version bumping across all ecosystem files with drift detection and changelog |
 | `researcher` | Agent | Sonnet | Investigates target platform plugin architectures via web search and documentation |
+| `port-converter` | Agent | Sonnet | Converts a single plugin component to a target platform format |
 
 ---
 
@@ -223,7 +224,22 @@ A platform research specialist that investigates target platform plugin architec
 - Model: **Sonnet** (parallelizable research tasks)
 - Tools: WebSearch, WebFetch, Read, Glob, Grep, Context7
 - Produces structured platform profiles with section-by-section findings
-- Used by three of the four skills in this plugin
+- Used by three of the five skills in this plugin
+
+### port-converter (Sonnet)
+
+A component conversion specialist that transforms a single Claude Code plugin component to a target platform format. Spawned by `port-plugin` as part of a wave-based conversion team — multiple converters run in parallel for independent components.
+
+**Key characteristics:**
+
+- Model: **Sonnet** (parallelizable conversion tasks)
+- Tools: Read, Glob, Grep, Write
+- Reads shared session files (`conversion_knowledge.md`, `resolution_cache.md`, `dependency_graph.md`) for conversion context
+- Loads type-specific converter references on demand (agent-converter, hook-converter, reference-converter, mcp-converter)
+- Handles 5 component types: skills, agents, hooks, references, and MCP configs
+- Detects incompatibilities and classifies them by severity (critical, functional, cosmetic)
+- Calculates per-component fidelity scores with a weighted formula
+- Works autonomously — defers user decisions to the orchestrator via inline markers
 
 ---
 
@@ -253,6 +269,7 @@ plugin-tools/
 ├── .claude-plugin/
 │   └── plugin.json             # Plugin manifest
 ├── agents/
+│   ├── port-converter.md       # Component conversion agent
 │   └── researcher.md           # Platform research agent
 ├── references/                 # Shared reference files
 │   ├── adapter-format.md

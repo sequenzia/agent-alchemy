@@ -27,6 +27,9 @@ claude plugins install agent-alchemy/agent-alchemy-tdd-tools
 
 # Git commit automation
 claude plugins install agent-alchemy/agent-alchemy-git-tools
+
+# Plugin porting, validation, and ecosystem analysis
+claude plugins install agent-alchemy/agent-alchemy-plugin-tools
 ```
 
 Verify your installation:

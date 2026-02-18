@@ -48,6 +48,7 @@ mkdocs build --strict          # Build with strict validation
 | `claude/sdd-tools/` | Spec-Driven Development plugins |
 | `claude/tdd-tools/` | Test-Driven Development plugins |
 | `claude/git-tools/` | Git automation plugins |
+| `claude/plugin-tools/` | Plugin porting and ecosystem health |
 | `apps/task-manager/` | Next.js real-time dashboard |
 | `extensions/vscode/` | VS Code extension |
 | `docs/` | MkDocs documentation source |

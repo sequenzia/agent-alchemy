@@ -57,7 +57,7 @@ For a full walkthrough, see the [Getting Started](getting-started.md) guide.
 |---------|-------------|
 | [Getting Started](getting-started.md) | Installation, prerequisites, and first steps |
 | [Architecture](architecture.md) | System design, plugin composition, and data flow |
-| [Plugins](plugins/index.md) | All 5 plugin groups with skills, agents, and usage guides |
+| [Plugins](plugins/index.md) | All 6 plugin groups with skills, agents, and usage guides |
 | [Task Manager](task-manager.md) | Real-time Kanban dashboard setup and API reference |
 | [VS Code Extension](vscode-extension.md) | Schema validation and autocomplete for plugin authoring |
 | [Configuration](configuration.md) | Settings reference for all plugin behaviors |
@@ -74,6 +74,7 @@ Agent Alchemy is in active development. Current plugin versions:
 | SDD Tools | 0.1.2 | Stable |
 | TDD Tools | 0.1.0 | Stable |
 | Git Tools | 0.1.0 | Stable |
+| Plugin Tools | 0.1.1 | Stable |
 
 ## License
 
