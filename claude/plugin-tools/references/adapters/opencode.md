@@ -2,11 +2,11 @@
 
 Platform adapter for converting Claude Code plugins to OpenCode format.
 
-OpenCode is a Go-based terminal AI coding assistant that provides an interactive TUI for working with multiple AI providers. It does not have a formal plugin system comparable to Claude Code's skill/agent/hook architecture. The closest equivalents are custom commands (markdown files), the `.opencode.json` configuration file, and the `OpenCode.md` project context file. This adapter maps Claude Code constructs to OpenCode's available mechanisms, with many features requiring flattening, inlining, or documenting as conversion gaps.
+OpenCode (anomalyco/opencode) is a TypeScript/Bun-based AI coding agent with a client/server architecture and TUI frontend. It provides a rich extension system with four complementary layers: skills (SKILL.md files loaded via the native `skill` tool), custom agents (markdown files with YAML frontmatter), commands (slash-command templates), and JS/TS plugins (event-driven extensions with lifecycle hooks). OpenCode natively discovers `.claude/skills/` directories, making Agent Alchemy skill files partially compatible out of the box.
 
-**Research sources**: OpenCode GitHub repository (github.com/opencode-ai/opencode), README.md, source code analysis of `internal/config/`, `internal/llm/agent/`, `internal/llm/tools/`, `internal/llm/prompt/`, `internal/tui/components/dialog/custom_commands.go`. Confidence: High for tool mappings and configuration (based on source code); Medium for best-practice patterns (limited community examples due to early-stage project).
+**Research sources**: OpenCode official documentation (opencode.ai/docs), GitHub repository (github.com/anomalyco/opencode), DeepWiki analysis, GitHub issues/PRs (#5958, #5894, #6177, #6252). Confidence: High for tool mappings, directory structure, and configuration (based on official docs and source code); Medium for plugin hook edge cases (subagent hook bypass documented in issue #5894).
 
-**Important note**: OpenCode has been archived and the project has moved to "Crush" (github.com/charmbracelet/crush) by the original author and the Charm team. This adapter is based on OpenCode v0.0.55 (the final release). Future updates should evaluate whether to target Crush instead.
+**Important note**: This adapter targets `anomalyco/opencode` (the active TypeScript project at opencode.ai), NOT `opencode-ai/opencode` (an archived Go project that moved to Crush). The previous adapter v1.0.0 incorrectly targeted the archived project.
 
 ---
 
@@ -16,24 +16,24 @@ OpenCode is a Go-based terminal AI coding assistant that provides an interactive
 |-------|-------|
 | name | OpenCode |
 | slug | opencode |
-| documentation_url | https://github.com/opencode-ai/opencode |
-| repository_url | https://github.com/opencode-ai/opencode |
-| plugin_docs_url | https://github.com/opencode-ai/opencode#custom-commands |
-| notes | OpenCode does not have a formal plugin system. The closest equivalents are custom commands (markdown files in `.opencode/commands/`), the `.opencode.json` configuration file, and the `OpenCode.md` project context file. The project has been archived and moved to Crush (github.com/charmbracelet/crush). |
+| documentation_url | https://opencode.ai/docs |
+| repository_url | https://github.com/anomalyco/opencode |
+| plugin_docs_url | https://opencode.ai/docs/plugins |
+| notes | OpenCode has a full extension system with skills, agents, commands, plugins, and custom tools. Skills use SKILL.md files and are discovered from 6 directory paths including `.claude/skills/`. The `@opencode-ai/plugin` SDK provides lifecycle hooks via JS/TS plugins. |
 
 ## Directory Structure
 
 | Field | Value |
 |-------|-------|
 | plugin_root | .opencode/ |
-| skill_dir | commands/ |
-| agent_dir | null |
-| hook_dir | null |
+| skill_dir | skills/ |
+| agent_dir | agents/ |
+| hook_dir | plugins/ |
 | reference_dir | null |
 | config_dir | ./ |
 | file_extension | .md |
 | naming_convention | kebab-case |
-| notes | OpenCode custom commands are markdown files stored in `.opencode/commands/` (project-level, prefixed `project:`) or `~/.config/opencode/commands/` (user-level, prefixed `user:`). Subdirectories create colon-separated command IDs (e.g., `commands/git/commit.md` becomes `project:git:commit`). There is no separate agent or hook directory. Reference files have no dedicated location; content must be inlined into command files or placed in OpenCode.md. The config file `.opencode.json` lives at the project root (or `$HOME` or `$XDG_CONFIG_HOME/opencode/`). |
+| notes | Skills are SKILL.md files in `.opencode/skills/{name}/SKILL.md` (project-level) or `~/.config/opencode/skills/` (user-level). OpenCode also discovers skills from `.claude/skills/`, `.agents/skills/`, `~/.claude/skills/`, and `~/.agents/skills/`. Agents are markdown files in `.opencode/agents/{name}.md`. Commands are markdown files in `.opencode/commands/{name}.md`. Plugins (JS/TS hooks) go in `.opencode/plugins/`. Custom tools go in `.opencode/tools/`. Config file is `opencode.json` (NOT `.opencode.json`) at project root or `.opencode/opencode.json`. Reference files have no dedicated directory — content should be inlined into skill bodies or loaded via the `instructions` config array in `opencode.json`. |
 
 ## Tool Name Mappings
 
@@ -41,10 +41,10 @@ OpenCode is a Go-based terminal AI coding assistant that provides an interactive
 
 | Claude Code Tool | Target Equivalent | Notes |
 |-----------------|-------------------|-------|
-| Read | view | OpenCode's `view` tool reads file contents. Supports `file_path`, `offset`, and `limit` parameters. Same core functionality as Claude Code's Read. |
+| Read | read | OpenCode's `read` tool reads file contents. Supports `file_path`, `offset`, and `limit` parameters. |
 | Write | write | OpenCode's `write` tool writes content to files. Requires `file_path` and `content` parameters. Requires user permission approval. |
-| Edit | edit | OpenCode's `edit` tool modifies files. Requires user permission approval. |
-| Glob | glob | OpenCode's `glob` tool finds files by pattern. Accepts `pattern` (required) and `path` (optional) parameters. |
+| Edit | edit | OpenCode's `edit` tool modifies files. Supports replace/insert/delete operations. Legacy aliases: `patch`, `multiedit`. Requires user permission approval. |
+| Glob | glob | OpenCode's `glob` tool finds files by pattern. Accepts `pattern` (required) and `path` (optional) parameters. Supports exclude patterns. |
 | Grep | grep | OpenCode's `grep` tool searches file contents. Accepts `pattern` (required), `path` (optional), `include` (optional glob filter), and `literal_text` (optional boolean) parameters. |
 | NotebookEdit | null | OpenCode has no Jupyter notebook editing tool. |
 
@@ -52,50 +52,50 @@ OpenCode is a Go-based terminal AI coding assistant that provides an interactive
 
 | Claude Code Tool | Target Equivalent | Notes |
 |-----------------|-------------------|-------|
-| Bash | bash | OpenCode's `bash` tool executes shell commands. Accepts `command` (required) and `timeout` (optional) parameters. Requires user permission approval. Shell is configurable in `.opencode.json`. |
-| Task | agent | OpenCode's `agent` tool spawns a read-only sub-agent with access to glob, grep, ls, view, and sourcegraph tools. Accepts a `prompt` parameter. The sub-agent cannot modify files (no bash, edit, write, patch). More limited than Claude Code's Task tool which supports full tool access and structured task management. |
+| Bash | bash | OpenCode's `bash` tool executes shell commands using PTY sessions. Accepts `command` (required), `cwd` (optional), `env` (optional), and `timeout` (optional) parameters. Requires user permission approval. Shell is configurable in `opencode.json`. |
+| Task | task | OpenCode's `task` tool spawns a subagent in an isolated session context. Accepts `prompt` (required), `description` (optional), `subagent_type` (optional: `build` or `plan`), and `command` (optional: name of a custom agent to use). Each invocation starts a fresh isolated context — no persistent cross-call state. Subagents cannot use the `question` tool. Model is determined by the agent's static config, not per-task. |
 
 ### Agent Coordination
 
 | Claude Code Tool | Target Equivalent | Notes |
 |-----------------|-------------------|-------|
-| TeamCreate | null | OpenCode has no team/multi-agent orchestration system. Its `agent` tool spawns a single read-only sub-agent per invocation. |
+| TeamCreate | null | OpenCode has no team/multi-agent orchestration system. The closest approach is sequential or parallel `task` tool calls with explicit context passing in prompts. Hub-and-spoke patterns (like deep-analysis) must be restructured as orchestrated `task` calls. |
 | TeamDelete | null | No team management in OpenCode. |
-| TaskCreate | null | OpenCode has no task management system. The `agent` tool is fire-and-forget with a single prompt/response cycle. |
-| TaskUpdate | null | No task state management. |
-| TaskList | null | No task listing capability. |
-| TaskGet | null | No task retrieval capability. |
-| SendMessage | null | No inter-agent messaging. The `agent` sub-tool returns its result as a single response. |
+| TaskCreate | partial:todowrite | OpenCode's `todowrite` tool creates/updates todo items. Not a structured task management system — more like a session-scoped scratchpad. Cannot set task dependencies, owners, or statuses beyond basic completion. |
+| TaskUpdate | partial:todowrite | Same `todowrite` tool handles updates. Limited to simple status changes. |
+| TaskList | partial:todoread | OpenCode's `todoread` tool reads current todo list state. Returns all items, no filtering by owner or status. |
+| TaskGet | partial:todoread | Same `todoread` tool. No per-task retrieval by ID — reads the full list. |
+| SendMessage | null | No inter-agent messaging. Subagents are isolated. The only way to pass context between agents is through the `task` tool's prompt parameter. |
 
 ### User Interaction
 
 | Claude Code Tool | Target Equivalent | Notes |
 |-----------------|-------------------|-------|
-| AskUserQuestion | null | OpenCode has no structured user interaction tool. The AI communicates with the user through direct text output in the TUI. Permission requests are handled by the built-in permission system (allow/deny dialog), but there is no programmatic way to ask freeform questions and receive structured responses. Skill prompts that use AskUserQuestion should convert to instructional text directing the user to provide input via the chat interface. |
+| AskUserQuestion | question | OpenCode's `question` tool (merged in v1.1.8) supports single-select, multi-select, and confirm dialogs with 1-8 questions and 2-8 options each. **Only available to primary agents, not subagents.** Free-text input is not supported through `question`. Skills invoked via `task` tool that need user interaction must structure questions into their initial prompt. |
 
 ### Web & Research
 
 | Claude Code Tool | Target Equivalent | Notes |
 |-----------------|-------------------|-------|
-| WebSearch | null | OpenCode has no web search tool. The `sourcegraph` tool can search public code repositories but does not perform general web searches. The `fetch` tool can retrieve content from URLs but requires knowing the URL in advance. |
-| WebFetch | fetch | OpenCode's `fetch` tool retrieves content from URLs. Accepts `url` (required), `format` (required: `text`, `markdown`, or `html`), and `timeout` (optional) parameters. Maximum response size is 5MB. Requires user permission approval. |
+| WebSearch | websearch | OpenCode's `websearch` tool uses Exa AI for web searching. Accepts query parameters. |
+| WebFetch | webfetch | OpenCode's `webfetch` tool retrieves content from URLs. Accepts `url` (required), `format` (required: `text`, `markdown`, or `html`), and `timeout` (optional) parameters. Maximum response size is 5MB. Requires user permission approval. |
 
 ### MCP Tools
 
 | Claude Code Tool | Target Equivalent | Notes |
 |-----------------|-------------------|-------|
-| mcp__context7__resolve-library-id | context7_resolve-library-id | OpenCode uses `{mcpName}_{toolName}` naming convention for MCP tools (underscore separator instead of double-underscore). MCP servers are configured in `.opencode.json` under the `mcpServers` key. Both stdio and SSE transport types are supported. |
+| mcp__context7__resolve-library-id | context7_resolve-library-id | OpenCode uses `{mcpName}_{toolName}` naming convention for MCP tools (single underscore separator instead of double-underscore). MCP servers are configured in `opencode.json` under the `mcp` key (NOT `mcpServers`). Both `local` (stdio) and `remote` (HTTP/SSE) transport types are supported. OAuth support available. |
 | mcp__context7__query-docs | context7_query-docs | Same naming pattern: `{mcpName}_{toolName}`. |
-| mcp__* (generic pattern) | {mcpName}_{toolName} | OpenCode discovers MCP tools at startup by connecting to each configured MCP server and calling `ListTools`. Tool names follow `{mcpName}_{toolName}` format. All MCP tool invocations require user permission approval. |
+| mcp__* (generic pattern) | {mcpName}_{toolName} | OpenCode discovers MCP tools at startup by connecting to each configured MCP server and calling `ListTools`. Tool names follow `{mcpName}_{toolName}` format. All MCP tool invocations require user permission approval. Config supports `{env:VAR_NAME}` for secrets. |
 
 ## Model Tier Mappings
 
 | Claude Code Model | Target Equivalent | Notes |
 |------------------|-------------------|-------|
-| opus | claude-4-opus | OpenCode supports specific model IDs from multiple providers. For Anthropic, use `claude-4-opus` (or `claude-3-opus` for older). Models are configured per agent type in `.opencode.json` under `agents.{agentName}.model`. OpenCode supports Anthropic, OpenAI, Google, Groq, AWS Bedrock, Azure, OpenRouter, GitHub Copilot, and self-hosted providers. |
-| sonnet | claude-4-sonnet | Use `claude-4-sonnet` (or `claude-3.7-sonnet`, `claude-3.5-sonnet` for older). The `task` agent type (sub-agent) maps naturally to Sonnet-tier usage since it has restricted tools. |
-| haiku | claude-3.5-haiku | Use `claude-3.5-haiku` (or `claude-3-haiku` for older). Suitable for lightweight tasks. Note: OpenCode's `title` agent is hardcoded to 80 max tokens regardless of model. |
-| default | claude-4-sonnet | Default to Sonnet-tier for general use. OpenCode has 4 built-in agent types: `coder` (main), `task` (sub-agent), `title` (session naming), `summarizer` (context compaction). |
+| opus | anthropic/claude-opus-4-5 | OpenCode uses `provider/model-id` format. Full ID with date: `anthropic/claude-opus-4-5-20251101`. Also available: `anthropic/claude-opus-4-6`. Models are configured per agent type in `opencode.json` under `agents.{agentName}.model`. OpenCode supports Anthropic, OpenAI, Google, Groq, AWS Bedrock, Azure, OpenRouter, GitHub Copilot, and self-hosted providers. |
+| sonnet | anthropic/claude-sonnet-4-5 | Full ID with date: `anthropic/claude-sonnet-4-5-20250929`. Also available: `anthropic/claude-sonnet-4-20250514`. The `task` subagent type maps naturally to Sonnet-tier usage. |
+| haiku | anthropic/claude-haiku-4-5 | Full ID: `anthropic/claude-haiku-4-5-20251001`. Also available: `anthropic/claude-3-5-haiku`. Suitable for lightweight tasks. |
+| default | anthropic/claude-sonnet-4-5 | Default to Sonnet-tier for general use. OpenCode has built-in agent types: `coder` (main), `task` (sub-agent), `title` (session naming), `summarizer` (context compaction). Use `/models` command at runtime to list available model IDs. |
 
 ## Frontmatter Translations
 
@@ -103,23 +103,23 @@ OpenCode is a Go-based terminal AI coding assistant that provides an interactive
 
 | Claude Code Field | Target Field | Notes |
 |------------------|-------------|-------|
-| name | embedded:filename | OpenCode custom commands derive their name from the filename (without `.md` extension). Subdirectory paths become colon-separated prefixes (e.g., `commands/git/commit.md` becomes `project:git:commit`). No frontmatter metadata system exists. |
-| description | null | OpenCode auto-generates descriptions as "Custom command from {relPath}". There is no way to provide a custom description in the command file itself. |
-| argument-hint | embedded:body | Named arguments use `$NAME` placeholders in the markdown body (e.g., `$ISSUE_NUMBER`). OpenCode auto-detects these and prompts the user for values. Pattern: uppercase letters, numbers, underscores, must start with a letter. |
-| user-invocable | embedded:presence | All custom command files are user-invocable by definition. There is no equivalent to disabling user invocation. If a command file exists, it appears in the Ctrl+K command dialog. |
-| disable-model-invocation | null | OpenCode has no concept of model-invocable commands. Custom commands can only be triggered by users through the command dialog (Ctrl+K). The AI model cannot invoke custom commands. |
-| allowed-tools | null | OpenCode does not support per-command tool restrictions. All tools available to the agent type are always accessible. Tool restrictions are only enforced at the agent-type level (e.g., `task` agent has read-only tools). |
-| model | null | OpenCode does not support per-command model overrides. Models are configured per agent type globally in `.opencode.json`. The user can switch models at runtime via Ctrl+O. |
+| name | embedded:filename | OpenCode skills derive their name from the directory name containing SKILL.md (e.g., `skills/deep-analysis/SKILL.md` becomes skill `deep-analysis`). The `skill` tool loads skills by name from a merged registry of 6 directory paths. |
+| description | description | Supported in SKILL.md frontmatter. Required for skill discovery and shown when listing available skills. |
+| argument-hint | embedded:body | Use `$ARGUMENTS`, `$1`, `$2` etc. as placeholders in the skill body. OpenCode auto-detects `$NAME` placeholders (uppercase letters, numbers, underscores) and prompts the user for values when invoked as a command. |
+| user-invocable | user-invocable | Supported in SKILL.md frontmatter. Controls whether the skill appears in the command dialog. Default: true. |
+| disable-model-invocation | null | OpenCode has no concept of preventing model auto-invocation of skills. The `skill` tool is always available to the model. |
+| allowed-tools | null | OpenCode does not support per-skill tool restrictions. Tool restrictions are only configurable at the agent level via the `permission` frontmatter field in agent definitions. |
+| model | null | OpenCode does not support per-skill model overrides. Models are configured per agent type in `opencode.json`. Commands (not skills) support a `model` frontmatter field for per-command model override. |
 
 ### Agent Frontmatter
 
 | Claude Code Field | Target Field | Notes |
 |------------------|-------------|-------|
-| name | embedded:config-key | OpenCode has 4 fixed agent types: `coder`, `task`, `title`, `summarizer`. These are defined in Go code, not in configuration files. There is no user-defined agent mechanism. Custom agents would need to be approximated as custom commands with specific instructions in the prompt body. |
-| description | null | Agent descriptions are hardcoded in OpenCode's Go source code (system prompts). No configurable description field exists. |
-| model | agents.{name}.model | Model is configurable per agent type in `.opencode.json` (e.g., `"agents": {"coder": {"model": "claude-4-sonnet"}}`). Supports full model ID strings. |
-| tools | null | Tool sets are hardcoded per agent type in Go source code. The `coder` agent gets all tools; the `task` agent gets read-only tools (glob, grep, ls, view, sourcegraph). No user-configurable tool lists. |
-| skills | null | OpenCode has no concept of skills assigned to agents. The closest equivalent is the `contextPaths` config which loads markdown files as system prompt context (e.g., `CLAUDE.md`, `OpenCode.md`). |
+| name | embedded:filename | Agent name derived from `.md` filename in `.opencode/agents/`. |
+| description | description | Required field in agent frontmatter. Shown in agent selection UI. |
+| model | model | Supported. Format: `anthropic/claude-sonnet-4-5` (provider/model-id). |
+| tools | permission | Tool access controlled via `permission` field with per-tool allow/ask/deny values and glob patterns for file restrictions. Boolean shorthand supported (e.g., `write: false` to deny write access). |
+| skills | null | Skills are not assigned to agents in frontmatter. Agents invoke skills dynamically at runtime via the native `skill` tool. All skills in the merged registry are accessible to any agent. |
 
 ## Hook/Lifecycle Event Mappings
 
@@ -127,58 +127,79 @@ OpenCode is a Go-based terminal AI coding assistant that provides an interactive
 
 | Claude Code Event | Target Event | Notes |
 |------------------|-------------|-------|
-| PreToolUse | null | OpenCode has no hook/lifecycle event system. The permission system provides tool-level approval (allow/deny per invocation or per session) but does not support custom scripts or actions before tool execution. |
-| PostToolUse | null | No post-tool hooks. OpenCode logs tool results internally but does not expose hooks for custom post-processing. |
-| Stop | null | No session-end hooks. OpenCode supports auto-compact (summarization when context window fills) but this is not a hookable event. |
-| SessionStart | null | No session-start hooks. OpenCode's `contextPaths` config auto-loads specified files at startup, which is the closest equivalent (loading `OpenCode.md`, `CLAUDE.md`, etc.). |
-| Notification | null | No notification hooks. |
+| PreToolUse | tool.execute.before | JS/TS plugin hook. Can intercept and modify tool execution. **Known limitation**: Does not fire for subagent tool calls (issue #5894). For auto-approve behavior, prefer the `permission` config in `opencode.json` with `"allow"` value instead of a plugin hook. |
+| PostToolUse | tool.execute.after | JS/TS plugin hook. Processes results after tool execution. Same subagent limitation as PreToolUse. |
+| Stop | partial:session.deleted | JS/TS plugin hook. Fires when a session is deleted. Not an exact match for Claude Code's Stop event (which fires at end of each response). `session.idle` may be closer for some use cases. |
+| SessionStart | session.created | JS/TS plugin hook. Fires when a new session begins. |
+| Notification | partial:tui.toast.show | JS/TS plugin hook. Can trigger TUI toast notifications. Not a direct equivalent — Claude Code's Notification is a system event, OpenCode's is a display action. |
 
 ### Hook Configuration
 
-OpenCode has no hook/lifecycle configuration system. The permission system is the closest concept, providing allow/deny/allow-for-session controls on tool invocations, but it cannot execute custom scripts or commands in response to events.
+OpenCode hooks are implemented as JS/TS plugins using the `@opencode-ai/plugin` SDK. Plugin files are placed in `.opencode/plugins/` (project-level) or `~/.config/opencode/plugins/` (user-level).
 
-The `contextPaths` configuration in `.opencode.json` provides a limited form of session-start behavior by automatically loading specified markdown files into the system prompt context:
+Example plugin implementing PreToolUse and PostToolUse hooks:
 
-```json
-{
-  "contextPaths": [
-    "OpenCode.md",
-    "OpenCode.local.md",
-    "CLAUDE.md",
-    ".cursorrules"
-  ]
+```typescript
+import type { Plugin } from "@opencode-ai/plugin"
+
+export const MyPlugin: Plugin = async ({ project, client, $, directory, worktree }) => {
+  return {
+    "tool.execute.before": async (event) => {
+      // Intercept/modify tool execution before it runs
+      // event contains tool name, parameters, session info
+    },
+    "tool.execute.after": async (event) => {
+      // Process results after tool execution completes
+      // event contains tool name, result, session info
+    },
+    "session.created": async (event) => {
+      // Handle session start
+    }
+  }
 }
 ```
 
-This is not a true hook system but can be used to inject project-specific instructions at session start.
+Full event list: `command.executed`, `file.edited`, `file.watcher.updated`, `installation.updated`, `lsp.client.diagnostics`, `lsp.updated`, `message.part.removed`, `message.part.updated`, `message.removed`, `message.updated`, `permission.asked`, `permission.replied`, `server.connected`, `session.created`, `session.compacted`, `session.deleted`, `session.diff`, `session.error`, `session.idle`, `session.status`, `session.updated`, `shell.env`, `todo.updated`, `tool.execute.before`, `tool.execute.after`, `tui.prompt.append`, `tui.command.execute`, `tui.toast.show`.
+
+For Claude Code's auto-approve PreToolUse hooks, the recommended OpenCode equivalent is setting the `permission` config in `opencode.json` rather than implementing a plugin:
+
+```json
+{
+  "permission": {
+    "bash": "allow",
+    "write": "allow",
+    "edit": "allow"
+  }
+}
+```
 
 ## Composition Mechanism
 
 | Field | Value |
 |-------|-------|
-| mechanism | none |
-| syntax | N/A |
-| supports_cross_plugin | false |
-| supports_recursive | false |
-| max_depth | 0 |
-| notes | OpenCode custom commands are self-contained markdown files with no import, include, or reference mechanism. There is no way for one command to load or invoke another command. The `agent` tool can spawn a sub-agent with a text prompt, but this is a runtime tool call, not a static composition mechanism. Skills that rely on Claude Code's `Read ${CLAUDE_PLUGIN_ROOT}/...` composition pattern must be flattened: all referenced content should be inlined into a single command file. For large reference materials, consider placing content in `OpenCode.md` (project context) which is automatically loaded into the system prompt, rather than trying to include it in individual commands. |
+| mechanism | reference |
+| syntax | skill({ name: "skill-name" }) |
+| supports_cross_plugin | true |
+| supports_recursive | true |
+| max_depth | unlimited |
+| notes | OpenCode agents use the native `skill` tool to load SKILL.md content by name from a merged registry of 6 directory paths (`.opencode/skills/`, `.claude/skills/`, `.agents/skills/`, and their `~/.config/` or `~/` global equivalents). Skills are resolved by name — no file path references needed. Loaded skill content is injected into the conversation and protected from context compaction pruning. Claude Code's `Read ${CLAUDE_PLUGIN_ROOT}/skills/{name}/SKILL.md` pattern should be converted to skill tool invocations by name. Cross-plugin composition is natively supported since all skills from all discovery paths are merged into a single registry. For reference files that cannot be separate skills, use the `instructions` config array in `opencode.json` to inject files as global context, or inline content into the skill body. |
 
 ## Path Resolution
 
 | Field | Value |
 |-------|-------|
 | root_variable | null |
-| resolution_strategy | relative |
-| same_plugin_pattern | .opencode/commands/{command-name}.md |
-| cross_plugin_pattern | null |
-| notes | OpenCode has no path variable equivalent to `${CLAUDE_PLUGIN_ROOT}`. Custom command files are located by directory convention (`.opencode/commands/` for project-level, `~/.config/opencode/commands/` for user-level). File paths within tool calls use absolute paths or paths relative to the working directory. There is no mechanism for one command to reference another command's file path. The working directory is set at startup via `-c` flag or defaults to the current directory. Cross-plugin references are not possible; each project has its own `.opencode/commands/` directory. |
+| resolution_strategy | registry |
+| same_plugin_pattern | skill({ name: "{skill-name}" }) |
+| cross_plugin_pattern | skill({ name: "{skill-name}" }) |
+| notes | OpenCode resolves skills by name from a merged registry — no file path variables exist. Skills from any discovery directory (`.opencode/skills/`, `.claude/skills/`, etc.) are all accessible by name regardless of origin. For file references within tool calls (e.g., `read`, `bash`), use absolute paths or paths relative to the working directory. The working directory is set at startup via `-c` flag or defaults to the current directory. The `instructions` config array in `opencode.json` accepts file paths and glob patterns for global context injection. Template variables `{file:./path}` and `{env:VAR_NAME}` are supported in `opencode.json` config values. |
 
 ## Adapter Version
 
 | Field | Value |
 |-------|-------|
-| adapter_version | 1.0.0 |
-| target_platform_version | 0.0.55 |
+| adapter_version | 2.0.0 |
+| target_platform_version | 1.2.6 |
 | last_updated | 2026-02-17 |
 | author | research-agent |
-| changelog | Initial adapter created from source code analysis of OpenCode v0.0.55 (final release before archival). Research included README.md, internal/config/, internal/llm/agent/, internal/llm/tools/, internal/llm/prompt/, and internal/tui/components/dialog/custom_commands.go. Note: OpenCode has been archived and moved to Crush (github.com/charmbracelet/crush); future adapter versions should evaluate targeting Crush instead. |
+| changelog | v2.0.0: Complete adapter rewrite targeting anomalyco/opencode (TypeScript, active project at opencode.ai) instead of opencode-ai/opencode (Go, archived). The previous adapter v1.0.0 targeted the wrong project entirely. Major changes: Read→read (was view), Task→task (was agent), WebFetch→webfetch (was fetch), AskUserQuestion→question (was null), WebSearch→websearch (was null), all hooks now supported via JS/TS plugin SDK (were null), composition mechanism changed from none to reference (skill tool), agents now supported via .opencode/agents/ (was null), model IDs require anthropic/ prefix, config file is opencode.json (was .opencode.json), MCP config key is mcp (was mcpServers), task management via todoread/todowrite (was null). 43+ stale mappings corrected, 15+ new features added. |
