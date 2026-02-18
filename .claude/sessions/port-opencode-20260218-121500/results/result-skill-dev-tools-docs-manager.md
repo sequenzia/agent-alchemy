@@ -1,0 +1,494 @@
+# Conversion Result: skill-dev-tools-docs-manager
+
+## Metadata
+
+| Field | Value |
+|-------|-------|
+| Component ID | skill-dev-tools-docs-manager |
+| Component Type | skill |
+| Group | dev-tools |
+| Name | docs-manager |
+| Source Path | claude/dev-tools/skills/docs-manager/SKILL.md |
+| Target Path | skills/docs-manager.md |
+| Fidelity Score | 80% |
+| Fidelity Band | green |
+| Status | full |
+
+## Converted Content
+
+~~~markdown
+---
+description: >-
+  Documentation management workflow for MkDocs sites and standalone markdown files —
+  initialize, generate, update docs, and create change summaries. Use when asked to
+  "create docs", "write README", "update documentation", "generate docs site",
+  "write CONTRIBUTING", "manage documentation", or "docs changelog".
+user-invocable: true
+---
+
+<!-- argument-hint: <action-or-description> — Use $ARGUMENTS to receive the user's action or description input -->
+
+# Documentation Manager Workflow
+
+Execute a structured 6-phase workflow for managing documentation. Supports two documentation formats (MkDocs sites and standalone markdown files) and three action types (generate, update, change summary).
+
+**CRITICAL: Complete ALL applicable phases.** Some phases are conditional. After completing each phase, immediately proceed to the next phase without waiting for user prompts.
+
+## Phase Overview
+
+Execute these phases in order, completing ALL of them:
+
+1. **Interactive Discovery** — Determine documentation type, format, and scope through user interaction
+2. **Project Detection & Setup** — Detect project context, conditionally scaffold MkDocs
+3. **Codebase Analysis** — Deep codebase exploration using the deep-analysis skill
+4. **Documentation Planning** — Translate analysis findings into a concrete plan for user approval
+5. **Documentation Generation** — Launch docs-writer agents to generate content
+6. **Integration & Finalization** — Write files, validate, present results
+
+---
+
+## Phase 1: Interactive Discovery
+
+**Goal:** Determine through user interaction what documentation to create and in what format.
+
+### Step 1 — Infer intent from `$ARGUMENTS`
+
+Parse the user's input to pre-fill selections:
+- Keywords like "README", "CONTRIBUTING", "ARCHITECTURE" → infer `basic-markdown`
+- Keywords like "mkdocs", "docs site", "documentation site" → infer `mkdocs`
+- Keywords like "changelog", "release notes", "what changed" → infer `change-summary`
+
+If the intent is clear, present a summary for quick confirmation before proceeding (skip to Step 4). If ambiguous, proceed to Step 2.
+
+### Step 2 — Q1: Documentation type
+
+If the documentation type is ambiguous or needs confirmation, use the `question` tool:
+
+```
+What type of documentation would you like to create?
+1. "MkDocs documentation site" — Full docs site with mkdocs.yml, Material theme
+2. "Basic markdown files" — Standalone files like README.md, CONTRIBUTING.md, ARCHITECTURE.md
+3. "Change summary" — Changelog, release notes, commit message
+```
+
+Store as `DOC_TYPE` = `mkdocs` | `basic-markdown` | `change-summary`.
+
+### Step 3 — Conditional follow-up questions
+
+**If `DOC_TYPE = mkdocs`:**
+
+Q2: `question` tool — Existing project or new setup?
+- "Existing MkDocs project" → `MKDOCS_MODE = existing`
+- "New MkDocs setup" → `MKDOCS_MODE = new`
+
+Q3 (if `existing`): `question` tool — What to do?
+- "Generate new pages"
+- "Update existing pages"
+- "Both — generate and update"
+Store as `ACTION`.
+
+Q3 (if `new`): `question` tool — Scope?
+- "Full documentation"
+- "Getting started only (minimal init)"
+- "Custom pages"
+Store as `MKDOCS_SCOPE`. If custom, use `question` tool for desired pages (free text).
+
+**If `DOC_TYPE = basic-markdown`:**
+
+Q2: `question` tool (multi-select) — Which files?
+- "README.md"
+- "CONTRIBUTING.md"
+- "ARCHITECTURE.md"
+- "API documentation"
+Store as `MARKDOWN_FILES`. If "Other" is selected, use `question` tool for custom file paths/descriptions.
+
+**If `DOC_TYPE = change-summary`:**
+
+Q2: `question` tool — What range?
+- "Since last tag"
+- "Between two refs"
+- "Recent changes"
+Follow up for specific range details (tag name, ref pair, etc.).
+
+### Step 4 — Confirm selections
+
+Present a summary of all selections and use `question` tool:
+- "Proceed"
+- "Change selections"
+
+If the user wants to change, loop back to the relevant question.
+
+**Immediately proceed to Phase 2.**
+
+---
+
+## Phase 2: Project Detection & Setup
+
+**Goal:** Detect project context automatically, conditionally scaffold MkDocs.
+
+### Step 1 — Detect project metadata (all paths)
+
+- Check manifests: `package.json`, `pyproject.toml`, `Cargo.toml`, `go.mod`, `pom.xml`
+- Run `git remote get-url origin 2>/dev/null`
+- Note primary language and framework
+
+### Step 2 — Check existing documentation (all paths)
+
+- Use the `glob` tool for `docs/**/*.md`, `README.md`, `CONTRIBUTING.md`, `ARCHITECTURE.md`
+- For MkDocs: check for `mkdocs.yml`/`mkdocs.yaml`, read if found
+
+### Step 3 — MkDocs Initialization (only if `DOC_TYPE = mkdocs` AND `MKDOCS_MODE = new`)
+
+<!-- RESOLVED: unsupported_composition:reference_dir_null — Inline reference content into skill body; TODO for reference inlining. Cached decision (apply_globally=true). -->
+<!-- NOTE: The mkdocs-config-template.md reference file must be inlined into this skill body for opencode. The original loads it at runtime via: Read ${CLAUDE_PLUGIN_ROOT}/skills/docs-manager/references/mkdocs-config-template.md -->
+
+1. Load the MkDocs config template (see inlined template content at end of this skill)
+2. Fill template with detected metadata (ask via `question` tool if incomplete)
+3. Generate `mkdocs.yml`, create `docs/index.md` and `docs/getting-started.md`
+4. Present scaffold for confirmation before writing
+
+If `MKDOCS_SCOPE = minimal` (getting started only): write the scaffold files and skip to Phase 6.
+
+### Step 4 — Set action-specific context (for update/change-summary)
+
+For **update** modes, determine the approach:
+- **git-diff** — Update docs affected by recent code changes (default if user mentions "recent changes" or a branch/tag)
+- **full-scan** — Compare all source code against all docs for gap analysis (default if user says "full update" or "sync all")
+- **targeted** — Update specific pages or sections (default if user specifies file paths or page names)
+
+For **change-summary**, run `git log` and `git diff --stat` for the determined range.
+
+**Immediately proceed to Phase 3.**
+
+---
+
+## Phase 3: Codebase Analysis
+
+**Goal:** Deep codebase exploration using the deep-analysis skill.
+
+**Skip conditions:**
+- Skip for `change-summary` (uses git-based analysis instead — see below)
+- Skip for MkDocs minimal init-only (`MKDOCS_SCOPE = minimal`)
+
+### Step 1 — Build documentation-focused analysis context
+
+Construct a specific context string based on Phase 1 selections:
+
+| Selection | Analysis Context |
+|-----------|-----------------|
+| MkDocs generate | "Documentation generation — find all public APIs, architecture, integration points, and existing documentation..." |
+| MkDocs update | "Documentation update — identify changes to public APIs, outdated references, documentation gaps..." |
+| Basic markdown README | "Project overview — understand purpose, architecture, setup, key features, configuration, and dependencies..." |
+| Basic markdown ARCHITECTURE | "Architecture documentation — map system structure, components, data flow, design decisions, key dependencies..." |
+| Basic markdown API docs | "API documentation — find all public functions, classes, methods, types, their signatures and usage patterns..." |
+| Basic markdown CONTRIBUTING | "Contribution guidelines — find dev workflow, testing setup, code style rules, commit conventions, CI process..." |
+| Multiple files | Combine relevant contexts from above |
+
+### Step 2 — Run deep-analysis
+
+Invoke `skill({ name: "deep-analysis" })` and follow its workflow.
+
+Pass the documentation-focused analysis context from Step 1.
+
+Deep-analysis handles all agent orchestration (reconnaissance, team planning, approval — auto-approved when skill-invoked — team creation, code-explorers + code-synthesizer). Since docs-manager is the calling skill, deep-analysis returns control without standalone summary.
+
+**Note:** Deep-analysis may return cached results if a valid exploration cache exists. In skill-invoked mode, cache hits are auto-accepted — this is expected behavior that avoids redundant exploration.
+
+### Step 3 — Supplemental analysis for update with git-diff mode
+
+After deep-analysis, additionally:
+1. Run `git diff --name-only [base-ref]` for changed files
+2. Use `grep` tool to search existing docs for references to changed files/functions
+3. Cross-reference with synthesis findings
+
+### For change-summary path (instead of deep-analysis)
+
+1. Run `git log --oneline [range]` and `git diff --stat [range]`
+2. Launch 1 code-explorer agent using the `task` tool with `command: "code-explorer"` to analyze the changed files:
+   ```
+   Analysis context: Change summary for [range]
+   Focus area: These files changed in the specified range:
+   [list from git diff --stat]
+
+   For each significant change, identify:
+   - What was added, modified, or removed
+   - Impact on public APIs and user-facing behavior
+   - Whether any changes are breaking
+   Return a structured report of your findings.
+   ```
+
+**Immediately proceed to Phase 4.**
+
+---
+
+## Phase 4: Documentation Planning
+
+**Goal:** Translate analysis findings into a concrete documentation plan.
+
+### Step 1 — Produce plan based on doc type
+
+**MkDocs:**
+- Pages to create (with `docs/` paths)
+- Pages to update (with specific sections)
+- Proposed `mkdocs.yml` nav updates
+- Page dependency ordering (independent pages first, then pages that cross-reference them)
+
+**Basic Markdown:**
+- Files to create/update (with target paths)
+- Proposed structure/outline for each file
+- Content scope per file
+
+**Change Summary:**
+- Output formats to generate (Format 1: Changelog, Format 2: Commit message, Format 3: MkDocs page — only if MkDocs site exists)
+- Range confirmation
+- Scope of changes
+
+### Step 2 — User approval
+
+Use `question` tool:
+- "Approve the plan as-is"
+- "Modify the plan" (describe changes)
+- "Reduce scope" (select specific items only)
+
+**Immediately proceed to Phase 5.**
+
+---
+
+## Phase 5: Documentation Generation
+
+**Goal:** Generate content using docs-writer agents.
+
+### Step 1 — Load templates
+
+<!-- RESOLVED: unsupported_composition:reference_dir_null — Inline reference content into skill body; TODO for reference inlining. Cached decision (apply_globally=true). -->
+<!-- NOTE: The change-summary-templates.md reference file must be inlined into this skill body for opencode. The original loads it at runtime via: Read ${CLAUDE_PLUGIN_ROOT}/skills/docs-manager/references/change-summary-templates.md -->
+
+<!-- RESOLVED: unsupported_composition:reference_dir_null — Inline reference content into skill body; TODO for reference inlining. Cached decision (apply_globally=true). -->
+<!-- NOTE: The markdown-file-templates.md reference file must be inlined into this skill body for opencode. The original loads it at runtime via: Read ${CLAUDE_PLUGIN_ROOT}/skills/docs-manager/references/markdown-file-templates.md -->
+
+- If `DOC_TYPE = change-summary`: Load change-summary templates (see inlined template content at end of this skill)
+- If `DOC_TYPE = basic-markdown`: Load markdown file templates (see inlined template content at end of this skill)
+
+### Step 2 — Group by dependency
+
+- **Independent pages/files** — Can be written without referencing other new content (API reference, standalone guides, individual markdown files)
+- **Dependent pages/files** — Reference or summarize content from other pages (index pages, overview pages, README that links to CONTRIBUTING)
+
+### Step 3 — Launch docs-writer agents
+
+Launch agents using the `task` tool with `command: "docs-writer"` (the docs-writer agent is configured with the opus model in its agent definition).
+
+Launch independent pages/files in parallel, then sequential for dependent ones (include generated content from independent pages in the prompt context).
+
+**MkDocs prompt template:**
+```
+Documentation task: [page type — API reference / architecture / how-to / change summary]
+Target file: [docs/path/to/page.md]
+Output format: MkDocs
+Project: [project name] at [project root]
+
+MkDocs site context:
+- Theme: Material for MkDocs
+- Extensions available: admonitions, code highlighting, tabbed content, Mermaid diagrams
+- Existing pages: [list of current doc pages]
+
+Exploration findings:
+[Relevant findings from Phase 3 for this page]
+
+Existing page content (if updating):
+[Current content of the page, or "New page — no existing content"]
+
+Generate the complete page content in MkDocs-flavored Markdown.
+```
+
+**Basic Markdown prompt template:**
+```
+Documentation task: [file type — README / CONTRIBUTING / ARCHITECTURE / API docs]
+Target file: [path/to/file.md]
+Output format: Basic Markdown
+Project: [project name] at [project root]
+
+File type guidance:
+[Relevant structural template from markdown-file-templates]
+
+Exploration findings:
+[Relevant findings from Phase 3 for this file]
+
+Existing file content (if updating):
+[Current content, or "New file — no existing content"]
+
+Generate the complete file content in standard GitHub-flavored Markdown.
+Do NOT use MkDocs-specific extensions (admonitions, tabbed content, code block titles).
+```
+
+### Step 4 — Review generated content
+
+- Verify structure, check for unfilled placeholders
+- Validate cross-references between pages/files use correct relative paths
+
+**Immediately proceed to Phase 6.**
+
+---
+
+## Phase 6: Integration & Finalization
+
+**Goal:** Write files, validate, present results.
+
+### Step 1 — Write files
+
+**MkDocs:**
+- Write pages under `docs/`
+- Update `mkdocs.yml` nav — read current config, add new pages in logical positions, preserve existing structure
+
+**Basic Markdown:**
+- Write files to their target paths (project root or specified directories)
+- For updates, use the `edit` tool to modify existing files
+
+**Change Summary:**
+- Present outputs inline for review
+- Write files as applicable (e.g., append to CHANGELOG.md)
+
+### Step 2 — Validate
+
+**MkDocs:**
+- Verify all files referenced in `nav` exist on disk using `glob` tool
+- Check for broken cross-references between pages using `grep` tool
+- If `mkdocs` CLI is available, run `mkdocs build --strict 2>&1` to check for warnings (non-blocking)
+
+**Basic Markdown:**
+- Validate internal cross-references between files (e.g., README links to CONTRIBUTING)
+- Check that referenced paths exist
+
+### Step 3 — Present results
+
+Summarize what was done:
+- Files created (with paths)
+- Files updated (with description of changes)
+- Navigation changes (if MkDocs)
+- Any validation warnings
+
+For **change-summary**, present generated outputs directly inline.
+
+### Step 4 — Next steps
+
+Use `question` tool with relevant options:
+
+**MkDocs:**
+- "Preview the site" (if `mkdocs serve` is available)
+- "Commit the changes"
+- "Generate additional pages"
+- "Done — no further action"
+
+**Basic Markdown:**
+- "Commit the changes"
+- "Generate additional files"
+- "Review a specific file"
+- "Done — no further action"
+
+---
+
+## Error Handling
+
+If any phase fails:
+1. Explain what went wrong
+2. Ask the user how to proceed using the `question` tool:
+   - Retry the phase
+   - Skip to next phase (with partial results)
+   - Abort the workflow
+
+### Non-Git Projects
+If the project is not a git repository:
+- Skip git remote detection in Phase 2 (omit `repo_url` and `repo_name` from mkdocs.yml)
+- The `update` action with git-diff mode is unavailable — fall back to full-scan or targeted mode
+- The `change-summary` action is unavailable — inform the user and suggest alternatives
+
+### Basic Markdown on Non-Git Projects
+- CONTRIBUTING.md is still viable — use project conventions instead of git workflow sections
+- Skip branch naming and PR process sections; focus on code style, testing, and setup
+
+### Phase Failure
+- Explain the error clearly
+- Offer retry/skip/abort options via `question` tool
+
+---
+
+## Agent Coordination
+
+- **Phase 3**: Exploration and synthesis handled by the `deep-analysis` skill (`skill({ name: "deep-analysis" })`), which uses parallel task-based agent coordination with hub-and-spoke pattern. Deep-analysis performs reconnaissance, composes a team plan (auto-approved when invoked by another skill), and orchestrates its own code-explorer and code-synthesizer agents via the `task` tool.
+- **Phase 5**: docs-writer agents launched via `task` tool with `command: "docs-writer"` for high-quality content generation. Parallel for independent files, sequential for dependent files.
+
+---
+
+## Additional Resources
+
+Reference files from the original Claude Code plugin must be inlined below for opencode compatibility (opencode has no reference_dir equivalent). The orchestrator will inline the following files after resolving the UNRESOLVED markers above:
+
+- `references/mkdocs-config-template.md` — MkDocs configuration template
+- `references/change-summary-templates.md` — Change summary format templates
+- `references/markdown-file-templates.md` — Standalone markdown file structure templates
+~~~
+
+## Fidelity Report
+
+| Mapping Type | Count | Weight | Contribution |
+|-------------|-------|--------|-------------|
+| Direct | 24 | 1.0 | 24.0 |
+| Workaround | 10 | 0.7 | 7.0 |
+| TODO | 0 | 0.2 | 0.0 |
+| Omitted | 5 | 0.0 | 0.0 |
+| **Total** | **39** | | **31.0** |
+
+**Score:** 31.0 / 39 * 100 = **80%**
+
+**Notes:** The 5 omitted features are all cosmetic (null-mapped fields/tools not referenced in body: `disable-model-invocation`, the `allowed-tools` field itself, `TeamCreate`, `TeamDelete`, `SendMessage`). The 10 workarounds are either cached decisions (Task* partial mappings, reference file inlining) or idiomatic task tool parameter adaptation. The 3 reference file composition gaps are the primary functional concern — they require the orchestrator to inline the reference file contents into the skill body.
+
+## Decisions
+
+| Feature | Decision Type | Original | Converted | Rationale | Confidence | Resolution Mode |
+|---------|-------------|----------|-----------|-----------|------------|----------------|
+| name field | relocated | `name: docs-manager` | Derived from filename `docs-manager.md` | Skill frontmatter mapping: name → embedded:filename | high | auto |
+| argument-hint | relocated | `argument-hint: <action-or-description>` | Comment in body: `<!-- argument-hint: <action-or-description> — Use $ARGUMENTS -->` | Skill frontmatter mapping: argument-hint → embedded:body | high | auto |
+| user-invocable | direct | `user-invocable: true` | `user-invocable: true` | Direct 1:1 field mapping | high | N/A |
+| description | direct | description block | description block (unchanged) | Direct 1:1 field mapping | high | N/A |
+| disable-model-invocation | omitted | `disable-model-invocation: false` | Omitted | Maps to null; value was false (no behavioral restriction). Cached decision applied. | high | cached |
+| allowed-tools field | omitted | `allowed-tools: [...]` | Omitted (field has no equivalent) | No per-skill tool restrictions in opencode. Individual tools tracked separately. | high | cached |
+| TeamCreate (allowed-tools) | omitted | `TeamCreate` | Omitted | No team orchestration in opencode. Cached: parallel task calls pattern. 0 body references — cosmetic. | high | cached |
+| TeamDelete (allowed-tools) | omitted | `TeamDelete` | Omitted | No team management in opencode. Cached: tasks are ephemeral. 0 body references — cosmetic. | high | cached |
+| SendMessage (allowed-tools) | omitted | `SendMessage` | Omitted | No inter-agent messaging. Cached: context passed via task prompt. 0 body references — cosmetic. | high | cached |
+| TaskCreate (allowed-tools) | workaround | `TaskCreate` | `todowrite` (partial) | Cached: session-scoped scratchpad. 0 body references — cosmetic. | high | cached |
+| TaskUpdate (allowed-tools) | workaround | `TaskUpdate` | `todowrite` (partial) | Cached: same todowrite tool. 0 body references — cosmetic. | high | cached |
+| TaskList (allowed-tools) | workaround | `TaskList` | `todoread` (partial) | Cached: returns full list. 0 body references — cosmetic. | high | cached |
+| TaskGet (allowed-tools) | workaround | `TaskGet` | `todoread` (partial) | Cached: no per-task retrieval by ID. 0 body references — cosmetic. | high | cached |
+| AskUserQuestion (all instances) | direct | `AskUserQuestion` | `question` tool | Direct tool mapping (primary agent context — skill invoked by user). | high | N/A |
+| Task tool subagent_type code-explorer | workaround | `subagent_type: "code-explorer"` | `command: "code-explorer"` | opencode task tool uses command for named agents; model configured in agent definition | high | individual |
+| Task tool subagent_type docs-writer + model:opus | workaround | `subagent_type: "docs-writer", model: "opus"` | `command: "docs-writer"` | opencode task tool uses command for named agents; opus model configured in docs-writer agent definition | high | individual |
+| deep-analysis cross-plugin composition | direct | `Read ${CLAUDE_PLUGIN_ROOT}/../core-tools/skills/deep-analysis/SKILL.md` | `skill({ name: "deep-analysis" })` | Cross-plugin supported; registry-based resolution; same pattern as same-plugin | high | N/A |
+| mkdocs-config-template.md reference | workaround | `Read ${CLAUDE_PLUGIN_ROOT}/skills/docs-manager/references/mkdocs-config-template.md` | UNRESOLVED inline marker + note | reference_dir is null in opencode; cached decision: inline content into skill body | high | cached |
+| change-summary-templates.md reference | workaround | `Read ${CLAUDE_PLUGIN_ROOT}/skills/docs-manager/references/change-summary-templates.md` | UNRESOLVED inline marker + note | reference_dir is null in opencode; cached decision: inline content into skill body | high | cached |
+| markdown-file-templates.md reference | workaround | `Read ${CLAUDE_PLUGIN_ROOT}/skills/docs-manager/references/markdown-file-templates.md` | UNRESOLVED inline marker + note | reference_dir is null in opencode; cached decision: inline content into skill body | high | cached |
+| Tool name: Glob → glob | direct | `Glob` | `glob` | Direct tool mapping | high | auto |
+| Tool name: Grep → grep | direct | `Grep` | `grep` | Direct tool mapping | high | auto |
+| Tool name: Edit → edit | direct | `Edit` (Phase 6 body) | `edit` | Direct tool mapping | high | auto |
+| Agent Coordination section TeamCreate reference | workaround | "Agent Teams with hub-and-spoke coordination" | Rewritten as "parallel task-based agent coordination" | deep-analysis internals use task tool; TeamCreate not available; description updated to reflect actual opencode mechanism | high | individual |
+
+## Gaps
+
+| Feature | Reason | Severity | Workaround | User Acknowledged |
+|---------|--------|----------|------------|-------------------|
+| allowed-tools field | No per-skill tool restrictions in opencode. Tool permissions are agent-level only. | cosmetic | Field omitted. All tool access governed by agent permission config. | false |
+| disable-model-invocation | Not supported in opencode for skills. | cosmetic | Value was false (no restriction active). Omitted with no behavioral impact. | false |
+| TeamCreate / TeamDelete | No team orchestration API in opencode. | cosmetic | Removed from tool list. Deep-analysis handles its own parallelism via task tool internally. 0 direct body references. | false |
+| SendMessage | No inter-agent messaging in opencode. | cosmetic | Removed from tool list. Context passing via task prompt is the opencode pattern. 0 direct body references. | false |
+| TaskCreate/TaskUpdate/TaskList/TaskGet | Partial mapping to todowrite/todoread. No dependencies, owners, or structured statuses. | cosmetic | Partial mapping noted. 0 direct body references in this skill. | false |
+| reference_dir (mkdocs-config-template.md) | opencode has no reference_dir equivalent; reference files cannot be dynamically loaded by skills | functional | Inline reference file content directly into skill body. 3 UNRESOLVED markers placed. | false |
+| reference_dir (change-summary-templates.md) | opencode has no reference_dir equivalent | functional | Inline reference file content directly into skill body. | false |
+| reference_dir (markdown-file-templates.md) | opencode has no reference_dir equivalent | functional | Inline reference file content directly into skill body. | false |
+| Task subagent model override | opencode task tool does not accept model parameter at call site | functional | Model is configured in the named agent definition (docs-writer agent). Workaround preserves intent. | false |
+
+## Unresolved Incompatibilities
+
+| Group Key | Feature | Severity | Category | Reason | Suggested Workaround | Confidence | Affected Locations |
+|-----------|---------|----------|----------|--------|---------------------|------------|-------------------|
+| unsupported_composition:reference_dir_null | mkdocs-config-template.md reference | functional | unsupported_composition | opencode has no reference_dir; skills cannot dynamically load reference files at runtime | Inline the full content of references/mkdocs-config-template.md into this skill body | high | 1 location (Phase 2 Step 3) |
+| unsupported_composition:reference_dir_null | change-summary-templates.md reference | functional | unsupported_composition | opencode has no reference_dir; skills cannot dynamically load reference files at runtime | Inline the full content of references/change-summary-templates.md into this skill body | high | 1 location (Phase 5 Step 1) |
+| unsupported_composition:reference_dir_null | markdown-file-templates.md reference | functional | unsupported_composition | opencode has no reference_dir; skills cannot dynamically load reference files at runtime | Inline the full content of references/markdown-file-templates.md into this skill body | high | 1 location (Phase 5 Step 1) |
