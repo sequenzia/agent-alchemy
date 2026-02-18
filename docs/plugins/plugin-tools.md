@@ -2,7 +2,7 @@
 
 Plugin Tools provides lifecycle management for cross-platform plugin porting, adapter validation, incremental updates to ported plugins, and ecosystem health analysis. It uses an extensible adapter framework with real-time platform research and interactive workflows.
 
-**Plugin:** `agent-alchemy-plugin-tools` | **Version:** 0.1.0 | **Skills:** 4 | **Agents:** 1
+**Plugin:** `agent-alchemy-plugin-tools` | **Version:** 0.1.0 | **Skills:** 5 | **Agents:** 1
 
 ## Plugin Inventory
 
@@ -12,6 +12,7 @@ Plugin Tools provides lifecycle management for cross-platform plugin porting, ad
 | `validate-adapter` | Skill | -- | Validates adapter files against live platform documentation |
 | `update-ported-plugin` | Skill | -- | Incremental updates when source plugins or target platforms change |
 | `dependency-checker` | Skill | -- | Ecosystem health analysis with 7 detection passes and doc drift checks |
+| `bump-plugin-version` | Skill | -- | Version bumping across all ecosystem files with drift detection and changelog |
 | `researcher` | Agent | Sonnet | Investigates target platform plugin architectures via web search and documentation |
 
 ---
@@ -184,6 +185,33 @@ All settings are under the `plugin-tools.dependency-checker` key in `.claude/age
 
 ---
 
+## Bump Plugin Version (`/bump-plugin-version`)
+
+Automates version bumping across all ecosystem files. Scans 5 version locations per plugin for drift, applies consistent updates, generates a CHANGELOG entry, and creates a conventional commit.
+
+### Six-Phase Workflow
+
+```mermaid
+flowchart LR
+    A["Discovery"] --> B["Drift Check"]
+    B --> C["Selection"]
+    C --> D["Bump"]
+    D --> E["Changelog"]
+    E --> F["Commit"]
+
+    style B fill:#ff9800,color:#fff
+    style D fill:#7c4dff,color:#fff
+```
+
+1. **Discovery** -- Reads `marketplace.json` and builds a plugin inventory with current versions.
+2. **Drift Check** -- Scans all 5 version locations for inconsistencies against the marketplace registry. Offers to fix, skip, or abort on drift.
+3. **Selection** -- Multi-select plugins to bump and choose bump level (patch/minor/major). Computes new versions and displays a bump plan. Supports `--dry-run` to stop here.
+4. **Bump** -- Edits all 5 locations per plugin: marketplace.json, root CLAUDE.md, docs/index.md, docs/plugins/index.md, and per-plugin doc files.
+5. **Changelog** -- Adds grouped entries under `## [Unreleased]` in CHANGELOG.md.
+6. **Commit** -- Stages only modified files and creates a conventional commit (`chore(marketplace): bump ...`).
+
+---
+
 ## Agents
 
 ### researcher (Sonnet)
@@ -242,7 +270,9 @@ plugin-tools/
 │   │   └── SKILL.md            # Adapter validation (~625 lines)
 │   ├── update-ported-plugin/
 │   │   └── SKILL.md            # Incremental updater (~800 lines)
-│   └── dependency-checker/
-│       └── SKILL.md            # Ecosystem health analyzer (~650 lines)
+│   ├── dependency-checker/
+│   │   └── SKILL.md            # Ecosystem health analyzer (~650 lines)
+│   └── bump-plugin-version/
+│       └── SKILL.md            # Version bumper (~380 lines)
 └── README.md
 ```

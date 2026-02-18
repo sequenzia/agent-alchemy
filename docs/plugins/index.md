@@ -11,7 +11,7 @@ Agent Alchemy extends Claude Code through six plugin groups, each targeting a di
 | [SDD Tools](sdd-tools.md) | Spec-Driven Development pipeline | 6 | 3 | 0.1.2 |
 | [TDD Tools](tdd-tools.md) | Test-Driven Development workflows | 3 | 3 | 0.1.0 |
 | [Git Tools](git-tools.md) | Git commit automation | 1 | 0 | 0.1.0 |
-| [Plugin Tools](plugin-tools.md) | Plugin porting and ecosystem health | 4 | 1 | 0.1.0 |
+| [Plugin Tools](plugin-tools.md) | Plugin porting and ecosystem health | 5 | 1 | 0.1.0 |
 
 ## How Plugins Work
 
@@ -98,7 +98,7 @@ Lightweight git automation. A single skill that analyzes staged changes and gene
 
 Plugin lifecycle management. Ports Agent Alchemy plugins to other platforms using an adapter framework with live research, validates adapters against current platform documentation, applies incremental updates to ported plugins, and analyzes ecosystem health across all plugin groups.
 
-**Key skills:** `/port-plugin`, `/validate-adapter`, `/dependency-checker`
+**Key skills:** `/port-plugin`, `/validate-adapter`, `/dependency-checker`, `/bump-plugin-version`
 
 [Read the full Plugin Tools guide →](plugin-tools.md)
 

@@ -10,6 +10,7 @@ Plugin lifecycle tools for AI agents -- cross-platform porting, adapter validati
 | `/validate-adapter` | Yes | Validates adapter files against live platform documentation to detect stale mappings, missing features, and outdated version information. Can optionally apply updates in-place. |
 | `/update-ported-plugin` | Yes | Updates previously-ported plugins when source plugins change or the target platform evolves. Detects source diffs and platform changes, applies incremental updates, and refreshes metadata. |
 | `/dependency-checker` | Yes | Analyzes the plugin ecosystem to detect dependency issues — circular deps, missing components, broken paths, orphaned files, agent-skill mismatches, marketplace inconsistencies, and documentation drift. |
+| `/bump-plugin-version` | Yes | Bumps plugin versions across all ecosystem files — marketplace.json, CLAUDE.md, docs — with drift detection, CHANGELOG entry, and conventional commit. |
 
 ## Agents
 
@@ -60,6 +61,17 @@ Multi-phase conversion workflow:
 4. **Cross-Reference Documentation** -- Compare graph against CLAUDE.md and README files for inventory/chain/line-count drift
 5. **Report** -- Interactive findings browser with severity grouping, plugin filtering, graph visualization, and optional markdown export
 
+### bump-plugin-version
+
+6-phase version bump workflow:
+
+1. **Discovery** -- Read marketplace.json, build plugin inventory with current versions
+2. **Drift Check** -- Scan all 5 version locations for inconsistencies, offer to fix
+3. **Selection** -- Multi-select plugins and bump level, compute new versions, show plan
+4. **Bump** -- Edit all 5 locations per plugin (marketplace.json, CLAUDE.md, 3 docs files)
+5. **Changelog** -- Add grouped entries under [Unreleased] in CHANGELOG.md
+6. **Commit** -- Stage modified files and create conventional commit
+
 ## Shared References
 
 | File | Description |
@@ -96,8 +108,10 @@ plugin-tools/
 │   │   └── SKILL.md            # Adapter validation (~625 lines)
 │   ├── update-ported-plugin/
 │   │   └── SKILL.md            # Incremental updater (~800 lines)
-│   └── dependency-checker/
-│       └── SKILL.md            # Ecosystem health analyzer (~650 lines)
+│   ├── dependency-checker/
+│   │   └── SKILL.md            # Ecosystem health analyzer (~650 lines)
+│   └── bump-plugin-version/
+│       └── SKILL.md            # Version bumper (~380 lines)
 └── README.md
 ```
 
