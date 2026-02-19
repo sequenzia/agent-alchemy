@@ -564,7 +564,7 @@ Choose the appropriate template based on depth level:
 
 9. **Review for completeness** before writing
 
-10. **Write the spec** to the configured output path (default: `specs/SPEC-{name}.md`)
+10. **Write the spec** to the configured output path (default: `specs/{name}-SPEC.md`)
 
 11. **Present the completed spec location** to the user
 

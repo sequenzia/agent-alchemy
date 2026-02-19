@@ -11,13 +11,15 @@ Spec-Driven Development — turn ideas into structured specifications, decompose
 | `/create-tasks` | Yes | Decomposes specs into dependency-ordered Claude Code Tasks with acceptance criteria. Supports merge mode for incremental updates via `task_uid`. |
 | `/execute-tasks` | Yes | Wave-based task execution orchestrator with session management, per-task context isolation, concurrent agent execution, and interrupted session recovery. |
 
+> **Note:** TDD task creation and execution skills (`/create-tdd-tasks`, `/execute-tdd-tasks`) have moved to the `tdd-tools` plugin as of v0.1.3.
+
 ## Agents
 
 | Agent | Model | Purpose |
 |-------|-------|---------|
 | `researcher` | — | Technical and domain research for spec creation. Searches external sources for architecture decisions and best practices. |
 | `spec-analyzer` | — | Quality analysis agent that reviews specs against criteria and generates structured reports. |
-| `task-executor` | — | Autonomous implementation agent with 4-phase workflow. Writes execution context and progress updates consumed by the Task Manager. |
+| `task-executor` | — | Autonomous implementation agent with 4-phase workflow. Writes execution context and progress updates consumed by the Task Manager. Also used by `tdd-tools` `/execute-tdd-tasks` for non-TDD tasks. |
 
 ## The SDD Pipeline
 

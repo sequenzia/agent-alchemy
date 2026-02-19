@@ -91,8 +91,8 @@ execute-tasks -> task-executor agent x N per wave -> writes execution context
 
 tdd-cycle -> tdd-executor (opus) x 1 per feature (6-phase RED-GREEN-REFACTOR)
 generate-tests -> test-writer (sonnet) x N parallel (criteria-driven or code-analysis)
-create-tdd-tasks -> reads existing tasks -> generates TDD pairs (test blocks impl)
-execute-tdd-tasks -> tdd-executor for TDD tasks, task-executor for non-TDD tasks
+create-tdd-tasks (tdd-tools) -> reads existing tasks -> generates TDD pairs (test blocks impl)
+execute-tdd-tasks (tdd-tools) -> tdd-executor for TDD tasks, task-executor (sdd-tools, soft dep) for non-TDD tasks
 
 port-plugin -> researcher (sonnet) x 1 -> port-converter (sonnet) x N per wave -> orchestrator resolves incompatibilities between waves
 validate-adapter -> researcher (sonnet) x 1 -> compare adapter sections against research
@@ -128,8 +128,8 @@ dependency-checker -> reads all plugin groups -> builds dependency graph -> 7 an
 |-------|--------|--------|---------|
 | core-tools | deep-analysis, codebase-analysis, language-patterns, project-conventions | code-explorer, code-synthesizer, code-architect | 0.1.1 |
 | dev-tools | feature-dev, architecture-patterns, code-quality, changelog-format, docs-manager, release-python-package | code-reviewer, changelog-manager, docs-writer | 0.1.1 |
-| sdd-tools | create-spec, analyze-spec, create-tasks, execute-tasks, create-tdd-tasks, execute-tdd-tasks | researcher, spec-analyzer, task-executor | 0.1.2 |
-| tdd-tools | generate-tests, tdd-cycle, analyze-coverage | test-writer, tdd-executor, test-reviewer | 0.1.0 |
+| sdd-tools | create-spec, analyze-spec, create-tasks, execute-tasks | researcher, spec-analyzer, task-executor | 0.1.3 |
+| tdd-tools | generate-tests, tdd-cycle, analyze-coverage, create-tdd-tasks, execute-tdd-tasks | test-writer, tdd-executor, test-reviewer | 0.1.1 |
 | git-tools | git-commit | — | 0.1.0 |
 | plugin-tools | port-plugin, validate-adapter, update-ported-plugin, dependency-checker, bump-plugin-version | researcher, port-converter | 0.1.1 |
 
@@ -147,8 +147,8 @@ dependency-checker -> reads all plugin groups -> builds dependency graph -> 7 an
 | `claude/dev-tools/skills/feature-dev/SKILL.md` | 273 | 7-phase lifecycle spawning architect + reviewer agent teams |
 | `claude/tdd-tools/skills/tdd-cycle/SKILL.md` | 727 | 7-phase RED-GREEN-REFACTOR TDD workflow |
 | `claude/tdd-tools/skills/generate-tests/SKILL.md` | 524 | Test generation from acceptance criteria or source code |
-| `claude/sdd-tools/skills/create-tdd-tasks/SKILL.md` | 687 | SDD-to-TDD task pair transformation |
-| `claude/sdd-tools/skills/execute-tdd-tasks/SKILL.md` | 630 | TDD-aware wave execution with agent routing |
+| `claude/tdd-tools/skills/create-tdd-tasks/SKILL.md` | 687 | SDD-to-TDD task pair transformation |
+| `claude/tdd-tools/skills/execute-tdd-tasks/SKILL.md` | 630 | TDD-aware wave execution with agent routing |
 | `claude/plugin-tools/skills/dependency-checker/SKILL.md` | 651 | Ecosystem dependency analysis with 7 detection passes + doc drift |
 
 ## Known Challenges

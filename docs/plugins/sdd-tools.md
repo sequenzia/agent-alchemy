@@ -2,7 +2,7 @@
 
 Spec-Driven Development (SDD) Tools is the core workflow engine of Agent Alchemy. It provides a structured pipeline that transforms ideas into specifications, decomposes specifications into executable tasks, and runs autonomous implementation with wave-based parallelism.
 
-**Plugin:** `agent-alchemy-sdd-tools` | **Version:** 0.1.2 | **Skills:** 6 | **Agents:** 3
+**Plugin:** `agent-alchemy-sdd-tools` | **Version:** 0.1.3 | **Skills:** 4 | **Agents:** 3
 
 ## The SDD Pipeline
 
@@ -29,8 +29,8 @@ graph LR
 | 3. Decompose | `/create-tasks` | Spec file | Claude Code Tasks with metadata |
 | 4. Execute | `/execute-tasks` | Task list | Implemented code, session artifacts |
 
-!!! tip "Optional TDD Variant"
-    Two additional skills extend the pipeline with test-first development. After `/create-tasks`, run `/create-tdd-tasks` to generate RED-GREEN test pairs, then `/execute-tdd-tasks` for TDD-aware execution. See the [TDD Pipeline](#tdd-variant-pipeline) section below.
+!!! tip "TDD Variant (via tdd-tools)"
+    The `tdd-tools` plugin extends this pipeline with test-first development. After `/create-tasks`, run `/create-tdd-tasks` (tdd-tools) to generate RED-GREEN test pairs, then `/execute-tdd-tasks` (tdd-tools) for TDD-aware execution. See the [TDD Tools documentation](tdd-tools.md) for details.
 
 ---
 
@@ -349,174 +349,6 @@ Each execution creates a session directory at `.claude/sessions/__live_session__
 
 ---
 
-### `/create-tdd-tasks` -- SDD-to-TDD Transformation
-
-Transforms existing SDD implementation tasks into test-first TDD task pairs. For each eligible implementation task, a paired test task is created that must complete first, enforcing test-first development at the pipeline level.
-
-**Invocation:**
-
-```
-/agent-alchemy-sdd:create-tdd-tasks --task-group user-authentication
-```
-
-!!! warning "Requires tdd-tools Plugin"
-    This skill depends on the `tdd-tools` plugin for the `tdd-executor` and `test-writer` agents. If tdd-tools is not installed, the skill aborts with a clear error message.
-
-#### How Pairing Works
-
-For each eligible implementation task:
-
-1. A test task is created with subject `"Write tests for {original subject}"`
-2. The test task inherits the original task's upstream dependencies
-3. The implementation task gains the test task as a new blocker
-4. Acceptance criteria are converted into test descriptions
-
-```mermaid
-graph LR
-    subgraph "Before (SDD only)"
-        M1["Model #1"] --> A1["API #2"] --> U1["UI #3"]
-    end
-
-    subgraph "After (with TDD pairs)"
-        TM["Test-Model #4"] --> M2["Model #1"]
-        M2 --> TA["Test-API #5"]
-        TA --> A2["API #2"]
-        A2 --> TU["Test-UI #6"]
-        TU --> U2["UI #3"]
-    end
-
-    style TM fill:#f44336,color:#fff
-    style TA fill:#f44336,color:#fff
-    style TU fill:#f44336,color:#fff
-    style M2 fill:#4caf50,color:#fff
-    style A2 fill:#4caf50,color:#fff
-    style U2 fill:#4caf50,color:#fff
-```
-
-#### Task Classification
-
-| Task Type | TDD Pair Created? |
-|-----------|-------------------|
-| Implementation tasks (Create, Implement, Build, Add) | Yes |
-| Tasks already marked `tdd_mode: true` | No (skipped) |
-| Test tasks (Add tests for, Write tests for) | No |
-| Configuration/setup tasks | No |
-| Documentation tasks | No |
-
-#### Merge Mode
-
-Re-running the skill detects existing TDD pairs using four signals (metadata check, paired task check, UID check, subject check) and skips already-paired tasks. Anomalies like "implementation completed without tests" are flagged for user resolution.
-
-#### TDD Metadata
-
-Paired tasks receive additional metadata:
-
-| Field | Test Task (RED) | Implementation Task (GREEN) |
-|-------|----------------|---------------------------|
-| `tdd_mode` | `true` | `true` |
-| `tdd_phase` | `"red"` | `"green"` |
-| `paired_task_id` | `{impl_task_id}` | `{test_task_id}` |
-| `task_uid` | `{original_uid}:red` | Original UID unchanged |
-
----
-
-### `/execute-tdd-tasks` -- TDD-Aware Execution
-
-Orchestrates execution of TDD task pairs with RED-GREEN-REFACTOR verification. Routes TDD tasks to the `tdd-executor` agent and non-TDD tasks to the standard `task-executor`.
-
-**Invocation:**
-
-```
-/agent-alchemy-sdd:execute-tdd-tasks --task-group user-authentication
-```
-
-**Arguments:** Same as `/execute-tasks` (`--task-group`, `--max-parallel`, `--retries`).
-
-#### Agent Routing
-
-| Task Type | Detection | Agent | Plugin |
-|-----------|-----------|-------|--------|
-| TDD test (RED) | `tdd_mode: true`, `tdd_phase: "red"` | `tdd-executor` | tdd-tools |
-| TDD implementation (GREEN) | `tdd_mode: true`, `tdd_phase: "green"` | `tdd-executor` | tdd-tools |
-| Non-TDD | No `tdd_mode` metadata | `task-executor` | sdd-tools |
-
-#### Wave Structure
-
-The dependency structure from `/create-tdd-tasks` naturally produces alternating RED/GREEN waves:
-
-```
-Wave 1: [Test-A, Test-B, Test-C]         -- RED phase (parallel test writing)
-Wave 2: [Impl-A, Impl-B, Impl-C]         -- GREEN phase (parallel implementation)
-Wave 3: [Test-D, Test-E, Non-TDD-F]      -- Mixed wave
-Wave 4: [Impl-D, Impl-E]                 -- GREEN phase
-```
-
-#### TDD Verification Rules
-
-| Phase | PASS | FAIL |
-|-------|------|------|
-| **RED** | All new tests fail as expected | Tests cannot run or have syntax errors |
-| **GREEN** | All tests pass, zero regressions | New tests still failing after implementation |
-| **REFACTOR** | All tests green after cleanup | Tests broke during refactoring |
-
-#### Strictness Levels
-
-Configured via `tdd.strictness` in `.claude/agent-alchemy.local.md`:
-
-| Level | RED Behavior When Tests Pass Unexpectedly |
-|-------|------------------------------------------|
-| `strict` | FAIL -- blocks GREEN phase |
-| `normal` (default) | WARN -- proceeds with warning |
-| `relaxed` | INFO -- proceeds, informational only |
-
-!!! info "No Silent Degradation"
-    If a TDD test task (RED phase) fails after all retries, its paired implementation task remains blocked. The executor never falls back to running implementation without tests.
-
-#### TDD Compliance Reporting
-
-The session summary includes per-pair compliance tracking:
-
-```
-TDD COMPLIANCE:
-| Task Pair      | Test Task   | Impl Task   | RED | GREEN | Refactored | Coverage Delta |
-|----------------|-------------|-------------|-----|-------|------------|----------------|
-| User Auth      | #4 (PASS)   | #1 (PASS)   | Yes | Yes   | Yes        | +12%           |
-| Session Mgmt   | #5 (PASS)   | #2 (PARTIAL)| Yes | Yes   | No         | +8%            |
-
-TDD Compliance Rate: 1/2 (50%)
-```
-
----
-
-## TDD Variant Pipeline
-
-The TDD variant extends the standard SDD pipeline with two additional stages that enforce test-first development:
-
-```mermaid
-graph LR
-    A["/create-spec"] --> B["/analyze-spec"]
-    B --> C["/create-tasks"]
-    C --> D["/create-tdd-tasks"]
-    D --> E["/execute-tdd-tasks"]
-
-    style A fill:#7c4dff,color:#fff
-    style B fill:#7c4dff,color:#fff
-    style C fill:#7c4dff,color:#fff
-    style D fill:#f44336,color:#fff
-    style E fill:#f44336,color:#fff
-```
-
-| Step | Command | What Changes |
-|------|---------|-------------|
-| 1 | `/create-spec` | Create the spec (same as standard) |
-| 2 | `/analyze-spec specs/SPEC-{name}.md` | Quality check (same as standard) |
-| 3 | `/create-tasks specs/SPEC-{name}.md` | Generate implementation tasks (same as standard) |
-| 4 | `/create-tdd-tasks --task-group {group}` | Insert test tasks that block each implementation task |
-| 5 | `/execute-tdd-tasks --task-group {group}` | Execute with RED-GREEN-REFACTOR enforcement |
-
-!!! tip "Mixing Standard and TDD"
-    You can run `/create-tdd-tasks` on a subset using `--task-group`. Tasks outside the group remain standard SDD tasks and are executed with the regular 4-phase workflow when encountered by `/execute-tdd-tasks`.
-
 ---
 
 ## Dependency Inference
@@ -607,7 +439,7 @@ Executes a single task autonomously through the 4-phase workflow (Understand, Im
 
 ## Task Manager Integration
 
-The `/execute-tasks` and `/execute-tdd-tasks` skills produce session artifacts that integrate with the Agent Alchemy Task Manager -- a real-time Kanban dashboard.
+The `/execute-tasks` skill (and `/execute-tdd-tasks` from tdd-tools) produces session artifacts that integrate with the Agent Alchemy Task Manager -- a real-time Kanban dashboard.
 
 ### How It Works
 
@@ -644,15 +476,6 @@ Settings are stored in `.claude/agent-alchemy.local.md` (not committed to versio
 | `spec-output-path` | `specs/` | Directory for generated spec files |
 | `execute-tasks.max_parallel` | `5` | Max concurrent agents per wave (overridden by `--max-parallel`) |
 
-### TDD Settings
-
-These settings apply when using the TDD variant pipeline. They are read from `.claude/agent-alchemy.local.md` and can also be provided by the `tdd-tools` plugin:
-
-| Setting | Default | Description |
-|---------|---------|-------------|
-| `tdd.strictness` | `normal` | RED phase enforcement: `strict`, `normal`, or `relaxed` |
-| `tdd.coverage-threshold` | `80` | Minimum test coverage target percentage |
-
 ### Example Settings File
 
 ```markdown title=".claude/agent-alchemy.local.md"
@@ -664,10 +487,6 @@ These settings apply when using the TDD variant pipeline. They are read from `.c
 
 ## Execution
 - execute-tasks.max_parallel: 3
-
-## TDD
-- tdd.strictness: strict
-- tdd.coverage-threshold: 90
 ```
 
 ---
@@ -727,22 +546,12 @@ sdd-tools/
     │       ├── decomposition-patterns.md
     │       ├── dependency-inference.md
     │       └── testing-requirements.md
-    ├── execute-tasks/
-    │   ├── SKILL.md               # Execution orchestrator (262 lines)
-    │   └── references/
-    │       ├── orchestration.md
-    │       ├── execution-workflow.md
-    │       └── verification-patterns.md
-    ├── create-tdd-tasks/
-    │   ├── SKILL.md               # SDD-to-TDD transformation (687 lines)
-    │   └── references/
-    │       ├── tdd-decomposition-patterns.md
-    │       └── tdd-dependency-rules.md
-    └── execute-tdd-tasks/
-        ├── SKILL.md               # TDD-aware execution (630 lines)
+    └── execute-tasks/
+        ├── SKILL.md               # Execution orchestrator (262 lines)
         └── references/
-            ├── tdd-execution-workflow.md
-            └── tdd-verification-patterns.md
+            ├── orchestration.md
+            ├── execution-workflow.md
+            └── verification-patterns.md
 ```
 
 ---
@@ -767,7 +576,7 @@ sdd-tools/
     /agent-alchemy-sdd:execute-tasks --task-group my-feature
     ```
 
-=== "TDD Pipeline"
+=== "TDD Pipeline (via tdd-tools)"
 
     ```bash
     # 1-3. Same as standard pipeline
@@ -775,11 +584,11 @@ sdd-tools/
     /agent-alchemy-sdd:analyze-spec specs/SPEC-My-Feature.md
     /agent-alchemy-sdd:create-tasks specs/SPEC-My-Feature.md
 
-    # 4. Add TDD test pairs
-    /agent-alchemy-sdd:create-tdd-tasks --task-group my-feature
+    # 4. Add TDD test pairs (tdd-tools plugin)
+    /agent-alchemy-tdd:create-tdd-tasks --task-group my-feature
 
-    # 5. Execute with TDD enforcement
-    /agent-alchemy-sdd:execute-tdd-tasks --task-group my-feature
+    # 5. Execute with TDD enforcement (tdd-tools plugin)
+    /agent-alchemy-tdd:execute-tdd-tasks --task-group my-feature
     ```
 
 === "Single Task"

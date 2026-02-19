@@ -8,8 +8,8 @@ Agent Alchemy extends Claude Code through six plugin groups, each targeting a di
 |--------|-------|--------|--------|---------|
 | [Core Tools](core-tools.md) | Codebase analysis and exploration | 4 | 3 | 0.1.1 |
 | [Dev Tools](dev-tools.md) | Feature development, review, docs | 6 | 3 | 0.1.1 |
-| [SDD Tools](sdd-tools.md) | Spec-Driven Development pipeline | 6 | 3 | 0.1.2 |
-| [TDD Tools](tdd-tools.md) | Test-Driven Development workflows | 3 | 3 | 0.1.0 |
+| [SDD Tools](sdd-tools.md) | Spec-Driven Development pipeline | 4 | 3 | 0.1.3 |
+| [TDD Tools](tdd-tools.md) | Test-Driven Development workflows | 5 | 3 | 0.1.1 |
 | [Git Tools](git-tools.md) | Git commit automation | 1 | 0 | 0.1.0 |
 | [Plugin Tools](plugin-tools.md) | Plugin porting and ecosystem health | 5 | 2 | 0.1.1 |
 
@@ -72,7 +72,7 @@ The development lifecycle toolkit. Covers feature implementation with architect/
 
 ### SDD Tools
 
-The structured development pipeline. Transforms ideas into specs via adaptive interviews, decomposes specs into dependency-ordered tasks, and executes them autonomously with wave-based parallelism. Optionally extends into TDD with test-first task pairing.
+The structured development pipeline. Transforms ideas into specs via adaptive interviews, decomposes specs into dependency-ordered tasks, and executes them autonomously with wave-based parallelism.
 
 **Key skills:** `/create-spec` → `/analyze-spec` → `/create-tasks` → `/execute-tasks`
 
@@ -80,9 +80,9 @@ The structured development pipeline. Transforms ideas into specs via adaptive in
 
 ### TDD Tools
 
-Test-Driven Development workflows. Automates the RED-GREEN-REFACTOR cycle, generates behavior-driven tests from acceptance criteria or source code, and analyzes test coverage with gap identification. Auto-detects pytest, Jest, and Vitest.
+Test-Driven Development workflows. Automates the RED-GREEN-REFACTOR cycle, generates behavior-driven tests from acceptance criteria or source code, analyzes test coverage, and orchestrates TDD task execution with wave-based parallelism. Auto-detects pytest, Jest, and Vitest.
 
-**Key skills:** `/tdd-cycle`, `/generate-tests`, `/analyze-coverage`
+**Key skills:** `/tdd-cycle`, `/generate-tests`, `/analyze-coverage`, `/create-tdd-tasks`, `/execute-tdd-tasks`
 
 [Read the full TDD Tools guide →](tdd-tools.md)
 
@@ -113,27 +113,26 @@ graph TD
     DA --> DM["docs-manager<br/>(dev-tools)"]
     DA --> CS["create-spec<br/>(sdd-tools)"]
 
-    CTT["create-tdd-tasks<br/>(sdd-tools)"] -.->|"requires"| TDD["tdd-executor<br/>(tdd-tools)"]
-    ETT["execute-tdd-tasks<br/>(sdd-tools)"] -.->|"requires"| TDD
+    ETT["execute-tdd-tasks<br/>(tdd-tools)"] -.->|"soft dep"| TE["task-executor<br/>(sdd-tools)"]
 
     DC["dependency-checker<br/>(plugin-tools)"] -.->|"reads all"| DA
     DC -.->|"reads all"| FD
     DC -.->|"reads all"| CS
-    DC -.->|"reads all"| TDD
+    DC -.->|"reads all"| TDD["tdd-executor<br/>(tdd-tools)"]
 
     style DA fill:#7c4dff,color:#fff
     style CA fill:#7c4dff,color:#fff
     style FD fill:#00bcd4,color:#fff
     style DM fill:#00bcd4,color:#fff
     style CS fill:#f44336,color:#fff
-    style CTT fill:#f44336,color:#fff
-    style ETT fill:#f44336,color:#fff
+    style TE fill:#f44336,color:#fff
+    style ETT fill:#4caf50,color:#fff
     style TDD fill:#4caf50,color:#fff
     style DC fill:#ff9800,color:#fff
 ```
 
 - **deep-analysis** (core-tools) is loaded by 4 skills across core-tools, dev-tools, and sdd-tools
-- **TDD variant skills** (sdd-tools) require the tdd-tools plugin for the `tdd-executor` agent
+- **execute-tdd-tasks** (tdd-tools) has a soft dependency on `task-executor` from sdd-tools for non-TDD task routing
 - **dependency-checker** (plugin-tools) reads all plugin groups to build its dependency graph
 - All other cross-references are optional — skills degrade gracefully when dependencies are missing
 

@@ -38,10 +38,10 @@
 | code-quality | skill | dev-tools | 68% | Yellow | 3 | 1 | 0 | 1 | 5 |
 | changelog-format | skill | dev-tools | 68% | Yellow | 3 | 1 | 0 | 1 | 5 |
 | tdd-cycle | skill | tdd-tools | 68% | Yellow | 10 | 8 | 6 | 0 | 24 |
-| execute-tdd-tasks | skill | sdd-tools | 68% | Yellow | 12 | 7 | 4 | 0 | 23 |
+| execute-tdd-tasks | skill | tdd-tools | 68% | Yellow | 12 | 7 | 4 | 0 | 23 |
 | release-python-package | skill | dev-tools | 67% | Yellow | 6 | 2 | 0 | 3 | 12 |
 | deep-analysis | skill | core-tools | 66% | Yellow | 9 | 11 | 6 | 1 | 27 |
-| create-tdd-tasks | skill | sdd-tools | 62% | Yellow | 6 | 9 | 4 | 2 | 21 |
+| create-tdd-tasks | skill | tdd-tools | 62% | Yellow | 6 | 9 | 4 | 2 | 21 |
 | create-spec | skill | sdd-tools | 59% | Yellow | 6 | 8 | 6 | 0 | 20 |
 | create-tasks | skill | sdd-tools | 57% | Yellow | 5 | 6 | 5 | 0 | 16 |
 | code-explorer | agent | core-tools | 56% | Yellow | 9 | 4 | 4 | 4 | 21 |
@@ -124,10 +124,10 @@
 | code-quality | skill | dev-tools | 68% Yellow | claude/dev-tools/skills/code-quality/SKILL.md | .opencode/skills/code-quality.md |
 | changelog-format | skill | dev-tools | 68% Yellow | claude/dev-tools/skills/changelog-format/SKILL.md | .opencode/skills/changelog-format.md |
 | tdd-cycle | skill | tdd-tools | 68% Yellow | claude/tdd-tools/skills/tdd-cycle/SKILL.md | .opencode/skills/tdd-cycle.md |
-| execute-tdd-tasks | skill | sdd-tools | 68% Yellow | claude/sdd-tools/skills/execute-tdd-tasks/SKILL.md | .opencode/skills/execute-tdd-tasks.md |
+| execute-tdd-tasks | skill | tdd-tools | 68% Yellow | claude/tdd-tools/skills/execute-tdd-tasks/SKILL.md | .opencode/skills/execute-tdd-tasks.md |
 | release-python-package | skill | dev-tools | 67% Yellow | claude/dev-tools/skills/release-python-package/SKILL.md | .opencode/skills/release-python-package.md |
 | deep-analysis | skill | core-tools | 66% Yellow | claude/core-tools/skills/deep-analysis/SKILL.md | .opencode/skills/deep-analysis.md |
-| create-tdd-tasks | skill | sdd-tools | 62% Yellow | claude/sdd-tools/skills/create-tdd-tasks/SKILL.md | .opencode/skills/create-tdd-tasks.md |
+| create-tdd-tasks | skill | tdd-tools | 62% Yellow | claude/tdd-tools/skills/create-tdd-tasks/SKILL.md | .opencode/skills/create-tdd-tasks.md |
 | create-spec | skill | sdd-tools | 59% Yellow | claude/sdd-tools/skills/create-spec/SKILL.md | .opencode/skills/create-spec.md |
 | create-tasks | skill | sdd-tools | 57% Yellow | claude/sdd-tools/skills/create-tasks/SKILL.md | .opencode/skills/create-tasks.md |
 | code-explorer | agent | core-tools | 56% Yellow | claude/core-tools/agents/code-explorer.md | .opencode/agents/code-explorer.md |
@@ -284,10 +284,10 @@ components:
   - source: claude/sdd-tools/skills/execute-tasks/SKILL.md
     target: .opencode/skills/execute-tasks.md
     fidelity: 77
-  - source: claude/sdd-tools/skills/create-tdd-tasks/SKILL.md
+  - source: claude/tdd-tools/skills/create-tdd-tasks/SKILL.md
     target: .opencode/skills/create-tdd-tasks.md
     fidelity: 62
-  - source: claude/sdd-tools/skills/execute-tdd-tasks/SKILL.md
+  - source: claude/tdd-tools/skills/execute-tdd-tasks/SKILL.md
     target: .opencode/skills/execute-tdd-tasks.md
     fidelity: 68
   - source: claude/tdd-tools/skills/generate-tests/SKILL.md

@@ -1,6 +1,6 @@
 # TDD Tools
 
-The TDD Tools plugin (`v0.1.0`) brings Test-Driven Development workflows to Agent Alchemy. It provides three skills and three agents that automate the RED-GREEN-REFACTOR cycle, generate behavior-driven tests, and analyze test coverage -- all with framework auto-detection and deep integration into the SDD pipeline.
+The TDD Tools plugin (`v0.1.1`) brings Test-Driven Development workflows to Agent Alchemy. It provides five skills and three agents that automate the RED-GREEN-REFACTOR cycle, generate behavior-driven tests, analyze test coverage, and orchestrate TDD task execution -- all with framework auto-detection and deep integration into the SDD pipeline.
 
 ## Philosophy
 
@@ -19,6 +19,8 @@ TDD Tools follows five core principles:
 | `tdd-cycle` | Skill | -- | Full 7-phase RED-GREEN-REFACTOR workflow |
 | `generate-tests` | Skill | -- | Test generation from criteria or existing code |
 | `analyze-coverage` | Skill | -- | Coverage analysis with gap identification |
+| `create-tdd-tasks` | Skill | -- | Transform SDD tasks into test-first TDD task pairs |
+| `execute-tdd-tasks` | Skill | -- | TDD-aware wave execution with agent routing |
 | `tdd-executor` | Agent | Opus | Executes the 6-phase TDD cycle per task |
 | `test-writer` | Agent | Sonnet | Generates test files (parallelizable) |
 | `test-reviewer` | Agent | Opus | Evaluates test quality against a behavior-driven rubric |
@@ -481,22 +483,22 @@ flowchart TD
 
 ## SDD Pipeline Integration
 
-TDD Tools integrates with the Spec-Driven Development pipeline through two skills in the `sdd-tools` plugin.
+TDD Tools extends the Spec-Driven Development pipeline with two skills that bridge SDD task generation and TDD execution.
 
 ### Task Flow
 
 ```mermaid
 flowchart LR
-    A["/create-tasks"] --> B["/create-tdd-tasks"]
+    A["/create-tasks<br/>(sdd-tools)"] --> B["/create-tdd-tasks"]
     B --> C["/execute-tdd-tasks"]
     C --> D["tdd-executor"]
-    C --> E["task-executor"]
+    C --> E["task-executor<br/>(sdd-tools)"]
 
     style D fill:#7b1fa2,color:#fff
     style E fill:#455a64,color:#fff
 ```
 
-### `/create-tdd-tasks` (sdd-tools)
+### `/create-tdd-tasks`
 
 Transforms SDD implementation tasks into test-first TDD task pairs. For each implementation task, it creates a paired test task that **blocks** it -- enforcing test-first development at the pipeline level.
 
@@ -505,19 +507,19 @@ Transforms SDD implementation tasks into test-first TDD task pairs. For each imp
 - Converts acceptance criteria into test descriptions for the paired test task
 - Adds minimal metadata: `tdd_mode`, `tdd_phase`, `paired_task_id`
 
-### `/execute-tdd-tasks` (sdd-tools)
+### `/execute-tdd-tasks`
 
 Orchestrates wave-based execution of TDD task pairs. Routes tasks to the appropriate agent:
 
-| Task Type | Agent | Workflow |
-|-----------|-------|----------|
-| TDD task (`tdd_mode: true`) | `tdd-executor` (Opus) | 6-phase RED-GREEN-REFACTOR |
-| Non-TDD task | `task-executor` | Standard implementation |
+| Task Type | Agent | Source | Workflow |
+|-----------|-------|--------|----------|
+| TDD task (`tdd_mode: true`) | `tdd-executor` (Opus) | Same plugin | 6-phase RED-GREEN-REFACTOR |
+| Non-TDD task | `task-executor` | sdd-tools (cross-plugin) | Standard implementation |
 
 Reports aggregate TDD compliance across all executed task pairs.
 
-!!! note "Cross-Plugin Dependency"
-    `execute-tdd-tasks` requires the `tdd-tools` plugin to be installed. It uses the `tdd-executor` and `test-writer` agents from this plugin. If `tdd-tools` is not available, the skill aborts with a clear error message.
+!!! note "Soft Dependency on sdd-tools"
+    `execute-tdd-tasks` routes non-TDD tasks to the `task-executor` agent from `sdd-tools`. Since the TDD pipeline requires `/create-tasks` (sdd-tools) to generate tasks in the first place, sdd-tools is always installed when this skill runs. Claude Code resolves agent names globally across installed plugins.
 
 ---
 

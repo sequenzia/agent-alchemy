@@ -9,6 +9,8 @@ Test-Driven Development tools for AI agents — test generation, RED-GREEN-REFAC
 | `/generate-tests` | Yes | Test generation from specs, acceptance criteria, or existing code. Spawns test-writer agents (Sonnet) to produce framework-specific test files. |
 | `/tdd-cycle` | Yes | RED-GREEN-REFACTOR workflow orchestrator. Drives the 6-phase TDD cycle: write failing test, verify red, implement minimally, verify green, refactor, confirm green. |
 | `/analyze-coverage` | Yes | Coverage analysis and gap detection. Runs coverage tools (pytest-cov, istanbul/c8), identifies untested paths, and recommends additional tests. |
+| `/create-tdd-tasks` | Yes | Transform SDD tasks into test-first TDD task pairs. Reads existing tasks from `/create-tasks` and generates paired test tasks with RED-GREEN dependencies. |
+| `/execute-tdd-tasks` | Yes | Execute TDD task pairs autonomously with RED-GREEN-REFACTOR verification. Routes TDD tasks to `tdd-executor` and non-TDD tasks to `task-executor` (from sdd-tools). |
 
 ## Agents
 
@@ -31,18 +33,21 @@ The TDD tools provide three complementary capabilities:
 When used with `sdd-tools`, the TDD workflow extends the spec-to-implementation pipeline:
 
 ```
-/create-spec  -->  specs/SPEC-{name}.md
+/create-spec  -->  specs/SPEC-{name}.md          (sdd-tools)
                         |
-/create-tasks -->  Implementation tasks
+/create-tasks -->  Implementation tasks           (sdd-tools)
                         |
-/create-tdd-tasks --> Test-first task pairs (sdd-tools)
+/create-tdd-tasks --> Test-first task pairs        (tdd-tools)
                         |
-/execute-tdd-tasks --> TDD-aware execution (sdd-tools)
+/execute-tdd-tasks --> TDD-aware execution         (tdd-tools)
         |
-        +-- generate-tests --> Test files (tdd-tools)
-        +-- tdd-cycle -------> RED-GREEN-REFACTOR (tdd-tools)
-        +-- analyze-coverage -> Coverage reports (tdd-tools)
+        +-- tdd-executor -----> RED-GREEN-REFACTOR (tdd-tools)
+        +-- task-executor -----> Non-TDD tasks     (sdd-tools, soft dependency)
+        +-- generate-tests ----> Test files         (tdd-tools)
+        +-- analyze-coverage --> Coverage reports   (tdd-tools)
 ```
+
+> **Soft dependency on sdd-tools:** `/execute-tdd-tasks` routes non-TDD tasks to the `task-executor` agent from `sdd-tools`. Since TDD tasks are always generated from SDD tasks via `/create-tasks`, `sdd-tools` is expected to be installed when these skills run.
 
 ## Settings
 
@@ -81,6 +86,12 @@ tdd:
 | `tdd.test-review-threshold` | -- | Yes | -- |
 | `tdd.test-review-on-generate` | -- | Yes | -- |
 
+## Hooks
+
+| Hook | Event | Purpose |
+|------|-------|---------|
+| `auto-approve-session.sh` | `PreToolUse` (Write, Edit, Bash) | Auto-approves file operations within execution session directories. Timeout: 5s. Required by `/execute-tdd-tasks`. |
+
 ## Directory Structure
 
 ```
@@ -89,6 +100,9 @@ tdd-tools/
 │   ├── test-writer.md             # Sonnet test generation worker
 │   ├── tdd-executor.md            # Opus TDD cycle executor
 │   └── test-reviewer.md           # Opus test quality reviewer
+├── hooks/
+│   ├── hooks.json                 # PreToolUse hook config
+│   └── auto-approve-session.sh    # Session auto-approve script
 ├── skills/
 │   ├── generate-tests/
 │   │   ├── SKILL.md               # Test generation skill
@@ -99,10 +113,19 @@ tdd-tools/
 │   │   ├── SKILL.md               # RED-GREEN-REFACTOR workflow
 │   │   └── references/
 │   │       └── tdd-workflow.md    # TDD phase definitions
-│   └── analyze-coverage/
-│       ├── SKILL.md               # Coverage analysis skill
+│   ├── analyze-coverage/
+│   │   ├── SKILL.md               # Coverage analysis skill
+│   │   └── references/
+│   │       └── coverage-patterns.md  # Coverage tool integration
+│   ├── create-tdd-tasks/
+│   │   ├── SKILL.md               # SDD-to-TDD transformation (687 lines)
+│   │   └── references/
+│   │       ├── tdd-decomposition-patterns.md
+│   │       └── tdd-dependency-rules.md
+│   └── execute-tdd-tasks/
+│       ├── SKILL.md               # TDD-aware execution (630 lines)
 │       └── references/
-│           └── coverage-patterns.md  # Coverage tool integration
-├── plugin.json
+│           ├── tdd-execution-workflow.md
+│           └── tdd-verification-patterns.md
 └── README.md
 ```

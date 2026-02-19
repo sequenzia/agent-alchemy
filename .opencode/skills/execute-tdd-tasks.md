@@ -58,7 +58,7 @@ This skill orchestrates TDD task execution through a 10-step loop that mirrors t
 
 ### Step 1: Load References
 
-<!-- TODO: Reference file inlining required. The following reference files are used by this skill but opencode has no reference_dir equivalent. Inline their content into this skill body or register them in opencode.json under the instructions array. Reference files: tdd-execution-workflow.md and tdd-verification-patterns.md (both in the original claude/sdd-tools/skills/execute-tdd-tasks/references/ directory). -->
+<!-- TODO: Reference file inlining required. The following reference files are used by this skill but opencode has no reference_dir equivalent. Inline their content into this skill body or register them in opencode.json under the instructions array. Reference files: tdd-execution-workflow.md and tdd-verification-patterns.md (both in the original claude/tdd-tools/skills/execute-tdd-tasks/references/ directory). -->
 
 Read the TDD-specific reference files containing the full wave execution workflow and verification rules. These files must be inlined into this skill or loaded via the opencode.json instructions config:
 

@@ -141,13 +141,13 @@ The `execute-tdd-tasks` skill routes tasks to different agent types based on met
 
 | Task Type | Detection | Agent | Plugin |
 |-----------|-----------|-------|--------|
-| TDD test task | `metadata.tdd_mode == true` AND `metadata.tdd_phase == "red"` | `tdd-executor` | tdd-tools |
-| TDD implementation task | `metadata.tdd_mode == true` AND `metadata.tdd_phase == "green"` | `tdd-executor` | tdd-tools |
-| Non-TDD task | No `tdd_mode` metadata or `tdd_mode == false` | `task-executor` | sdd-tools |
+| TDD test task | `metadata.tdd_mode == true` AND `metadata.tdd_phase == "red"` | `tdd-executor` | tdd-tools (same plugin) |
+| TDD implementation task | `metadata.tdd_mode == true` AND `metadata.tdd_phase == "green"` | `tdd-executor` | tdd-tools (same plugin) |
+| Non-TDD task | No `tdd_mode` metadata or `tdd_mode == false` | `task-executor` | sdd-tools (cross-plugin, soft dependency) |
 
 ### Agent Spawning for TDD Tasks
 
-TDD tasks are launched using the `tdd-executor` agent from `tdd-tools`:
+TDD tasks are launched using the `tdd-executor` agent (same plugin):
 
 ```
 Task:
@@ -188,7 +188,7 @@ Task:
 
 ### Agent Spawning for Non-TDD Tasks
 
-Non-TDD tasks use the standard `task-executor` agent from `sdd-tools`, with the same prompt format as standard `execute-tasks`.
+Non-TDD tasks use the standard `task-executor` agent from `sdd-tools` (cross-plugin, resolved globally), with the same prompt format as standard `execute-tasks`.
 
 ---
 
@@ -277,7 +277,7 @@ Example mixed execution:
 
 Non-TDD tasks within a TDD execution session:
 
-- Use the standard `task-executor` agent (not `tdd-executor`)
+- Use the standard `task-executor` agent from `sdd-tools` (not `tdd-executor`)
 - Follow the standard 4-phase workflow (Understand, Implement, Verify, Complete)
 - Write to per-task context files like all other tasks
 - Are included in the session summary and task log
@@ -314,28 +314,6 @@ Setting `max_parallel = 1` produces fully sequential execution: one task at a ti
 ---
 
 ## Error Handling
-
-### tdd-tools Not Installed
-
-If the `tdd-executor` agent or `test-writer` agent cannot be resolved (tdd-tools plugin not installed):
-
-1. **Detection**: The orchestrator checks for the `tdd-tools` plugin availability before starting execution
-2. **Error message**:
-   ```
-   ERROR: tdd-tools plugin is required for TDD task execution.
-
-   The following agents are needed but not available:
-   - tdd-executor (from tdd-tools) — executes TDD task pairs
-   - test-writer (from tdd-tools) — generates tests in parallel
-
-   Install tdd-tools:
-   1. Add tdd-tools to your .mcp.json plugin configuration
-   2. Restart Claude Code to load the plugin
-   3. Re-run /execute-tdd-tasks
-
-   Alternatively, use /execute-tasks to run tasks without TDD enforcement.
-   ```
-3. **Behavior**: Abort execution before launching any agents. Do not fall back to standard execution — the user explicitly requested TDD execution
 
 ### Agent Spawn Failures
 
@@ -378,7 +356,7 @@ The TDD execution loop follows the same 10-step orchestration as `execute-tasks`
 | Step | Standard Behavior | TDD Extension |
 |------|------------------|---------------|
 | 1. Load Tasks | `TaskList` | Same — filter by `--task-group` if provided |
-| 2. Validate State | Check edge cases | Also check: tdd-tools installed, TDD pairs have valid cross-references |
+| 2. Validate State | Check edge cases | Also check: TDD pairs have valid cross-references |
 | 3. Build Plan | Topological sort into waves | Annotate waves with RED/GREEN phase labels |
 | 4. Check Settings | Read local settings | Also read `tdd.strictness` setting |
 | 5. Present Plan | Display and confirm | Show TDD pair count, strictness level, phase annotations |

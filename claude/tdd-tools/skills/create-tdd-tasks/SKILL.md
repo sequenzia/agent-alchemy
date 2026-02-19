@@ -72,25 +72,9 @@ AskUserQuestion:
 
 The TDD task pairs are planning artifacts themselves -- generating them IS the planning activity.
 
-### Requires tdd-tools Plugin
+### Soft Dependency on sdd-tools
 
-This skill depends on the `tdd-tools` plugin. Before proceeding with any work, verify the plugin is available. Check for the plugin at `${CLAUDE_PLUGIN_ROOT}/../tdd-tools/` by attempting to read its `README.md`.
-
-If `tdd-tools` is not installed, display a clear error and stop:
-
-```
-ERROR: tdd-tools plugin is required but not installed.
-
-The create-tdd-tasks skill depends on the tdd-tools plugin for:
-- test-writer agent (generates test files during TDD execution)
-- tdd-executor agent (runs the 6-phase RED-GREEN-REFACTOR workflow)
-- Test framework detection and patterns
-
-Install tdd-tools:
-  Add agent-alchemy-tdd-tools to your .mcp.json or plugin configuration.
-
-Without tdd-tools, TDD task pairs cannot be executed.
-```
+This skill is part of the `tdd-tools` plugin and works with agents in the same plugin (`tdd-executor`, `test-writer`). It bridges the SDD pipeline (`/create-tasks` from `sdd-tools`) and TDD execution (`/execute-tdd-tasks`). The `sdd-tools` plugin is expected to be installed since TDD tasks are generated from SDD tasks created by `/create-tasks`.
 
 ---
 
@@ -98,16 +82,7 @@ Without tdd-tools, TDD task pairs cannot be executed.
 
 **Goal:** Verify prerequisites and load reference materials.
 
-### Step 1: Check tdd-tools Plugin
-
-Verify the tdd-tools plugin is available by reading:
-```
-Read: ${CLAUDE_PLUGIN_ROOT}/../tdd-tools/README.md
-```
-
-If the file cannot be read, display the error message above and stop. Do not proceed to Phase 2.
-
-### Step 2: Parse Arguments
+### Step 1: Parse Arguments
 
 Check `$ARGUMENTS` for optional `--task-group` filter:
 - If `--task-group <group>` is present, extract the group name for filtering
@@ -608,12 +583,6 @@ NEXT STEPS:
 
 ## Error Handling
 
-### tdd-tools Not Installed
-
-If the tdd-tools plugin check fails in Phase 1:
-- Display the clear error message with installation instructions
-- Stop immediately -- do not proceed to any other phase
-
 ### Empty Task List
 
 If TaskList returns no tasks:
@@ -654,17 +623,17 @@ If a TaskCreate call fails:
 
 ### Convert all tasks to TDD pairs
 ```
-/agent-alchemy-sdd:create-tdd-tasks
+/agent-alchemy-tdd:create-tdd-tasks
 ```
 
 ### Convert a specific group
 ```
-/agent-alchemy-sdd:create-tdd-tasks --task-group user-authentication
+/agent-alchemy-tdd:create-tdd-tasks --task-group user-authentication
 ```
 
 ### Re-run (merge mode)
 ```
-/agent-alchemy-sdd:create-tdd-tasks --task-group user-authentication
+/agent-alchemy-tdd:create-tdd-tasks --task-group user-authentication
 ```
 If TDD pairs already exist for some tasks, they will be detected and skipped.
 
