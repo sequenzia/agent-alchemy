@@ -7,5 +7,9 @@
   "enabledMcpjsonServers": [
     "context7"
   ],
-  "enabledPlugins": {}
+  "enabledPlugins": {
+    "plugin-dev@claude-plugins-official": true,
+    "hookify@claude-plugins-official": true,
+    "skill-creator@claude-plugins-official": true
+  }
 }

@@ -1,6 +1,6 @@
 # Actionable Insights Template
 
-Use this template when presenting and processing actionable items in Phase 4's "Address Actionable Insights" action.
+Use this template when presenting and processing actionable items in Phase 3's "Address Actionable Insights" action.
 
 ---
 
