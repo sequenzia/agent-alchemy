@@ -10,3 +10,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Changed
 
 - Bump plugin-tools from 0.1.0 to 0.1.1
+- Bump sdd-tools from 0.1.3 to 0.1.4 and tdd-tools from 0.1.1 to 0.1.2
