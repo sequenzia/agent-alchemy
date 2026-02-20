@@ -38,9 +38,12 @@ Present extracted items grouped by severity, highest first:
 - Description comes from the **Impact** column
 
 ### From Recommendations Section
-- If the recommendation references or links to a **High** severity challenge, assign **High**
-- If the recommendation references a **Medium** challenge, assign **Medium**
-- If no challenge link is apparent, default to **Medium**
+- Each recommendation in the report should explicitly cite which challenge it addresses (see report template). Use this citation to inherit severity:
+  - Recommendation cites a **High** challenge → assign **High**
+  - Recommendation cites a **Medium** challenge → assign **Medium**
+  - Recommendation cites a **Low** challenge → assign **Low**
+- If a recommendation addresses multiple challenges, use the highest severity among them
+- If no challenge link is present (legacy reports or standalone recommendations), infer from context or default to **Medium**
 
 ### From Other Findings
 - Default to **Low** unless the finding explicitly describes a critical issue
@@ -68,6 +71,16 @@ Present extracted items grouped by severity, highest first:
 - Requires understanding current behavior before proposing changes
 - Dependencies or side effects need mapping
 
+### Effort Estimates
+
+Provide rough effort alongside complexity to help users prioritize:
+
+| Complexity | Typical Effort | Description |
+|-----------|---------------|-------------|
+| Simple | Low (~minutes) | Single targeted change, clear fix |
+| Complex — Architectural | Medium–High (~30min–1hr+) | Multi-file refactoring, design decisions |
+| Complex — Investigation | Medium (~15-30min) + varies | Investigation phase + fix implementation |
+
 ---
 
 ## Change Proposal Format
@@ -78,6 +91,7 @@ Present each proposed fix using this structure:
 #### {Item Title} ({Severity})
 
 **Complexity:** Simple / Complex (architectural) / Complex (investigation)
+**Effort:** Low (~minutes) / Medium (~30min) / High (~1hr+)
 
 **Files to modify:**
 | File | Change Type |
@@ -125,8 +139,11 @@ After processing all selected items, present:
 
 ### Item Extraction
 - Only extract items with concrete, actionable fixes — skip vague observations
-- Deduplicate items that appear in both Challenges and Recommendations
-- When deduplicating, keep the higher severity and merge descriptions
+- **Deduplication criteria** — Merge items that match on any of:
+  - Same target file or component mentioned in both items
+  - Significant keyword overlap in titles (2+ shared meaningful words)
+  - One item is a superset of the other (e.g., "fix error handling in auth" subsumes "add try-catch to login endpoint")
+- When deduplicating, keep the higher severity, merge descriptions, and note both source sections
 
 ### User Selection
 - Present items in severity order so the user sees the most impactful items first
@@ -134,7 +151,11 @@ After processing all selected items, present:
 
 ### Processing Order
 - Process items in the order the user selected them, but within that, prioritize by severity
-- If a fix for one item would conflict with another selected item, flag this before proceeding
+- **Conflict detection** — Before starting fixes, scan the selected items for potential conflicts:
+  - **Same-file modifications**: Two items targeting the same file(s) — flag ordering risk
+  - **Contradictory changes**: One item adds what another removes, or they modify the same function/component in incompatible ways
+  - **Ordering dependencies**: One fix creates a prerequisite for another (e.g., "add error type" must precede "use error type in handler")
+- If conflicts are detected, present them to the user before proceeding and suggest a processing order that resolves dependencies
 
 ### Revision Cycles
 - Maximum 3 revision cycles per item when user selects "Modify"

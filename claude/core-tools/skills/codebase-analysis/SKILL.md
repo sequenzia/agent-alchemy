@@ -1,6 +1,6 @@
 ---
 name: codebase-analysis
-description: Execute a structured codebase exploration workflow to gather insights. Use when asked to "analyze codebase", "explore codebase", "understand this codebase", or "map the codebase".
+description: Produce a structured codebase analysis report with architecture overview, critical files, patterns, and actionable recommendations. Use when asked to "analyze codebase", "explore codebase", "understand this codebase", "map the codebase", "give me an overview of this project", "what does this codebase do", "codebase report", "project analysis", "audit this codebase", or "how is this project structured".
 argument-hint: <analysis-context or feature-description>
 user-invocable: true
 disable-model-invocation: false
@@ -29,15 +29,24 @@ Execute a structured 3-phase codebase analysis workflow to gather insights.
    - If `$ARGUMENTS` is provided, use it as the analysis context
    - If no arguments, set context to "general codebase understanding"
 
-2. **Run deep-analysis workflow:**
+2. **Check for cached results:**
+   - Check if `.claude/sessions/exploration-cache/manifest.md` exists
+   - If found, read the manifest and verify: `codebase_path` matches the current working directory, and `timestamp` is within the configured cache TTL (default 24 hours)
+   - **If cache is valid**, use `AskUserQuestion`:
+     - **Use cached results** (show the formatted cache date) — Read cached synthesis from `.claude/sessions/exploration-cache/synthesis.md` and recon from `recon_summary.md`. Set `CACHE_HIT = true` and `CACHE_TIMESTAMP` to the cache's timestamp. Skip step 3 and proceed directly to step 4.
+     - **Run fresh analysis** — Remove the cache manifest file, set `CACHE_HIT = false`, and proceed to step 3
+   - **If no valid cache**: set `CACHE_HIT = false` and proceed to step 3
+
+3. **Run deep-analysis workflow:**
    - Read `${CLAUDE_PLUGIN_ROOT}/skills/deep-analysis/SKILL.md` and follow its workflow
    - Pass the analysis context from step 1
    - This handles reconnaissance, team planning, approval (auto-approved when skill-invoked), team creation, parallel exploration (code-explorer agents), and synthesis (code-synthesizer agent)
-   - **Note:** Deep-analysis may return cached results if a valid exploration cache exists. In skill-invoked mode, cache hits are auto-accepted — this is expected behavior that avoids redundant exploration.
+   - After completion, set `CACHE_TIMESTAMP = null` (fresh results, no prior cache)
 
-3. **Verify results:**
+4. **Verify results and capture metadata:**
    - Ensure the synthesis covers the analysis context adequately
    - If critical gaps remain, use Glob/Grep to fill them directly
+   - Record analysis metadata for Phase 2 reporting: whether results were cached (`CACHE_HIT`), cache timestamp if applicable (`CACHE_TIMESTAMP`), and the number of explorer agents used (from the deep-analysis team plan, or 0 if cached)
 
 ---
 
@@ -53,11 +62,13 @@ Execute a structured 3-phase codebase analysis workflow to gather insights.
    Structure the report with these sections:
    - **Executive Summary** — Lead with the most important finding
    - **Architecture Overview** — How the codebase is structured
+   - **Tech Stack** — Core technologies, frameworks, and tools detected
    - **Critical Files** — The 5-10 most important files with details
    - **Patterns & Conventions** — Recurring patterns and coding conventions
    - **Relationship Map** — How components connect to each other
    - **Challenges & Risks** — Technical risks and complexity hotspots
-   - **Recommendations** — Actionable next steps
+   - **Recommendations** — Actionable next steps, each citing the challenge it addresses
+   - **Analysis Methodology** — Agents used, cache status, scope, and duration
 
 3. **IMPORTANT: Proceed immediately to Phase 3.**
    Do NOT stop here. Do NOT wait for user input. The report is presented, but the workflow requires Post-Analysis Actions. Continue directly to Phase 3 now.
@@ -94,11 +105,10 @@ Process selected actions in the following fixed order. Complete all sub-steps fo
 
 **Step 2a-2: Generate and save the report**
 
-- Load the report template from `${CLAUDE_PLUGIN_ROOT}/skills/codebase-analysis/references/report-template.md`
+- Use the report template already loaded in Phase 2 Step 1
 - Generate the full structured report using the Phase 2 analysis findings and the template structure
 - Write the report to the confirmed path using the Write tool
 - Confirm the file was saved
-- Set `STRUCTURED_REPORT_SAVED = true` (used in Step 3)
 
 #### Action: Save Custom Report
 
@@ -121,7 +131,7 @@ Process selected actions in the following fixed order. Complete all sub-steps fo
 
 #### Action: Update Project Documentation
 
-**Step 2c-1: Select documentation files to update**
+**Step 2c-1: Select documentation files and gather directions**
 
 Use `AskUserQuestion` with `multiSelect: true`:
 
@@ -129,51 +139,23 @@ Use `AskUserQuestion` with `multiSelect: true`:
 - **CLAUDE.md** — Add patterns, conventions, critical files, and architectural decisions
 - **AGENTS.md** — Add agent descriptions, capabilities, and coordination patterns
 
-**Step 2c-2: Process each selected documentation file**
+Then use a single `AskUserQuestion` to gather update directions for all selected files: "What content from the analysis should be added or updated? Provide general directions or specific sections to focus on (applies across all selected files, or specify per-file directions)."
 
-For each selected file:
+**Step 2c-2: Generate and approve documentation drafts**
 
-##### If README.md selected:
+For each selected file, read the existing file and generate a draft based on the user's directions and Phase 2 analysis data:
 
-- Read the existing README.md at the project root
-  - If no README.md exists, skip this file and inform the user
-- Use `AskUserQuestion` to ask what content the user wants to add or update based on the analysis findings (e.g., "update the architecture section", "add project structure", "rewrite tech stack")
-- Draft the updates based on the user's direction and the Phase 2 analysis data
-- Present the draft to the user for approval using `AskUserQuestion`:
-  - **Apply** — Apply the drafted updates
-  - **Modify** — User describes what to change, then re-draft
-  - **Skip** — Skip this file entirely
-- If approved, apply updates using the Edit tool
+- **README.md**: Read existing file at project root. If no README.md exists, skip and inform the user. Draft updates focusing on architecture, project structure, and tech stack.
+- **CLAUDE.md**: Read existing file at project root. If none exists, ask if one should be created (if declined, skip). Draft updates focusing on patterns, conventions, critical files, and architectural decisions.
+- **AGENTS.md**: Read existing file at project root (create new if none exists). Draft content focusing on agent inventory (name, model, purpose), capabilities and tool access, coordination patterns, skill-agent mappings, and model tiering rationale.
 
-##### If CLAUDE.md selected:
+Present **all drafts together** in a single output, clearly labeled by file. Then use `AskUserQuestion`:
 
-- Read the existing CLAUDE.md at the project root
-  - If no CLAUDE.md exists, use `AskUserQuestion` to ask if one should be created
-  - If user declines, skip this file
-- Use `AskUserQuestion` to ask what content the user wants to add or update based on the analysis findings (e.g., "add critical files section", "update conventions", "document architectural decisions")
-- Draft the updates based on the user's direction and the Phase 2 analysis data
-- Present the draft to the user for approval using `AskUserQuestion`:
-  - **Apply** — Apply the drafted updates
-  - **Modify** — User describes what to change, then re-draft
-  - **Skip** — Skip this file entirely
-- If approved, apply updates using the Edit tool (or Write tool if creating new)
+- **Apply all** — Apply all drafted updates
+- **Modify** — Specify which file(s) to revise and what to change (max 3 revision cycles, then must Apply or Skip)
+- **Skip all** — Skip all documentation updates
 
-##### If AGENTS.md selected:
-
-- Read the existing AGENTS.md at the project root
-  - If no AGENTS.md exists, inform the user that a new file will be created
-- Use `AskUserQuestion` to ask what content the user wants to add or update based on the analysis findings (e.g., "document all agents and their roles", "add coordination patterns", "list model tiers")
-- Draft content based on the user's direction and the Phase 2 analysis data — potential focus areas include:
-  - Agent inventory (name, model tier, purpose)
-  - Agent capabilities and tool access
-  - Coordination patterns (hub-and-spoke, wave-based, sequential)
-  - Which skills spawn which agents
-  - Model tiering rationale
-- Present the draft to the user for approval using `AskUserQuestion`:
-  - **Apply** — Apply the drafted content
-  - **Modify** — User describes what to change, then re-draft
-  - **Skip** — Skip this file entirely
-- If approved, write content using the Write tool (new file) or Edit tool (existing file)
+If approved, apply updates using Edit tool (existing files) or Write tool (new files).
 
 #### Action: Keep Insights in Memory
 
@@ -187,13 +169,13 @@ For each selected file:
 
 ### Step 3: Actionable Insights Follow-up
 
-**Condition:** This step only executes if `STRUCTURED_REPORT_SAVED = true` (the user selected "Save Codebase Analysis Report" in Step 1 and it was saved successfully).
+**Condition:** This step always executes after Step 2 completes. The Phase 2 analysis is available in conversation context regardless of whether a report file was saved.
 
 Use `AskUserQuestion` to ask:
 - **Address actionable insights** — Fix challenges and implement recommendations from the report
 - **Skip** — No further action needed
 
-If the user selects "Skip" or if the condition is not met, proceed to Step 4.
+If the user selects "Skip", proceed to Step 4.
 
 If the user selects "Address actionable insights":
 
@@ -201,7 +183,7 @@ If the user selects "Address actionable insights":
 
 Parse the Phase 2 report (in conversation context) to extract items from:
 - **Challenges & Risks** table rows — title from Challenge column, severity from Severity column, description from Impact column
-- **Recommendations** section — each numbered item; infer severity from linked challenges (High if linked to a High challenge, otherwise Medium)
+- **Recommendations** section — each numbered item with an _(addresses: {Challenge name})_ citation; inherit the cited challenge's severity (High/Medium/Low). If no citation is present, default to Medium.
 - **Other findings** with concrete fixes — default to Low severity
 
 If no actionable items are found, inform the user and skip to Step 4.
@@ -227,8 +209,9 @@ For each item:
 
 2. **Plan the fix:**
    - Simple: Read the target file, propose changes directly
-   - Complex (architectural): Launch `agent-alchemy-core-tools:code-architect` agent to design the fix
-   - Complex (needs investigation): Launch `agent-alchemy-core-tools:code-explorer` agent to investigate before proposing
+   - Complex (architectural): Launch `agent-alchemy-core-tools:code-architect` agent with context: the item title, severity, description, the relevant report section text (copy the specific Challenges/Recommendations entry), and any files or components mentioned. The agent designs the fix and returns a proposal.
+   - Complex (needs investigation): Launch `agent-alchemy-core-tools:code-explorer` agent with context: the item title, description, suspected files/components, and what needs investigation. The agent explores and returns findings for you to formulate a fix proposal.
+   - If an agent launch fails, fall back to direct investigation using Read/Glob/Grep and propose a simpler fix based on available information.
 
 3. **Present proposal:** Show files to modify, specific changes, and rationale
 
@@ -252,12 +235,28 @@ Summarize which actions were executed and confirm the workflow is complete.
 
 ## Error Handling
 
+### General
+
 If any phase fails:
 1. Explain what went wrong
 2. Ask the user how to proceed:
    - Retry the phase
    - Skip to next phase (with partial results)
    - Abort the workflow
+
+### Documentation Update Failures (Step 2c)
+
+If an Edit or Write call fails when applying documentation updates:
+1. Retry the operation once
+2. If still failing, present the drafted content to the user inline and suggest they apply it manually
+3. Continue with the remaining selected files
+
+### Agent Launch Failures (Step 3c)
+
+If a `code-architect` or `code-explorer` agent fails during actionable insight processing:
+1. Fall back to direct investigation using Read, Glob, and Grep
+2. Propose a simpler fix based on available information
+3. If the item is too complex to address without agent assistance, inform the user and offer to skip
 
 ---
 

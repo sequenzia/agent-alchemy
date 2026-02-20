@@ -1,6 +1,6 @@
 # Codebase Analysis Report Template
 
-Use this template when presenting analysis findings in Phase 3.
+Use this template when presenting analysis findings in Phase 2.
 
 ---
 
@@ -12,6 +12,8 @@ Use this template when presenting analysis findings in Phase 3.
 **Analysis Context**: {What was analyzed and why}
 **Codebase Path**: {Path analyzed}
 **Date**: {YYYY-MM-DD}
+
+{If the report exceeds approximately 100 lines, add a **Table of Contents** here linking to each major section.}
 
 ---
 
@@ -26,7 +28,21 @@ Use this template when presenting analysis findings in Phase 3.
 {2-3 paragraphs describing:}
 - How the codebase is structured (layers, modules, boundaries)
 - The design philosophy and architectural style
-- Key technologies and frameworks in use
+- Key architectural decisions and their rationale
+
+---
+
+## Tech Stack
+
+| Category | Technology | Version (if detected) | Role |
+|----------|-----------|----------------------|------|
+| Language | {e.g., TypeScript} | {e.g., 5.x} | Primary language |
+| Framework | {e.g., Next.js} | {e.g., 16} | Web framework |
+| Styling | {e.g., Tailwind CSS} | {e.g., v4} | UI styling |
+| Testing | {e.g., Jest} | — | Test runner |
+| Build | {e.g., esbuild} | — | Bundler |
+
+{Include only technologies actually detected in config files or code. Omit categories that don't apply.}
 
 ---
 
@@ -62,11 +78,19 @@ Use this template when presenting analysis findings in Phase 3.
 
 ## Relationship Map
 
-{Describe how components connect}
+{Describe how key components connect — limit to 15-20 most significant connections}
 
+**Data Flow:**
+- `Input` → `Processing` → `Output`
+
+**Component Dependencies:**
 - `Component A` → calls → `Component B`
-- Data flows from `X` through `Y` to `Z`
 - `Module` depends on `Service` for configuration
+
+**Cross-Cutting Concerns:**
+- `Logger` ← used by ← `Component A`, `Component B`, `Module`
+
+{For complex architectures, group connections by subsystem rather than listing individually}
 
 ---
 
@@ -80,8 +104,8 @@ Use this template when presenting analysis findings in Phase 3.
 
 ## Recommendations
 
-1. **{Recommendation}**: {Brief rationale}
-2. **{Recommendation}**: {Brief rationale}
+1. **{Recommendation}** _(addresses: {Challenge name})_: {Brief rationale}
+2. **{Recommendation}** _(addresses: {Challenge name})_: {Brief rationale}
 
 ---
 
@@ -90,6 +114,9 @@ Use this template when presenting analysis findings in Phase 3.
 - **Exploration agents**: {Number} agents with focus areas: {list}
 - **Synthesis**: Findings merged and critical files read in depth
 - **Scope**: {What was included and what was intentionally excluded}
+- **Cache status**: {Fresh analysis / Cached results from YYYY-MM-DD}
+- **Config files detected**: {List of config files found during reconnaissance (package.json, tsconfig.json, etc.)}
+- **Gap-filling**: {Whether direct Glob/Grep investigation was needed after synthesis, and what areas were filled}
 ```
 
 ---
@@ -114,6 +141,9 @@ Use this template when presenting analysis findings in Phase 3.
 - Focus on the most important connections, not an exhaustive dependency graph
 - Use directional language (calls, depends on, triggers, reads from)
 - Highlight any circular dependencies or unexpected couplings
+- **Depth**: Include 2-3 levels of dependency depth — direct dependencies and their key subdependencies
+- **Format**: Use ASCII diagrams for linear flows, prose with arrows (`→`) for complex webs. Choose whichever is clearer.
+- **Scope limit**: Cap at 15-20 connections. If more exist, group related connections under subsystem labels.
 
 ### Challenges & Risks
 - Rate severity based on likelihood and impact combined
@@ -122,7 +152,7 @@ Use this template when presenting analysis findings in Phase 3.
 
 ### Recommendations
 - Make recommendations actionable — "consider" is weaker than "use X for Y"
-- Connect each recommendation to a specific finding
+- **Cite source challenge**: Each recommendation must reference the specific challenge it addresses using the format: _(addresses: {Challenge name})_. This creates reliable severity links for the actionable insights step.
 - Limit to 3-5 recommendations to maintain focus
 
 ---
