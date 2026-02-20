@@ -398,45 +398,38 @@ Task:
 
 **Important**: Always include the `CONCURRENT EXECUTION MODE` and `RESULT FILE PROTOCOL` sections regardless of `max_parallel` value. All agents write to per-task context files (`context-task-{id}.md`) and result files (`result-task-{id}.md`), and the orchestrator always performs the merge step in 7f. This unified path eliminates fragile direct writes to `execution_context.md`.
 
-5. **Poll for completion**: After launching all background agents, poll for result files using Bash:
+5. **Poll for completion**: After launching all background agents, poll for result files using the `poll-for-results.sh` script in a **multi-round pattern**. Each round invokes the script once via Bash; the script checks for result files every 15 seconds for up to 7 minutes then exits with a progress report. The orchestrator loops across rounds until all results are found or the cumulative timeout is reached.
 
-```bash
-# Poll for result files with timeout
-SESSION_DIR=".claude/sessions/__live_session__"
-EXPECTED_IDS="{space-separated task IDs for this wave}"
-TIMEOUT=3600
-ELAPSED=0
-INTERVAL=15
+**IMPORTANT**: Always specify `timeout: 480000` (8 minutes) on each Bash invocation. The default Bash timeout of 2 minutes is NOT enough for polling.
 
-while true; do
-  ALL_DONE=true
-  for ID in $EXPECTED_IDS; do
-    if [ ! -f "$SESSION_DIR/result-task-$ID.md" ]; then
-      ALL_DONE=false
-      break
-    fi
-  done
+**Poll round invocation** (via Bash tool with `timeout: 480000`):
 
-  if $ALL_DONE; then
-    sleep 1  # Brief pause to ensure filesystem flush
-    break
-  fi
+   ```bash
+   bash ${CLAUDE_PLUGIN_ROOT}/skills/execute-tasks/scripts/poll-for-results.sh \
+     .claude/sessions/__live_session__ {task_id_1} {task_id_2} {task_id_3}
+   ```
 
-  if [ $ELAPSED -ge $TIMEOUT ]; then
-    echo "TIMEOUT: Not all result files appeared within ${TIMEOUT}s"
-    echo "Missing:"
-    for ID in $EXPECTED_IDS; do
-      [ ! -f "$SESSION_DIR/result-task-$ID.md" ] && echo "  result-task-$ID.md"
-    done
-    break
-  fi
+   Replace `{task_id_N}` with the actual task IDs for this wave.
 
-  sleep $INTERVAL
-  ELAPSED=$((ELAPSED + INTERVAL))
-done
-```
+**Multi-round orchestrator loop** (Claude logic, not Bash):
 
-After polling completes, proceed to 7d for batch processing.
+After launching background agents, repeat the following:
+1. Run the poll script via Bash (with `timeout: 480000`), substituting this wave's task IDs
+2. Parse the output:
+   - `POLL_RESULT: ALL_DONE` — all agents finished. Proceed to 7d.
+   - `POLL_RESULT: PENDING` — some agents still running. Log the progress line (e.g., "Wave 2 polling: 3/5 tasks complete, waiting on: 7 12"). Continue to the next poll round.
+   - Bash tool timeout error or no recognizable output — treat as incomplete round. Log "Poll round timed out, retrying..." and continue to the next poll round.
+3. Track cumulative elapsed time across rounds. If cumulative time exceeds **45 minutes**, stop polling and report:
+   ```
+   TIMEOUT: Not all result files appeared within 45 minutes.
+   Missing: {list of task IDs still without result files}
+   ```
+   Then proceed to 7d, which handles missing result files via the TaskOutput fallback.
+4. Between rounds, no additional sleep — the script itself includes sleep intervals.
+
+**Note**: The 45-minute cumulative timeout is **per polling loop instance** (i.e., per wave). Each time the orchestrator starts polling for a new wave (Step 7c) or for retry agents (Step 7e), the cumulative timer resets to zero. This gives each wave a full 45-minute window for its agents to complete.
+
+After polling completes (all done or timeout), proceed to 7d for batch processing.
 
 ### 7d: Process Results (Batch)
 
@@ -489,8 +482,8 @@ After batch processing identifies failed tasks:
    - Launch a new background agent (`run_in_background: true`) with failure context from the result file included in the prompt
    - Update `progress.md` active task entry: `- [{id}] {subject} — Retrying ({n}/{max})`
 3. If any retry agents were launched:
-   - Enter a new polling round for the retry agents' result files (same Bash polling as 7c step 5)
-   - After polling completes, process retry results using the same batch approach as 7d
+   - Enter a new multi-round polling loop for the retry agents' result files (same `poll-for-results.sh` pattern as 7c step 5, with only the retry task IDs as arguments and `timeout: 480000` on each Bash invocation)
+   - After polling completes (all retry result files found or cumulative timeout reached), process retry results using the same batch approach as 7d
    - Repeat 7e if any retries still have attempts remaining
 4. If retries exhausted for a task:
    - Leave task as `in_progress`

@@ -128,8 +128,8 @@ dependency-checker -> reads all plugin groups -> builds dependency graph -> 7 an
 |-------|--------|--------|---------|
 | core-tools | deep-analysis, codebase-analysis, language-patterns, project-conventions | code-explorer, code-synthesizer, code-architect | 0.1.1 |
 | dev-tools | feature-dev, architecture-patterns, code-quality, changelog-format, docs-manager, release-python-package | code-reviewer, changelog-manager, docs-writer | 0.1.1 |
-| sdd-tools | create-spec, analyze-spec, create-tasks, execute-tasks | researcher, spec-analyzer, task-executor | 0.1.4 |
-| tdd-tools | generate-tests, tdd-cycle, analyze-coverage, create-tdd-tasks, execute-tdd-tasks | test-writer, tdd-executor, test-reviewer | 0.1.2 |
+| sdd-tools | create-spec, analyze-spec, create-tasks, execute-tasks | researcher, spec-analyzer, task-executor | 0.1.5 |
+| tdd-tools | generate-tests, tdd-cycle, analyze-coverage, create-tdd-tasks, execute-tdd-tasks | test-writer, tdd-executor, test-reviewer | 0.1.3 |
 | git-tools | git-commit | — | 0.1.0 |
 | plugin-tools | port-plugin, validate-adapter, update-ported-plugin, dependency-checker, bump-plugin-version | researcher, port-converter | 0.1.1 |
 

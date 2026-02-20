@@ -426,7 +426,7 @@ Task:
 
 **Important**: Always include the `CONCURRENT EXECUTION MODE` and `RESULT FILE PROTOCOL` sections regardless of `max_parallel` value. All agents write to per-task context files and result files.
 
-5. **Poll for completion**: After launching all background agents, poll for result files using Bash (same polling script as standard `execute-tasks` — wait for all `result-task-{id}.md` files with timeout). After polling completes, proceed to 8d.
+5. **Poll for completion**: After launching all background agents, poll for result files using the `poll-for-results.sh` script from `execute-tasks` via the **multi-round polling pattern**. Each poll round invokes `bash ${CLAUDE_PLUGIN_ROOT}/../sdd-tools/skills/execute-tasks/scripts/poll-for-results.sh .claude/sessions/__live_session__ {task_ids...}` (with Bash `timeout: 480000`). The script checks for `result-task-{id}.md` files every 15 seconds for up to 7 minutes, reporting progress on exit. The orchestrator loops across rounds until all results are found or the 45-minute cumulative timeout is reached. If the Bash tool returns a timeout error, treat it as an incomplete round and retry. After polling completes, proceed to 8d.
 
 #### 8d: Process Results (Batch)
 
@@ -464,7 +464,7 @@ After batch processing identifies failed tasks:
    - For TDD tasks, include TDD-specific retry guidance in the prompt
    - Update `progress.md`: `- [{id}] {subject} -- Retrying ({n}/{max})`
 3. If any retry agents were launched:
-   - Enter a new polling round for the retry agents' result files
+   - Enter a new multi-round polling loop for the retry agents' result files (same `poll-for-results.sh` pattern as 8c step 5, with only the retry task IDs as arguments)
    - Process retry results using the same batch approach as 8d
    - Repeat 8e if any retries still have attempts remaining
 4. If retries exhausted:
@@ -591,13 +591,13 @@ See `references/tdd-verification-patterns.md` for complete verification rules.
 
 - **Autonomous execution loop**: After user confirms the plan, no further prompts between tasks
 - **Background agent execution**: Agents run as background tasks (`run_in_background: true`), returning ~3 lines instead of ~100+ lines of full output. This reduces orchestrator context consumption by ~79% per wave.
-- **Result file protocol**: Each agent writes a compact `result-task-{id}.md` as its very last action. TDD result files include a `## TDD Compliance` section. The orchestrator polls for these files via Bash, then batch-reads them for processing.
+- **Result file protocol**: Each agent writes a compact `result-task-{id}.md` as its very last action. TDD result files include a `## TDD Compliance` section. The orchestrator polls for these files via `poll-for-results.sh` in multi-round Bash invocations (each with `timeout: 480000`), with progress output between rounds, then batch-reads them for processing.
 - **Batched session file updates**: `task_log.md` and `progress.md` are updated once per wave (batch read-modify-write) instead of per-task.
 - **Wave-based TDD parallelism**: Test tasks (RED) in one wave, their paired implementation tasks (GREEN) in the next. Multiple features run in parallel within a wave
 - **Agent routing by metadata**: TDD tasks go to `tdd-executor`, non-TDD tasks go to `task-executor`
 - **Per-task context isolation**: Each agent writes to `context-task-{id}.md`, orchestrator merges after each wave
 - **Test-to-implementation context flow**: Test task result data is read from disk and injected into the paired implementation task's prompt via `PAIRED TEST TASK OUTPUT`. RED result files are retained across waves until the paired GREEN task completes.
-- **Within-wave retry**: Failed tasks with retries remaining are re-launched as background agents. The orchestrator enters a new polling round for retry result files.
+- **Within-wave retry**: Failed tasks with retries remaining are re-launched as background agents. The orchestrator enters a new multi-round polling loop for retry result files (same `poll-for-results.sh` pattern as initial wave polling).
 - **No silent degradation**: If TDD test task fails, its paired implementation task stays blocked. Never run implementation without tests
 - **TDD compliance tracking**: Per-pair tracking of RED/GREEN/REFACTOR verification extracted from result files
 - **Configurable strictness**: `strict`, `normal`, or `relaxed` TDD enforcement via settings
