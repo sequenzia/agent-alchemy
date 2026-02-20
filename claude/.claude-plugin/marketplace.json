@@ -10,7 +10,7 @@
   "plugins": [
     {
       "name": "agent-alchemy-core-tools",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "description": "Agent Alchemy Core Tools — utilities and essential functions for AI agents",
       "source": "./core-tools",
       "homepage": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/core-tools",

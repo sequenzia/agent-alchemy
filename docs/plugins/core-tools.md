@@ -1,12 +1,12 @@
 # Core Tools
 
-Core Tools (v0.1.1) provides the foundational analysis and exploration capabilities for Agent Alchemy. It contains the **deep-analysis** skill — the keystone of the entire plugin ecosystem — along with supporting skills and agents that power codebase understanding across all plugin groups.
+Core Tools (v0.1.2) provides the foundational analysis and exploration capabilities for Agent Alchemy. It contains the **deep-analysis** skill — the keystone of the entire plugin ecosystem — along with supporting skills and agents that power codebase understanding across all plugin groups.
 
 ## Overview
 
 | | |
 |---|---|
-| **Version** | 0.1.1 |
+| **Version** | 0.1.2 |
 | **Skills** | 4 (2 user-invocable, 2 agent-loaded) |
 | **Agents** | 3 (code-explorer, code-synthesizer, code-architect) |
 | **Hooks** | 1 (auto-approve session file operations) |
