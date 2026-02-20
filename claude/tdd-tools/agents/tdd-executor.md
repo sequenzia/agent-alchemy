@@ -37,6 +37,7 @@ You have been launched by a TDD orchestration skill with:
 - **Retry Context**: (if retry) Previous attempt's verification results and failure details
 - **Execution Context Path**: Path to `.claude/sessions/__live_session__/execution_context.md` for reading shared learnings
 - **Context Write Path**: Path to `context-task-{id}.md` for writing learnings (never write directly to `execution_context.md`)
+- **Result Write Path**: Path to `result-task-{id}.md` for writing the compact result file with TDD compliance data (completion signal for the orchestrator)
 
 ## Process Overview
 
@@ -47,7 +48,7 @@ Execute these 6 phases in strict order. CRITICAL: Complete ALL 6 phases. Do not 
 3. **Phase 3: RED** - Run tests, verify ALL new tests fail, confirm RED state
 4. **Phase 4: Implement** - Write minimal code to make tests pass
 5. **Phase 5: GREEN** - Run full test suite, verify ALL tests pass, zero regressions
-6. **Phase 6: Complete** - Clean up code, run final tests, report results
+6. **Phase 6: Complete** - Clean up code, run final tests, write result file, return minimal status
 
 ---
 
@@ -355,11 +356,50 @@ Write learnings to your per-task context file at the `Context Write Path` specif
 - TDD compliance: RED verified={yes/no}, GREEN verified={yes/no}, Refactored={yes/no/partial}
 ```
 
-If the write to the per-task context file fails, do not crash. Include a `LEARNINGS:` fallback section in the report.
+If the write to the per-task context file fails, do not crash. Include the learnings in the result file Issues section as fallback.
 
-### Report Structure
+### Write Result File
 
-Return a structured report with per-phase results:
+As your **VERY LAST action** (after writing the context file), write a compact result file to the `Result Write Path` specified in your prompt (e.g., `.claude/sessions/__live_session__/result-task-{id}.md`):
+
+```markdown
+# Task Result: [{id}] {subject}
+status: PASS|PARTIAL|FAIL
+attempt: {n}/{max}
+tdd_phase: RED|GREEN
+
+## TDD Compliance
+- RED Verified: {true|false}
+- GREEN Verified: {true|false}
+- Refactored: {true|false|N/A}
+- Coverage Delta: {+/-pct|N/A}
+
+## Verification
+- Functional: {n}/{total}
+- Edge Cases: {n}/{total}
+- Tests: {passed}/{total} ({failed} failures)
+- Regressions: {count}
+
+## Files Modified
+- {path}: {brief description}
+
+## Issues
+{None or brief descriptions}
+```
+
+**Ordering**: Context file FIRST, result file LAST. The result file's existence signals completion to the orchestrator.
+
+### Return Status Line
+
+After writing the result file, return ONLY a single minimal status line:
+
+```
+DONE: [{id}] {subject} - {PASS|PARTIAL|FAIL}
+```
+
+### Fallback Report Format
+
+Only used when the result file write fails. Return the full report so the orchestrator can parse it from `TaskOutput`:
 
 ```
 TASK RESULT: {PASS|PARTIAL|FAIL}
@@ -377,19 +417,22 @@ VERIFICATION:
   Functional: {n}/{total} passed
   Edge Cases: {n}/{total} passed
   Error Handling: {n}/{total} passed
-  Performance: {n}/{total} passed (or N/A)
   Tests: {passed}/{total} ({failed} failures)
   Regressions: {count}
 
-{If PARTIAL or FAIL:}
 ISSUES:
   - {criterion or phase}: {what went wrong}
 
-RECOMMENDATIONS:
-  - {suggestion for fixing or completing}
-
 FILES MODIFIED:
   - {file path}: {brief description of change}
+
+{If context append also failed:}
+LEARNINGS:
+  - Files modified: {list}
+  - Tests written: {count} in {file paths}
+  - TDD compliance: RED={yes/no}, GREEN={yes/no}, Refactored={yes/no}
+  - Key learnings: {patterns, conventions, file locations}
+  - Issues encountered: {problems, workarounds}
 ```
 
 ---
@@ -447,4 +490,4 @@ Use this information to:
 - **Minimal implementation**: Only write code that makes failing tests pass
 - **Phase gates are mandatory**: Do not skip RED verification. Do not skip GREEN verification.
 - **Session directory is auto-approved**: Freely create and modify any files within `.claude/sessions/`
-- **Per-task context files are auto-approved**: `context-task-{id}.md` files within `.claude/sessions/` are auto-approved
+- **Per-task context and result files are auto-approved**: `context-task-{id}.md` and `result-task-{id}.md` files within `.claude/sessions/` are auto-approved

@@ -243,13 +243,49 @@ Include updates to Project Patterns, Key Decisions, Known Issues, and File Map s
 If the write to the per-task context file fails:
 
 1. **Do not crash** — continue the workflow normally
-2. Log a `WARNING: Failed to write learnings to context file` line in the verification report
-3. Include a `LEARNINGS:` fallback section in the report with the same data that would have been written
-4. Return the report normally — the orchestrator will pick up the fallback learnings
+2. Log a `WARNING: Failed to write learnings to context file` line in the result file Issues section
+3. Include the learnings in the result file Issues section as fallback
+4. The orchestrator will pick up the fallback learnings from the result file
 
-### Report Structure
+### Write Result File
 
-Return a structured report to the orchestrating skill:
+As your **VERY LAST action** (after writing the context file), write a compact result file to the `Result Write Path` specified in your prompt (e.g., `.claude/sessions/__live_session__/result-task-{id}.md`):
+
+```markdown
+# Task Result: [{id}] {subject}
+status: PASS|PARTIAL|FAIL
+attempt: {n}/{max}
+
+## Verification
+- Functional: {n}/{total}
+- Edge Cases: {n}/{total}
+- Error Handling: {n}/{total}
+- Tests: {passed}/{total} ({failed} failures)
+
+## Files Modified
+- {path}: {brief description}
+
+## Issues
+{None or brief descriptions}
+```
+
+**Ordering**: Context file FIRST, result file LAST. The result file's existence signals completion to the orchestrator.
+
+**Error resilience**: If the result file write fails, fall back to returning the full structured report (see Fallback Report Format below) so the orchestrator can parse it from `TaskOutput`.
+
+### Return Status Line
+
+After writing the result file, return ONLY a single minimal status line:
+
+```
+DONE: [{id}] {subject} - {PASS|PARTIAL|FAIL}
+```
+
+This keeps the orchestrator's context minimal (~3 lines per background agent launch + ~1 line return).
+
+### Fallback Report Format
+
+Only used when the result file write fails. Return the full report so the orchestrator can parse it from `TaskOutput`:
 
 ```
 TASK RESULT: {PASS|PARTIAL|FAIL}
@@ -272,4 +308,10 @@ RECOMMENDATIONS:
 
 FILES MODIFIED:
   - {file path}: {brief description of change}
+
+{If context append also failed:}
+LEARNINGS:
+  - Files modified: {list}
+  - Key learnings: {patterns, conventions, file locations}
+  - Issues encountered: {problems, workarounds}
 ```

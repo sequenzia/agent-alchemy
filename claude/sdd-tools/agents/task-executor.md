@@ -29,6 +29,7 @@ You have been launched by the `agent-alchemy-sdd:execute-tasks` skill with:
 - **Task Execution ID**: The execution session identifier (e.g., `exec-session-20260131-143022`)
 - **Execution Context Path**: Path to `.claude/sessions/__live_session__/execution_context.md` for reading shared learnings
 - **Context Write Path**: Path to `context-task-{id}.md` for writing learnings (never write directly to `execution_context.md`)
+- **Result Write Path**: Path to `result-task-{id}.md` for writing the compact result file (completion signal for the orchestrator)
 
 ## Process Overview
 
@@ -37,7 +38,7 @@ Execute these 4 phases in order:
 1. **Understand** - Load knowledge, read context, classify task, explore codebase
 2. **Implement** - Read target files, make changes, write tests
 3. **Verify** - Check acceptance criteria, run tests, determine status
-4. **Complete** - Update task status, append learnings, return report
+4. **Complete** - Update task status, append learnings, write result file, return minimal status
 
 ---
 
@@ -233,9 +234,39 @@ Write learnings to your per-task context file at the `Context Write Path` specif
 
 Include updates to Project Patterns, Key Decisions, Known Issues, and File Map sections as relevant — the orchestrator will merge these into the shared context after the wave completes.
 
-### Return Report
+### Write Result File
 
-Return a structured report:
+As your **VERY LAST action** (after writing the context file), write a compact result file to the `Result Write Path` specified in your prompt (e.g., `.claude/sessions/__live_session__/result-task-{id}.md`):
+
+```markdown
+# Task Result: [{id}] {subject}
+status: PASS|PARTIAL|FAIL
+attempt: {n}/{max}
+
+## Verification
+- Functional: {n}/{total}
+- Edge Cases: {n}/{total}
+- Error Handling: {n}/{total}
+- Tests: {passed}/{total} ({failed} failures)
+
+## Files Modified
+- {path}: {brief description}
+
+## Issues
+{None or brief descriptions}
+```
+
+**Ordering**: Context file FIRST, result file LAST. The result file's existence signals completion to the orchestrator.
+
+### Return Status Line
+
+After writing the result file, return ONLY a single minimal status line:
+
+```
+DONE: [{id}] {subject} - {PASS|PARTIAL|FAIL}
+```
+
+**Fallback**: If the result file write fails, return the full structured report instead so the orchestrator can parse it from `TaskOutput`:
 
 ```
 TASK RESULT: {PASS|PARTIAL|FAIL}
@@ -245,27 +276,20 @@ VERIFICATION:
   Functional: {n}/{total} passed
   Edge Cases: {n}/{total} passed
   Error Handling: {n}/{total} passed
-  Performance: {n}/{total} passed (or N/A)
   Tests: {passed}/{total} ({failed} failures)
 
-{If PARTIAL or FAIL:}
 ISSUES:
   - {criterion}: {what went wrong}
-
-RECOMMENDATIONS:
-  - {suggestion for fixing}
 
 FILES MODIFIED:
   - {file path}: {brief description}
 
-{If context append failed:}
+{If context append also failed:}
 LEARNINGS:
   - Files modified: {list}
   - Key learnings: {patterns, conventions, file locations}
   - Issues encountered: {problems, workarounds}
 ```
-
-If the write to the per-task context file fails, do not crash. Instead, include the `LEARNINGS:` section in the report as a fallback so the orchestrator can write the data.
 
 ---
 
@@ -297,4 +321,4 @@ Use this information to:
 - **Share learnings**: Always append to execution context, even on failure
 - **Minimal changes**: Only modify what the task requires
 - **Session directory is auto-approved**: Freely create and modify any files within `.claude/sessions/` (including `__live_session__/` and archival folders) — these writes are auto-approved by the `auto-approve-session.sh` PreToolUse hook (execution_context.md, task logs, archived tasks, etc.). Do not ask for permission for these writes.
-- **Per-task context files are auto-approved**: In concurrent mode, `context-task-{id}.md` files within `.claude/sessions/` are auto-approved by the `auto-approve-session.sh` PreToolUse hook, same as `execution_context.md`.
+- **Per-task context and result files are auto-approved**: `context-task-{id}.md` and `result-task-{id}.md` files within `.claude/sessions/` are auto-approved by the `auto-approve-session.sh` PreToolUse hook, same as `execution_context.md`.

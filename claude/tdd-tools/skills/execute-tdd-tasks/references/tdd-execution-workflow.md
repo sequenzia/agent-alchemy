@@ -147,12 +147,13 @@ The `execute-tdd-tasks` skill routes tasks to different agent types based on met
 
 ### Agent Spawning for TDD Tasks
 
-TDD tasks are launched using the `tdd-executor` agent (same plugin):
+TDD tasks are launched using the `tdd-executor` agent (same plugin) with `run_in_background: true`:
 
 ```
 Task:
   subagent_type: tdd-executor
   mode: bypassPermissions
+  run_in_background: true
   prompt: |
     Execute the following TDD task.
 
@@ -172,14 +173,44 @@ Task:
 
     CONCURRENT EXECUTION MODE
     Context Write Path: .claude/sessions/__live_session__/context-task-{id}.md
+    Result Write Path: .claude/sessions/__live_session__/result-task-{id}.md
     Do NOT write to execution_context.md directly.
     Do NOT update progress.md — the orchestrator manages it.
     Write your learnings to the Context Write Path above instead.
 
-    {If GREEN phase, include test task output:}
+    RESULT FILE PROTOCOL
+    As your VERY LAST action (after writing context-task-{id}.md), write a compact
+    result file to the Result Write Path above. TDD format:
+
+    # Task Result: [{id}] {subject}
+    status: PASS|PARTIAL|FAIL
+    attempt: {n}/{max}
+    tdd_phase: RED|GREEN
+
+    ## TDD Compliance
+    - RED Verified: {true|false}
+    - GREEN Verified: {true|false}
+    - Refactored: {true|false|N/A}
+    - Coverage Delta: {+/-pct|N/A}
+
+    ## Verification
+    - Functional: {n}/{total}
+    - Edge Cases: {n}/{total}
+    - Tests: {passed}/{total} ({failed} failures)
+
+    ## Files Modified
+    - {path}: {brief description}
+
+    ## Issues
+    {None or brief descriptions}
+
+    After writing the result file, return ONLY this single status line:
+    DONE: [{id}] {subject} - {PASS|PARTIAL|FAIL}
+
+    {If GREEN phase, include paired test task result data:}
     PAIRED TEST TASK OUTPUT:
     ---
-    {test task verification report and context}
+    {test task result file content and context}
     ---
     The tests written by the paired test task are already on disk.
     Your job is to implement code that makes these tests pass (GREEN phase),
@@ -188,7 +219,7 @@ Task:
 
 ### Agent Spawning for Non-TDD Tasks
 
-Non-TDD tasks use the standard `task-executor` agent from `sdd-tools` (cross-plugin, resolved globally), with the same prompt format as standard `execute-tasks`.
+Non-TDD tasks use the standard `task-executor` agent from `sdd-tools` (cross-plugin, resolved globally) with `run_in_background: true`, and the same prompt format as standard `execute-tasks` (including the `RESULT FILE PROTOCOL` section with the standard result file format).
 
 ---
 
@@ -196,7 +227,7 @@ Non-TDD tasks use the standard `task-executor` agent from `sdd-tools` (cross-plu
 
 ### Test-to-Implementation Context Flow
 
-When a test task (RED phase) completes, its output informs the paired implementation task (GREEN phase). This context flows through two channels:
+When a test task (RED phase) completes, its output informs the paired implementation task (GREEN phase). This context flows through three channels:
 
 #### Channel 1: Per-Task Context File
 
@@ -213,27 +244,39 @@ The test task writes its learnings to `context-task-{test_id}.md`. After the tes
 
 #### Channel 2: Direct Prompt Injection
 
-The orchestrator includes the test task's verification report directly in the implementation task's prompt (see `PAIRED TEST TASK OUTPUT` above). This provides:
+The orchestrator injects the test task's result data directly into the implementation task's prompt (see `PAIRED TEST TASK OUTPUT` above). This provides:
 
 - Which tests were written and where
 - RED verification results (all tests failed as expected)
 - Any warnings or anomalies from the RED phase
-- Specific error messages from test failures (useful for understanding what needs to be implemented)
+- TDD compliance data (RED verified status)
+
+#### Channel 3: Result File Data
+
+The orchestrator reads the test task's `result-task-{test_id}.md` file after the RED wave completes. This compact file contains structured verification data and TDD compliance metrics. The orchestrator retains this data for injection into the paired implementation task's prompt in the next wave.
+
+**Key difference from Channel 2**: The result file is read from disk rather than captured from Task tool output, reducing the orchestrator's context consumption. The result file data replaces what was previously embedded as full agent output.
 
 ### Context Flow Diagram
 
 ```
 Wave N (RED phase):
-  Test-Task-A writes:  context-task-{A}.md
-  Test-Task-B writes:  context-task-{B}.md
+  Test-Task-A writes:  context-task-{A}.md, then result-task-{A}.md (LAST)
+  Test-Task-B writes:  context-task-{B}.md, then result-task-{B}.md (LAST)
 
+  Orchestrator polls:  waits for result-task-{A}.md and result-task-{B}.md
+  Orchestrator reads:  result-task-{A}.md, result-task-{B}.md (compact, ~18 lines each)
+  Orchestrator stores: result data for GREEN phase injection
   Orchestrator merges: context-task-{A}.md + context-task-{B}.md -> execution_context.md
+  Orchestrator retains: result-task-{A}.md, result-task-{B}.md (for GREEN injection)
 
 Wave N+1 (GREEN phase):
   Impl-Task-A reads:   execution_context.md (contains A's and B's learnings)
-  Impl-Task-A receives: Test-Task-A's verification report in prompt
+  Impl-Task-A receives: Test-Task-A's result data in PAIRED TEST TASK OUTPUT
   Impl-Task-B reads:   execution_context.md (contains A's and B's learnings)
-  Impl-Task-B receives: Test-Task-B's verification report in prompt
+  Impl-Task-B receives: Test-Task-B's result data in PAIRED TEST TASK OUTPUT
+
+  After GREEN wave: orchestrator deletes retained RED result files
 ```
 
 ### What Implementation Tasks Learn from Test Tasks
@@ -245,6 +288,7 @@ The paired test task output tells the implementation agent:
 3. **What the interface should look like**: Import paths and function signatures implied by tests
 4. **What errors to handle**: Error-scenario tests define expected error behavior
 5. **Baseline state**: Pre-existing test pass/fail counts for regression detection
+6. **TDD compliance**: Whether RED phase was properly verified (from result file data)
 
 ---
 

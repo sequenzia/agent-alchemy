@@ -292,7 +292,7 @@ Read `.claude/sessions/__live_session__/execution_context.md` and hold as baseli
 1. Mark all wave tasks as `in_progress` via `TaskUpdate`
 2. Record `wave_start_time`
 3. Update `progress.md` with active tasks
-4. Launch all wave agents simultaneously using **parallel Task tool calls in a single message turn**
+4. Launch all wave agents simultaneously using **parallel Task tool calls in a single message turn** with `run_in_background: true`
 
 **Route each task to the correct agent:**
 
@@ -302,6 +302,7 @@ Read `.claude/sessions/__live_session__/execution_context.md` and hold as baseli
 Task:
   subagent_type: tdd-executor
   mode: bypassPermissions
+  run_in_background: true
   prompt: |
     Execute the following TDD task.
 
@@ -321,14 +322,21 @@ Task:
 
     CONCURRENT EXECUTION MODE
     Context Write Path: .claude/sessions/__live_session__/context-task-{id}.md
+    Result Write Path: .claude/sessions/__live_session__/result-task-{id}.md
     Do NOT write to execution_context.md directly.
     Do NOT update progress.md -- the orchestrator manages it.
     Write your learnings to the Context Write Path above instead.
 
-    {If GREEN phase, include paired test task output:}
+    RESULT FILE PROTOCOL
+    As your VERY LAST action (after writing context-task-{id}.md), write a compact
+    result file to the Result Write Path above. TDD format includes a TDD Compliance
+    section with RED Verified, GREEN Verified, Refactored, and Coverage Delta fields.
+    After writing the result file, return ONLY: DONE: [{id}] {subject} - {PASS|PARTIAL|FAIL}
+
+    {If GREEN phase, include paired test task result data:}
     PAIRED TEST TASK OUTPUT:
     ---
-    {test task verification report and context}
+    {test task result file content and context}
     ---
     The tests written by the paired test task are already on disk.
     Your job is to implement code that makes these tests pass (GREEN phase),
@@ -339,7 +347,7 @@ Task:
     Previous TDD phase that failed: {RED|GREEN|REFACTOR}
     Previous attempt failed with:
     ---
-    {previous verification report including TDD COMPLIANCE section}
+    {previous failure details from result file}
     ---
 
     TDD-specific retry guidance:
@@ -357,8 +365,8 @@ Task:
     5. Verify TDD compliance (RED verified, GREEN verified, refactored)
     6. Update task status if PASS (mark completed)
     7. Write learnings to .claude/sessions/__live_session__/context-task-{id}.md
-    8. Return a structured verification report including TDD COMPLIANCE section
-    9. Report any token/usage information available from your session
+    8. Write result to .claude/sessions/__live_session__/result-task-{id}.md
+    9. Return: DONE: [{id}] {subject} - {PASS|PARTIAL|FAIL}
 ```
 
 **For non-TDD tasks** (no `tdd_mode` metadata), launch the standard `task-executor` agent from `sdd-tools` (cross-plugin, resolved globally):
@@ -367,6 +375,7 @@ Task:
 Task:
   subagent_type: task-executor
   mode: bypassPermissions
+  run_in_background: true
   prompt: |
     Execute the following task.
 
@@ -384,15 +393,22 @@ Task:
 
     CONCURRENT EXECUTION MODE
     Context Write Path: .claude/sessions/__live_session__/context-task-{id}.md
+    Result Write Path: .claude/sessions/__live_session__/result-task-{id}.md
     Do NOT write to execution_context.md directly.
     Do NOT update progress.md -- the orchestrator manages it.
     Write your learnings to the Context Write Path above instead.
+
+    RESULT FILE PROTOCOL
+    As your VERY LAST action (after writing context-task-{id}.md), write a compact
+    result file to the Result Write Path above. Standard format with status, verification
+    summary, files modified, and issues sections.
+    After writing the result file, return ONLY: DONE: [{id}] {subject} - {PASS|PARTIAL|FAIL}
 
     {If retry attempt:}
     RETRY ATTEMPT {n} of {max_retries}
     Previous attempt failed with:
     ---
-    {previous verification report}
+    {previous failure details from result file}
     ---
     Focus on fixing the specific failures listed above.
 
@@ -404,57 +420,74 @@ Task:
     5. Verify against acceptance criteria
     6. Update task status if PASS (mark completed)
     7. Write learnings to .claude/sessions/__live_session__/context-task-{id}.md
-    8. Return a structured verification report
-    9. Report any token/usage information available from your session
+    8. Write result to .claude/sessions/__live_session__/result-task-{id}.md
+    9. Return: DONE: [{id}] {subject} - {PASS|PARTIAL|FAIL}
 ```
 
-**Important**: Always include the `CONCURRENT EXECUTION MODE` section regardless of `max_parallel` value. All agents write to per-task context files.
+**Important**: Always include the `CONCURRENT EXECUTION MODE` and `RESULT FILE PROTOCOL` sections regardless of `max_parallel` value. All agents write to per-task context files and result files.
 
-#### 8d: Process Results
+5. **Poll for completion**: After launching all background agents, poll for result files using Bash (same polling script as standard `execute-tasks` — wait for all `result-task-{id}.md` files with timeout). After polling completes, proceed to 8d.
 
-As each agent returns:
+#### 8d: Process Results (Batch)
 
-1. Calculate `duration` (format: <60s = `{s}s`, <60m = `{m}m {s}s`, >=60m = `{h}h {m}m {s}s`)
-2. Capture token usage from Task tool response if available
-3. Determine task type label: `TDD/RED`, `TDD/GREEN`, or `non-TDD`
-4. Update `task_log.md` using read-modify-write (append row):
+After polling completes, process all wave results in a single batch:
+
+1. Calculate `wave_duration` (format: <60s = `{s}s`, <60m = `{m}m {s}s`, >=60m = `{h}h {m}m {s}s`)
+
+2. **Read result files**: For each task in the wave, read `.claude/sessions/__live_session__/result-task-{id}.md`. Parse status, attempt, verification, files modified, and issues. For TDD tasks, also parse the `## TDD Compliance` section (RED Verified, GREEN Verified, Refactored, Coverage Delta).
+
+3. **Handle missing result files**: If a result file is missing after polling, fall back to `TaskOutput` for the crashed agent. Treat as FAIL.
+
+4. Determine task type label: `TDD/RED`, `TDD/GREEN`, or `non-TDD`
+5. Log status for each task: `[{id}] {subject}: {PASS|PARTIAL|FAIL} ({type})`
+
+6. **Batch update `task_log.md`**: Read once, append ALL wave rows, Write once:
    ```
-   | {id} | {subject} | {TDD/RED|TDD/GREEN|non-TDD} | {PASS/PARTIAL/FAIL} | {attempt}/{max} | {duration} | {tokens or N/A} |
+   | {id} | {subject} | {TDD/RED|TDD/GREEN|non-TDD} | {PASS/PARTIAL/FAIL} | {attempt}/{max} | {wave_duration} | N/A |
    ```
-5. Log status: `[{id}] {subject}: {PASS|PARTIAL|FAIL} ({type})`
-6. Update `progress.md`: move task from Active to Completed
-7. **For TDD tasks**: Extract TDD compliance data from the agent's report and update the `## TDD Compliance` table in `execution_context.md`
 
-**Context append fallback**: If the agent's report contains a `LEARNINGS:` section, write those learnings to `context-task-{id}.md` on behalf of the agent.
+7. **Batch update `progress.md`**: Read once, move ALL completed tasks from Active to Completed, Write once.
+
+8. **For TDD tasks**: Extract TDD compliance data from result files and update the `## TDD Compliance` table in `execution_context.md`
+
+**Context append fallback**: If a result file is missing but `TaskOutput` contains a `LEARNINGS:` section, write those learnings to `context-task-{id}.md` on behalf of the agent.
 
 #### 8e: Within-Wave Retry
 
-After processing a failed result:
+After batch processing identifies failed tasks:
 
-1. Check retry count for the failed task
-2. If retries remaining:
-   - Re-launch the agent immediately with failure context (include previous report)
+1. Collect all failed tasks with retries remaining
+2. For each retriable task:
+   - Read failure details from `result-task-{id}.md` (Issues and TDD Compliance sections)
+   - Delete the old `result-task-{id}.md` file before re-launching
+   - Launch a new background agent (`run_in_background: true`) with failure context from the result file
    - For TDD tasks, include TDD-specific retry guidance in the prompt
    - Update `progress.md`: `- [{id}] {subject} -- Retrying ({n}/{max})`
-3. If retries exhausted:
+3. If any retry agents were launched:
+   - Enter a new polling round for the retry agents' result files
+   - Process retry results using the same batch approach as 8d
+   - Repeat 8e if any retries still have attempts remaining
+4. If retries exhausted:
    - Leave task as `in_progress`
    - Log final failure
+   - Retain the result file for post-analysis
    - **For TDD test tasks**: The paired implementation task remains blocked and will not execute
 
 **Test-writer agent failure fallback:** If a TDD test task (RED phase) fails after all retries, the paired implementation task remains blocked. Do NOT fall back to running implementation without tests -- this would violate TDD principles.
 
-#### 8f: Merge Context After Wave
+#### 8f: Merge Context and Clean Up After Wave
 
 After ALL agents in the current wave have completed (including retries):
 
 1. Read `.claude/sessions/__live_session__/execution_context.md`
 2. Read all `context-task-{id}.md` files in task ID order
 3. Append each file's content to the `## Task History` section
-4. **For completed TDD tasks**: Update the `## TDD Compliance` table with pair results
+4. **For completed TDD tasks**: Update the `## TDD Compliance` table with pair results (extracted from result files in 8d)
 5. Write the complete updated `execution_context.md`
 6. Delete the `context-task-{id}.md` files
+7. **Clean up result files**: Delete `result-task-{id}.md` for PASS tasks. Retain `result-task-{id}.md` for FAIL tasks (post-analysis). **For TDD test tasks (RED)**: Retain the result file until the paired GREEN task completes — the orchestrator reads stored result data for `PAIRED TEST TASK OUTPUT` injection in the next wave.
 
-**Capture test task output for GREEN phase injection:** When processing a completed test task (RED phase), store its verification report for injection into the paired implementation task's prompt in the next wave.
+**Capture test task result data for GREEN phase injection:** When processing a completed test task (RED phase), read the result file content and store it for injection into the paired implementation task's prompt in the next wave. Delete the retained RED result file after the paired GREEN task's wave completes.
 
 #### 8g: Rebuild Next Wave and Archive
 
@@ -557,13 +590,16 @@ See `references/tdd-verification-patterns.md` for complete verification rules.
 ## Key Behaviors
 
 - **Autonomous execution loop**: After user confirms the plan, no further prompts between tasks
+- **Background agent execution**: Agents run as background tasks (`run_in_background: true`), returning ~3 lines instead of ~100+ lines of full output. This reduces orchestrator context consumption by ~79% per wave.
+- **Result file protocol**: Each agent writes a compact `result-task-{id}.md` as its very last action. TDD result files include a `## TDD Compliance` section. The orchestrator polls for these files via Bash, then batch-reads them for processing.
+- **Batched session file updates**: `task_log.md` and `progress.md` are updated once per wave (batch read-modify-write) instead of per-task.
 - **Wave-based TDD parallelism**: Test tasks (RED) in one wave, their paired implementation tasks (GREEN) in the next. Multiple features run in parallel within a wave
 - **Agent routing by metadata**: TDD tasks go to `tdd-executor`, non-TDD tasks go to `task-executor`
 - **Per-task context isolation**: Each agent writes to `context-task-{id}.md`, orchestrator merges after each wave
-- **Test-to-implementation context flow**: Test task output is injected into the paired implementation task's prompt via `PAIRED TEST TASK OUTPUT`
-- **Within-wave retry**: Failed tasks with retries remaining re-launch immediately
+- **Test-to-implementation context flow**: Test task result data is read from disk and injected into the paired implementation task's prompt via `PAIRED TEST TASK OUTPUT`. RED result files are retained across waves until the paired GREEN task completes.
+- **Within-wave retry**: Failed tasks with retries remaining are re-launched as background agents. The orchestrator enters a new polling round for retry result files.
 - **No silent degradation**: If TDD test task fails, its paired implementation task stays blocked. Never run implementation without tests
-- **TDD compliance tracking**: Per-pair tracking of RED/GREEN/REFACTOR verification in execution context
+- **TDD compliance tracking**: Per-pair tracking of RED/GREEN/REFACTOR verification extracted from result files
 - **Configurable strictness**: `strict`, `normal`, or `relaxed` TDD enforcement via settings
 - **Single-session invariant**: Only one execution session at a time, enforced by `.lock` file
 - **Interrupted session recovery**: Stale sessions archived, interrupted tasks reset to `pending`

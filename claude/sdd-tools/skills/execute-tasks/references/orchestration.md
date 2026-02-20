@@ -12,6 +12,46 @@ All orchestrator writes to session artifacts (`execution_context.md`, `task_log.
 
 This ensures atomic, reliable updates regardless of file size or content changes.
 
+## Result File Protocol
+
+### Purpose
+
+Reduce orchestrator context consumption by moving agent result data to disk. Instead of embedding full agent output (~100+ lines per task) into the orchestrator's context window, agents write a compact result file (~18 lines) as their **very last action**. The orchestrator reads these files after polling for completion.
+
+### File Format (Standard)
+
+Agents write `result-task-{id}.md` in `.claude/sessions/__live_session__/`:
+
+```markdown
+# Task Result: [{id}] {subject}
+status: PASS|PARTIAL|FAIL
+attempt: {n}/{max}
+
+## Verification
+- Functional: {n}/{total}
+- Edge Cases: {n}/{total}
+- Error Handling: {n}/{total}
+- Tests: {passed}/{total} ({failed} failures)
+
+## Files Modified
+- {path}: {brief description}
+
+## Issues
+{None or brief descriptions}
+```
+
+### Ordering Invariant
+
+Agents MUST write files in this order:
+1. `context-task-{id}.md` FIRST (learnings for context merge)
+2. `result-task-{id}.md` LAST (completion signal for orchestrator polling)
+
+The result file's existence serves as the completion signal. If it exists, the context file is guaranteed to exist (or the agent intentionally skipped it).
+
+### Fallback
+
+If an agent crashes before writing its result file, the orchestrator falls back to `TaskOutput` (blocking read of the background task's output) to diagnose the failure. This is the last-resort path and produces the same context pressure as the old foreground approach, but only for crashed agents.
+
 ## Step 1: Load Task List
 
 Use `TaskList` to get all tasks and their current state.
@@ -273,7 +313,7 @@ Read `.claude/sessions/__live_session__/execution_context.md` and hold it as the
    ## Completed This Session
    {accumulated completed tasks from prior waves}
    ```
-4. Launch all wave agents simultaneously using **parallel Task tool calls in a single message turn**:
+4. Launch all wave agents simultaneously using **parallel Task tool calls in a single message turn** with `run_in_background: true`:
 
 For each task in the wave, use the Task tool:
 
@@ -281,6 +321,7 @@ For each task in the wave, use the Task tool:
 Task:
   subagent_type: task-executor
   mode: bypassPermissions
+  run_in_background: true
   prompt: |
     Execute the following task.
 
@@ -300,15 +341,39 @@ Task:
 
     CONCURRENT EXECUTION MODE
     Context Write Path: .claude/sessions/__live_session__/context-task-{id}.md
+    Result Write Path: .claude/sessions/__live_session__/result-task-{id}.md
     Do NOT write to execution_context.md directly.
     Do NOT update progress.md — the orchestrator manages it.
     Write your learnings to the Context Write Path above instead.
+
+    RESULT FILE PROTOCOL
+    As your VERY LAST action (after writing context-task-{id}.md), write a compact
+    result file to the Result Write Path above. Format:
+
+    # Task Result: [{id}] {subject}
+    status: PASS|PARTIAL|FAIL
+    attempt: {n}/{max}
+
+    ## Verification
+    - Functional: {n}/{total}
+    - Edge Cases: {n}/{total}
+    - Error Handling: {n}/{total}
+    - Tests: {passed}/{total} ({failed} failures)
+
+    ## Files Modified
+    - {path}: {brief description}
+
+    ## Issues
+    {None or brief descriptions}
+
+    After writing the result file, return ONLY this single status line:
+    DONE: [{id}] {subject} - {PASS|PARTIAL|FAIL}
 
     {If retry attempt:}
     RETRY ATTEMPT {n} of {max_retries}
     Previous attempt failed with:
     ---
-    {previous verification report}
+    {previous failure details from result file}
     ---
     Focus on fixing the specific failures listed above.
 
@@ -327,51 +392,112 @@ Task:
     5. Verify against acceptance criteria (or inferred criteria for general tasks)
     6. Update task status if PASS (mark completed)
     7. Write learnings to .claude/sessions/__live_session__/context-task-{id}.md
-    8. Return a structured verification report
-    9. Report any token/usage information available from your session
+    8. Write result to .claude/sessions/__live_session__/result-task-{id}.md
+    9. Return: DONE: [{id}] {subject} - {PASS|PARTIAL|FAIL}
 ```
 
-**Important**: Always include the `CONCURRENT EXECUTION MODE` section regardless of `max_parallel` value. All agents write to per-task context files (`context-task-{id}.md`), and the orchestrator always performs the merge step in 7f. This unified path eliminates fragile direct writes to `execution_context.md`.
+**Important**: Always include the `CONCURRENT EXECUTION MODE` and `RESULT FILE PROTOCOL` sections regardless of `max_parallel` value. All agents write to per-task context files (`context-task-{id}.md`) and result files (`result-task-{id}.md`), and the orchestrator always performs the merge step in 7f. This unified path eliminates fragile direct writes to `execution_context.md`.
 
-### 7d: Process Results
+5. **Poll for completion**: After launching all background agents, poll for result files using Bash:
 
-As each agent returns:
+```bash
+# Poll for result files with timeout
+SESSION_DIR=".claude/sessions/__live_session__"
+EXPECTED_IDS="{space-separated task IDs for this wave}"
+TIMEOUT=3600
+ELAPSED=0
+INTERVAL=15
 
-1. Calculate `duration = current_time - task_start_time`. Format: <60s = `{s}s`, <60m = `{m}m {s}s`, >=60m = `{h}h {m}m {s}s`
-2. Capture token usage from the Task tool response if available, otherwise `N/A`
-3. Update `task_log.md` using read-modify-write: Read the current file, append a new row, Write the complete file:
+while true; do
+  ALL_DONE=true
+  for ID in $EXPECTED_IDS; do
+    if [ ! -f "$SESSION_DIR/result-task-$ID.md" ]; then
+      ALL_DONE=false
+      break
+    fi
+  done
+
+  if $ALL_DONE; then
+    sleep 1  # Brief pause to ensure filesystem flush
+    break
+  fi
+
+  if [ $ELAPSED -ge $TIMEOUT ]; then
+    echo "TIMEOUT: Not all result files appeared within ${TIMEOUT}s"
+    echo "Missing:"
+    for ID in $EXPECTED_IDS; do
+      [ ! -f "$SESSION_DIR/result-task-$ID.md" ] && echo "  result-task-$ID.md"
+    done
+    break
+  fi
+
+  sleep $INTERVAL
+  ELAPSED=$((ELAPSED + INTERVAL))
+done
+```
+
+After polling completes, proceed to 7d for batch processing.
+
+### 7d: Process Results (Batch)
+
+After polling completes, process all wave results in a single batch:
+
+1. Calculate `wave_duration = current_time - wave_start_time`. Format: <60s = `{s}s`, <60m = `{m}m {s}s`, >=60m = `{h}h {m}m {s}s`
+
+2. **Read result files**: For each task in the wave, read `.claude/sessions/__live_session__/result-task-{id}.md`. Parse:
+   - `status` line → PASS, PARTIAL, or FAIL
+   - `attempt` line → attempt number
+   - `## Verification` section → criterion pass counts
+   - `## Files Modified` section → changed file list
+   - `## Issues` section → failure details
+
+3. **Handle missing result files** (agent crash recovery): If a result file is missing after polling:
+   - Check if `context-task-{id}.md` exists (agent may have crashed between context and result write)
+   - Fall back to `TaskOutput` (blocking read) for the crashed agent to capture any diagnostic output
+   - Treat as FAIL with the TaskOutput content as failure details
+
+4. Log a status line for each task: `[{id}] {subject}: {PASS|PARTIAL|FAIL}`
+
+5. **Batch update `task_log.md`**: Read the current file once, append ALL wave rows, Write the complete file once:
    ```markdown
-   | {id} | {subject} | {PASS/PARTIAL/FAIL} | {attempt_number}/{max_retries} | {duration} | {token_usage or N/A} |
+   | {id1} | {subject1} | {PASS/PARTIAL/FAIL} | {attempt}/{max_retries} | {duration} | N/A |
+   | {id2} | {subject2} | {PASS/PARTIAL/FAIL} | {attempt}/{max_retries} | {duration} | N/A |
+   ...
    ```
-4. Log a brief status line: `[{id}] {subject}: {PASS|PARTIAL|FAIL}`
-5. Update `progress.md` using read-modify-write: Read the current file, move the task from Active Tasks to Completed This Session, Write the complete file:
+
+6. **Batch update `progress.md`**: Read the current file once, move ALL completed tasks from Active to Completed, Write the complete file once:
    ```markdown
    ## Active Tasks
-   - [{other_id}] {subject} — Phase 2 — Implementing
-   ...
+   {only tasks still running, if any}
 
    ## Completed This Session
-   - [{id}] {subject} — PASS ({duration})
+   - [{id1}] {subject1} — PASS ({wave_duration})
+   - [{id2}] {subject2} — FAIL ({wave_duration})
    {prior completed entries}
    ```
 
-**Context append fallback**: If the agent's report contains a `LEARNINGS:` section (indicating the agent failed to write to its context file), manually write those learnings to `.claude/sessions/__live_session__/context-task-{id}.md`.
+**Context append fallback**: If a result file is missing but `TaskOutput` contains a `LEARNINGS:` section, manually write those learnings to `.claude/sessions/__live_session__/context-task-{id}.md`.
 
 ### 7e: Within-Wave Retry
 
-After processing a failed result:
+After batch processing identifies failed tasks:
 
-1. Check retry count for the failed task
-2. If retries remaining:
-   - Re-launch the agent immediately with failure context included in the prompt
+1. Collect all failed tasks with retries remaining
+2. For each retriable task:
+   - Read the failure details from `result-task-{id}.md` (Issues section and Verification section)
+   - Delete the old `result-task-{id}.md` file before re-launching
+   - Launch a new background agent (`run_in_background: true`) with failure context from the result file included in the prompt
    - Update `progress.md` active task entry: `- [{id}] {subject} — Retrying ({n}/{max})`
-   - Do NOT wait for other wave agents to complete — retry occupies an existing slot
-3. If retries exhausted:
+3. If any retry agents were launched:
+   - Enter a new polling round for the retry agents' result files (same Bash polling as 7c step 5)
+   - After polling completes, process retry results using the same batch approach as 7d
+   - Repeat 7e if any retries still have attempts remaining
+4. If retries exhausted for a task:
    - Leave task as `in_progress`
    - Log final failure
-   - The slot is freed for any remaining retries
+   - Retain the result file for post-analysis
 
-### 7f: Merge Context After Wave
+### 7f: Merge Context and Clean Up After Wave
 
 After ALL agents in the current wave have completed (including retries):
 
@@ -380,6 +506,7 @@ After ALL agents in the current wave have completed (including retries):
 3. Append each file's full content to the end of the `## Task History` section
 4. Write the complete updated `execution_context.md` using Write
 5. Delete the `context-task-{id}.md` files
+6. **Clean up result files**: Delete `result-task-{id}.md` for PASS tasks. Retain `result-task-{id}.md` for FAIL tasks (available for post-session analysis in the archived session folder)
 
 ### 7g: Rebuild Next Wave and Archive
 
@@ -474,4 +601,4 @@ Process:
 - The execution context file enables knowledge sharing across task boundaries
 - Failed tasks remain as `in_progress` for manual review or re-execution
 - Run the execute-tasks skill again to pick up where you left off — it will execute any remaining unblocked tasks
-- All file operations within `.claude/sessions/` (including `__live_session__/` and archival folders) and `execution_pointer.md` are auto-approved by the `auto-approve-session.sh` PreToolUse hook. Task-executor agents are spawned with `mode: bypassPermissions` to enable fully autonomous execution. No user prompts should occur after the initial execution plan confirmation
+- All file operations within `.claude/sessions/` (including `__live_session__/` and archival folders) and `execution_pointer.md` are auto-approved by the `auto-approve-session.sh` PreToolUse hook. This includes `result-task-{id}.md` files used by the result file protocol. Task-executor agents are spawned with `mode: bypassPermissions` to enable fully autonomous execution. No user prompts should occur after the initial execution plan confirmation
