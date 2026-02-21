@@ -53,12 +53,12 @@ graph LR
     D --> E[⚡ Execution]
     E --> F[✔️ Verified Code]
 
-    style A fill:#f9f,stroke:#333
-    style B fill:#bbf,stroke:#333
-    style C fill:#fbb,stroke:#333
-    style D fill:#bfb,stroke:#333
-    style E fill:#ffb,stroke:#333
-    style F fill:#bff,stroke:#333
+    style A fill:#f9f,stroke:#333,color:#333
+    style B fill:#bbf,stroke:#333,color:#333
+    style C fill:#fbb,stroke:#333,color:#333
+    style D fill:#bfb,stroke:#333,color:#333
+    style E fill:#ffb,stroke:#333,color:#333
+    style F fill:#bff,stroke:#333,color:#333
 ```
 
 ---
@@ -165,11 +165,11 @@ flowchart TD
         TASKS -->|"watched by"| TM["Task Manager Dashboard"]
     end
 
-    style Phase1 fill:#e8f4fd,stroke:#2196F3
-    style Phase2 fill:#fce4ec,stroke:#e91e63
-    style Phase3 fill:#e8f5e9,stroke:#4CAF50
-    style Phase4 fill:#fff8e1,stroke:#FFC107
-    style External fill:#f3e5f5,stroke:#9C27B0
+    style Phase1 fill:#e8f4fd,stroke:#2196F3,color:#333
+    style Phase2 fill:#fce4ec,stroke:#e91e63,color:#333
+    style Phase3 fill:#e8f5e9,stroke:#4CAF50,color:#333
+    style Phase4 fill:#fff8e1,stroke:#FFC107,color:#333
+    style External fill:#f3e5f5,stroke:#9C27B0,color:#333
 ```
 
 ### Pipeline Artifacts
@@ -207,10 +207,10 @@ flowchart TD
     P5 --> |"User confirms"| P6["Phase 6: Spec Compilation"]
     P6 --> SPEC["specs/SPEC-{name}.md"]
 
-    style P3 fill:#e8f4fd,stroke:#2196F3
-    style CE fill:#fff3e0,stroke:#FF9800
-    style RES fill:#f3e5f5,stroke:#9C27B0
-    style SPEC fill:#e8f5e9,stroke:#4CAF50
+    style P3 fill:#e8f4fd,stroke:#2196F3,color:#333
+    style CE fill:#fff3e0,stroke:#FF9800,color:#333
+    style RES fill:#f3e5f5,stroke:#9C27B0,color:#333
+    style SPEC fill:#e8f5e9,stroke:#4CAF50,color:#333
 ```
 
 ### Depth Levels
@@ -301,9 +301,9 @@ flowchart TD
 
     E --> O["Keep reports as-is"]
 
-    style C fill:#e8f4fd,stroke:#2196F3
-    style D fill:#fff3e0,stroke:#FF9800
-    style E fill:#e0e0e0,stroke:#666
+    style C fill:#e8f4fd,stroke:#2196F3,color:#333
+    style D fill:#fff3e0,stroke:#FF9800,color:#333
+    style E fill:#e0e0e0,stroke:#666,color:#333
 ```
 
 ---
@@ -329,9 +329,9 @@ flowchart TD
     P7A --> P8["Phase 8: Report"]
     P7B --> P8
 
-    style P4 fill:#e8f4fd,stroke:#2196F3
-    style P5 fill:#fff3e0,stroke:#FF9800
-    style P7B fill:#fce4ec,stroke:#e91e63
+    style P4 fill:#e8f4fd,stroke:#2196F3,color:#333
+    style P5 fill:#fff3e0,stroke:#FF9800,color:#333
+    style P7B fill:#fce4ec,stroke:#e91e63,color:#333
 ```
 
 ### Task Decomposition Pattern
@@ -350,11 +350,11 @@ flowchart TD
     API --> |"blocks"| UI
     BL --> |"blocks"| TEST
 
-    style DM fill:#e8f5e9,stroke:#4CAF50
-    style API fill:#e8f4fd,stroke:#2196F3
-    style BL fill:#fff8e1,stroke:#FFC107
-    style UI fill:#fce4ec,stroke:#e91e63
-    style TEST fill:#f3e5f5,stroke:#9C27B0
+    style DM fill:#e8f5e9,stroke:#4CAF50,color:#333
+    style API fill:#e8f4fd,stroke:#2196F3,color:#333
+    style BL fill:#fff8e1,stroke:#FFC107,color:#333
+    style UI fill:#fce4ec,stroke:#e91e63,color:#333
+    style TEST fill:#f3e5f5,stroke:#9C27B0,color:#333
 ```
 
 ### Depth-Based Granularity
@@ -419,11 +419,11 @@ flowchart TD
     OBSOLETE --> KEEP["Keep if user confirms"]
     OBSOLETE --> MARK["Mark completed if user confirms"]
 
-    style PRESERVE fill:#e8f5e9,stroke:#4CAF50
-    style SKIP fill:#fff8e1,stroke:#FFC107
-    style UPDATE fill:#e8f4fd,stroke:#2196F3
-    style CREATE fill:#bbdefb,stroke:#1976D2
-    style OBSOLETE fill:#fce4ec,stroke:#e91e63
+    style PRESERVE fill:#e8f5e9,stroke:#4CAF50,color:#333
+    style SKIP fill:#fff8e1,stroke:#FFC107,color:#333
+    style UPDATE fill:#e8f4fd,stroke:#2196F3,color:#333
+    style CREATE fill:#bbdefb,stroke:#1976D2,color:#333
+    style OBSOLETE fill:#fce4ec,stroke:#e91e63,color:#333
 ```
 
 ### Dependency Inference
@@ -484,9 +484,9 @@ flowchart TD
 
     S8 --> ExecuteLoop
 
-    style ExecuteLoop fill:#fff8e1,stroke:#FFC107
-    style W3 fill:#e8f4fd,stroke:#2196F3
-    style W9 fill:#fce4ec,stroke:#e91e63
+    style ExecuteLoop fill:#fff8e1,stroke:#FFC107,color:#333
+    style W3 fill:#e8f4fd,stroke:#2196F3,color:#333
+    style W9 fill:#fce4ec,stroke:#e91e63,color:#333
 ```
 
 ### Wave-Based Parallelism
@@ -523,10 +523,10 @@ flowchart LR
     T5 --> T7
     T6 --> T7
 
-    style Wave1 fill:#e8f5e9,stroke:#4CAF50
-    style Wave2 fill:#e8f4fd,stroke:#2196F3
-    style Wave3 fill:#fff8e1,stroke:#FFC107
-    style Wave4 fill:#f3e5f5,stroke:#9C27B0
+    style Wave1 fill:#e8f5e9,stroke:#4CAF50,color:#333
+    style Wave2 fill:#e8f4fd,stroke:#2196F3,color:#333
+    style Wave3 fill:#fff8e1,stroke:#FFC107,color:#333
+    style Wave4 fill:#f3e5f5,stroke:#9C27B0,color:#333
 ```
 
 ### Task Executor 4-Phase Workflow
@@ -544,10 +544,10 @@ flowchart LR
     P3 -.- N3["Check criteria\nRun tests\nDetermine status"]
     P4 -.- N4["Update task status\nWrite learnings\nWrite result file"]
 
-    style P1 fill:#e8f4fd,stroke:#2196F3
-    style P2 fill:#e8f5e9,stroke:#4CAF50
-    style P3 fill:#fff8e1,stroke:#FFC107
-    style P4 fill:#f3e5f5,stroke:#9C27B0
+    style P1 fill:#e8f4fd,stroke:#2196F3,color:#333
+    style P2 fill:#e8f5e9,stroke:#4CAF50,color:#333
+    style P3 fill:#fff8e1,stroke:#FFC107,color:#333
+    style P4 fill:#f3e5f5,stroke:#9C27B0,color:#333
 ```
 
 ### Verification Status
@@ -576,9 +576,9 @@ flowchart TD
     COMPLETE["Session Complete"] --> ARCHIVE[".claude/sessions/{execution_id}/"]
     DIR --> |"move contents"| ARCHIVE
 
-    style DIR fill:#e8f4fd,stroke:#2196F3
-    style POINTER fill:#fff3e0,stroke:#FF9800
-    style ARCHIVE fill:#e8f5e9,stroke:#4CAF50
+    style DIR fill:#e8f4fd,stroke:#2196F3,color:#333
+    style POINTER fill:#fff3e0,stroke:#FF9800,color:#333
+    style ARCHIVE fill:#e8f5e9,stroke:#4CAF50,color:#333
 ```
 
 ### Key Execution Features
@@ -618,10 +618,10 @@ flowchart TD
     SA --> |"AskUserQuestion, Read, Write, Edit"| SPEC["Spec Files"]
     TE --> |"Read, Write, Edit, Glob, Grep, Bash"| CODE["Source Code"]
 
-    style CE fill:#e8f4fd,stroke:#2196F3
-    style R fill:#f3e5f5,stroke:#9C27B0
-    style SA fill:#fce4ec,stroke:#e91e63
-    style TE fill:#e8f5e9,stroke:#4CAF50
+    style CE fill:#e8f4fd,stroke:#2196F3,color:#333
+    style R fill:#f3e5f5,stroke:#9C27B0,color:#333
+    style SA fill:#fce4ec,stroke:#e91e63,color:#333
+    style TE fill:#e8f5e9,stroke:#4CAF50,color:#333
 ```
 
 | Agent | Model | Tools | Role | Spawned By |
@@ -773,9 +773,9 @@ flowchart TD
     CONTEXT --> CODE
     CODE --> LOGS
 
-    style SPEC fill:#bbdefb,stroke:#1976D2,stroke-width:3px
-    style TASKS fill:#c8e6c9,stroke:#388E3C,stroke-width:3px
-    style CODE fill:#fff9c4,stroke:#F9A825,stroke-width:3px
+    style SPEC fill:#bbdefb,stroke:#1976D2,color:#333,stroke-width:3px
+    style TASKS fill:#c8e6c9,stroke:#388E3C,color:#333,stroke-width:3px
+    style CODE fill:#fff9c4,stroke:#F9A825,color:#333,stroke-width:3px
 ```
 
 ### Execution Context Sharing
@@ -804,8 +804,8 @@ flowchart TD
         C4 --> EC2
     end
 
-    style EC fill:#e8f4fd,stroke:#2196F3,stroke-width:2px
-    style EC2 fill:#e8f4fd,stroke:#2196F3,stroke-width:2px
+    style EC fill:#e8f4fd,stroke:#2196F3,color:#333,stroke-width:2px
+    style EC2 fill:#e8f4fd,stroke:#2196F3,color:#333,stroke-width:2px
 ```
 
 ---
@@ -865,9 +865,9 @@ flowchart LR
     CLIENT --> |"invalidateQueries"| TQ["TanStack Query"]
     TQ --> KB["Kanban Board"]
 
-    style ET fill:#fff8e1,stroke:#FFC107
-    style JSON fill:#e8f5e9,stroke:#4CAF50
-    style KB fill:#e8f4fd,stroke:#2196F3
+    style ET fill:#fff8e1,stroke:#FFC107,color:#333
+    style JSON fill:#e8f5e9,stroke:#4CAF50,color:#333
+    style KB fill:#e8f4fd,stroke:#2196F3,color:#333
 ```
 
 ---
