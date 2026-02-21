@@ -1,6 +1,6 @@
 # TDD Tools
 
-The TDD Tools plugin (`v0.1.3`) brings Test-Driven Development workflows to Agent Alchemy. It provides five skills and three agents that automate the RED-GREEN-REFACTOR cycle, generate behavior-driven tests, analyze test coverage, and orchestrate TDD task execution -- all with framework auto-detection and deep integration into the SDD pipeline.
+The TDD Tools plugin (`v0.2.0`) brings Test-Driven Development workflows to Agent Alchemy. It provides five skills and three agents that automate the RED-GREEN-REFACTOR cycle, generate behavior-driven tests, analyze test coverage, and orchestrate TDD task execution -- all with framework auto-detection and deep integration into the SDD pipeline.
 
 ## Philosophy
 

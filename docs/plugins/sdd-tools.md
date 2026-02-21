@@ -2,7 +2,7 @@
 
 Spec-Driven Development (SDD) Tools is the core workflow engine of Agent Alchemy. It provides a structured pipeline that transforms ideas into specifications, decomposes specifications into executable tasks, and runs autonomous implementation with wave-based parallelism.
 
-**Plugin:** `agent-alchemy-sdd-tools` | **Version:** 0.1.5 | **Skills:** 4 | **Agents:** 3
+**Plugin:** `agent-alchemy-sdd-tools` | **Version:** 0.2.0 | **Skills:** 4 | **Agents:** 3
 
 ## The SDD Pipeline
 
