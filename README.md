@@ -12,7 +12,7 @@ Everything is built with Claude Code for Claude Code. The plugins are plain mark
 
 ### Claude Code Plugins
 
-Six plugin groups providing 24 skills and 13 agents:
+Six plugin groups providing 28 skills and 16 agents:
 
 | Plugin | Description |
 |--------|-------------|
@@ -107,7 +107,57 @@ Settings follow this precedence order (highest to lowest):
 
 ## Architecture
 
-Agent Alchemy follows a **markdown-as-code** philosophy where AI agent behaviors, workflows, and domain knowledge are defined entirely in Markdown with YAML frontmatter. Skills compose by loading other skills at runtime, and complex workflows orchestrate teams of specialized agents with different model tiers (Opus for synthesis, Sonnet for exploration).
+Agent Alchemy follows a **markdown-as-code** philosophy — "prompts as software" — where AI agent behaviors, workflows, and domain knowledge are defined entirely in Markdown with YAML frontmatter. There is no compilation step; the markdown files *are* the executable code, interpreted directly by Claude Code's runtime.
+
+### Three Interconnected Systems
+
+```
+Plugin Framework (claude/)        Task Dashboard (apps/task-manager/)
+  28 skills, 16 agents              Next.js 16 + TanStack Query
+  6 plugin groups                   Real-time Kanban via SSE
+  markdown-as-code                  Watches ~/.claude/tasks/
+         │                                    ▲
+         │  creates task JSON files           │ watches filesystem
+         └────────────────────────────────────┘
+
+VS Code Extension (extensions/vscode/)
+  Ajv YAML frontmatter validation
+  7 JSON schemas
+  Autocompletion + hover docs
+```
+
+### The SDD Pipeline
+
+The flagship workflow chains four skills into an end-to-end development pipeline:
+
+```
+/create-spec  →  specs/SPEC-{name}.md        (adaptive interview)
+                      │
+/analyze-spec →  {name}.analysis.md + .html   (quality gate)
+                      │
+/create-tasks →  ~/.claude/tasks/*.json       (dependency-ordered decomposition)
+                      │
+/execute-tasks → Wave-based autonomous execution → Task Manager (real-time)
+```
+
+### Model Tiering
+
+| Tier | Model | Use Case |
+|------|-------|----------|
+| Reasoning | Opus | Synthesis, architecture, review, implementation |
+| Exploration | Sonnet | Parallel search, broad codebase exploration |
+| Simple | Haiku | Git commits, quick tasks |
+
+### Tech Stack
+
+| Component | Technology |
+|-----------|-----------|
+| Plugins | Markdown + YAML frontmatter |
+| Task Manager | Next.js 16, React 19, TanStack Query 5, Tailwind CSS v4, Chokidar 5 |
+| VS Code Extension | Ajv, esbuild |
+| Package Manager | pnpm (workspaces) |
+
+### Repository Structure
 
 ```
 claude/                          # Plugins (markdown-as-code)

@@ -12,9 +12,8 @@
   - Marketplace registry at `claude/.claude-plugin/marketplace.json`
 - `apps/task-manager/` — Next.js 16 real-time Kanban dashboard (36 TS/TSX files)
 - `extensions/vscode/` — VS Code extension (6 TS source files, 7 JSON schemas)
-- `docs/` + `site/` — MkDocs documentation site (14 docs pages)
+- `docs/` + `site/` — MkDocs documentation site
 - `internal/` — Internal documentation and analysis
-- `.opencode/` — Complete OpenCode port (34 components, 72% fidelity)
 
 ### Key Observations
 - Plugin system uses markdown-as-code: skills = SKILL.md with YAML frontmatter, agents = name.md
@@ -23,9 +22,3 @@
 - Task Manager uses SSE for real-time updates: Chokidar watches ~/.claude/tasks/ → SSE → TanStack Query
 - VS Code extension provides Ajv-based YAML frontmatter validation + JSON schema validation
 - ~90+ markdown files across the claude/ directory (skills, agents, references)
-- 189 commits, single author, active development
-
-### Focus Areas
-1. Plugin Architecture & Composition Patterns (High complexity)
-2. Task Manager Application (Medium complexity)
-3. VS Code Extension & Developer Infrastructure (Medium complexity)

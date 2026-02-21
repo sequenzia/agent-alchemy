@@ -61,6 +61,29 @@ pnpm lint                      # Lint all packages
 - **Agent Tool Restrictions**: Architect (core-tools) and reviewer (dev-tools) agents are read-only (Glob, Grep, Read only); executor agents can write — enforces separation of concerns
 - **AskUserQuestion Enforcement**: All interactive skills route user interaction through `AskUserQuestion`, never plain text output
 
+### SDD Pipeline Patterns
+
+- **Artifact chain**: `/create-spec` → spec markdown → `/create-tasks` → task JSON → `/execute-tasks` → code + session logs
+- **Wave-based execution**: Tasks grouped by topological sort level; N agents per wave, configurable via `--max-parallel`
+- **Result file protocol**: Each task-executor writes a compact `result-task-{id}.md` (~18 lines) as its last action; orchestrator polls for these instead of consuming full agent output (79% context reduction per wave)
+- **Per-task context isolation**: Each agent writes to `context-task-{id}.md`; orchestrator merges into shared `execution_context.md` between waves — eliminates write contention
+- **Merge mode**: `/create-tasks` uses `task_uid` composite keys for idempotent re-runs — completed tasks preserved, pending tasks updated, new tasks created
+- **Session management**: Single-session invariant via `.lock` file; interrupted sessions auto-recovered with in_progress tasks reset to pending
+
+### Session Directory Layout
+
+```
+.claude/sessions/__live_session__/       # Active execution session
+├── execution_plan.md                    # Wave plan from orchestrator
+├── execution_context.md                 # Shared learnings across tasks
+├── task_log.md                          # Per-task status, duration, tokens
+├── progress.md                          # Real-time progress tracking
+├── tasks/                               # Archived completed task JSONs
+├── context-task-{id}.md                 # Per-task context (ephemeral)
+├── result-task-{id}.md                  # Per-task result (ephemeral)
+└── .lock                                # Concurrency guard
+```
+
 ### Cross-Plugin Dependencies
 
 `deep-analysis` (core-tools) is the keystone skill, loaded by 3 skills across 2 plugin groups:
