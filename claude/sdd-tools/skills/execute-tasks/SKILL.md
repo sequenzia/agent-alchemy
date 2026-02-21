@@ -6,6 +6,8 @@ user-invocable: true
 disable-model-invocation: false
 allowed-tools:
   - Task
+  - TaskOutput
+  - TaskStop
   - Read
   - Write
   - Glob
@@ -102,10 +104,10 @@ Then ask the user to confirm before proceeding with execution. If the user cance
 Read `.claude/sessions/__live_session__/execution_context.md` (created in Step 5). If a prior execution context exists, look in `.claude/sessions/` for the most recent timestamped subfolder and merge relevant learnings into the new one.
 
 ### Step 8: Execute Loop
-Execute tasks in waves. For each wave: snapshot `execution_context.md`, mark wave tasks `in_progress`, update `progress.md` with all active tasks, launch up to `max_parallel` background agents simultaneously via **parallel Task tool calls with `run_in_background: true`**. Each agent writes to `context-task-{id}.md` and a compact `result-task-{id}.md` (completion signal). The orchestrator polls for result files via the `poll-for-results.sh` script in multi-round Bash invocations (each with `timeout: 480000`), logging progress between rounds, then batch-reads results to process outcomes — avoiding full agent output in context. Failed tasks with retries remaining are re-launched as background agents. After all wave agents complete: merge per-task context files into `execution_context.md`, clean up result and context files, archive completed task JSONs, refresh TaskList for newly unblocked tasks, form next wave, repeat.
+Execute tasks in waves. For each wave: snapshot `execution_context.md`, mark wave tasks `in_progress`, update `progress.md` with all active tasks, launch up to `max_parallel` background agents simultaneously via **parallel Task tool calls with `run_in_background: true`**, recording the `{task_list_id → background_task_id}` mapping from each Task tool response. Each agent writes to `context-task-{id}.md` and a compact `result-task-{id}.md` (completion signal). The orchestrator polls for result files via the `poll-for-results.sh` script in multi-round Bash invocations (each with `timeout: 480000`), logging progress between rounds, then batch-reads results to process outcomes — avoiding full agent output in context. After polling, the orchestrator calls `TaskOutput` on each background task_id to reap the process and extract per-task `duration_ms` and `total_tokens` usage metadata for the task log. If `TaskOutput` times out (agent stuck), `TaskStop` is called to force-terminate the agent. Failed tasks with retries remaining are re-launched as background agents (same TaskOutput reaping after retry polling). After all wave agents complete: merge per-task context files into `execution_context.md`, clean up result and context files, archive completed task JSONs, refresh TaskList for newly unblocked tasks, form next wave, repeat.
 
 ### Step 9: Session Summary
-Display execution results with pass/fail counts, total execution time, failed task list, newly unblocked tasks, and token usage summary (captured from Task tool responses if available). Save `session_summary.md` to `.claude/sessions/__live_session__/`. Archive the session by moving all contents from `__live_session__/` to `.claude/sessions/{task_execution_id}/`, leaving `__live_session__/` as an empty directory. `execution_pointer.md` stays pointing to `__live_session__/`.
+Display execution results with pass/fail counts, total execution time (sum of per-task `duration_ms`), failed task list, newly unblocked tasks, and total token usage (sum of per-task `total_tokens` captured via `TaskOutput`). Save `session_summary.md` to `.claude/sessions/__live_session__/`. Archive the session by moving all contents from `__live_session__/` to `.claude/sessions/{task_execution_id}/`, leaving `__live_session__/` as an empty directory. `execution_pointer.md` stays pointing to `__live_session__/`.
 
 ### Step 10: Update CLAUDE.md
 Review execution context for project-wide changes (new patterns, dependencies, commands, structure changes, design decisions). Make targeted edits to CLAUDE.md if meaningful changes occurred. Skip if only task-specific or internal implementation details.
@@ -196,6 +198,7 @@ This enables later tasks to benefit from earlier discoveries and retry attempts 
 
 - **Autonomous execution loop**: After the user confirms the execution plan, no further prompts occur between tasks. The loop runs without interruption once started.
 - **Background agent execution**: Agents run as background tasks (`run_in_background: true`), returning ~3 lines (task_id + output_file) instead of ~100+ lines of full output. This reduces orchestrator context consumption by ~79% per wave.
+- **Agent process reaping**: After polling confirms result files exist, the orchestrator calls `TaskOutput` on each background task_id to reap the process and extract per-task `duration_ms` and `total_tokens` usage metadata. If `TaskOutput` times out, `TaskStop` force-terminates the stuck agent. This prevents lingering background processes.
 - **Result file protocol**: Each agent writes a compact `result-task-{id}.md` (~18 lines) as its very last action. The orchestrator polls for these files via `poll-for-results.sh` in multi-round Bash invocations (each with `timeout: 480000`), with progress output between rounds, then batch-reads them for processing. The result file doubles as a completion signal.
 - **Batched session file updates**: Instead of per-task read-modify-write on `task_log.md` and `progress.md`, all updates are batched into a single read-modify-write cycle per file per wave.
 - **Wave-based parallelism**: Tasks at the same dependency level run simultaneously, up to `max_parallel` concurrent agents per wave. Tasks in later waves wait until their dependencies in earlier waves complete.

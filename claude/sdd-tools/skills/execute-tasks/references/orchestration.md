@@ -313,7 +313,9 @@ Read `.claude/sessions/__live_session__/execution_context.md` and hold it as the
    ## Completed This Session
    {accumulated completed tasks from prior waves}
    ```
-4. Launch all wave agents simultaneously using **parallel Task tool calls in a single message turn** with `run_in_background: true`:
+4. Launch all wave agents simultaneously using **parallel Task tool calls in a single message turn** with `run_in_background: true`.
+
+**Record the background task_id mapping**: After the Task tool returns for each agent, record the mapping `{task_list_id → background_task_id}` from each response. The `background_task_id` (returned in the Task tool result when `run_in_background: true`) is needed later to call `TaskOutput` for process reaping and usage extraction.
 
 For each task in the wave, use the Task tool:
 
@@ -435,7 +437,15 @@ After polling completes (all done or timeout), proceed to 7d for batch processin
 
 After polling completes, process all wave results in a single batch:
 
-1. Calculate `wave_duration = current_time - wave_start_time`. Format: <60s = `{s}s`, <60m = `{m}m {s}s`, >=60m = `{h}h {m}m {s}s`
+1. **Reap background agents and extract usage**: For each task in the wave, call `TaskOutput(task_id=<background_task_id>, block=true, timeout=60000)` using the mapping recorded in 7c. This serves two purposes:
+   - **Process reaping**: Terminates the background agent process (prevents lingering subagents)
+   - **Usage extraction**: Returns metadata with `duration_ms` and `total_tokens` per agent
+
+   Extract per-task values:
+   - `task_duration`: From `duration_ms` in TaskOutput metadata. Format: <60s = `{s}s`, <60m = `{m}m {s}s`, >=60m = `{h}h {m}m {s}s`
+   - `task_tokens`: From `total_tokens` in TaskOutput metadata. Format with comma separators (e.g., `45,230`)
+
+   If `TaskOutput` times out (agent truly stuck), call `TaskStop(task_id=<background_task_id>)` to force-terminate the process, then set `task_duration = "N/A"` and `task_tokens = "N/A"`.
 
 2. **Read result files**: For each task in the wave, read `.claude/sessions/__live_session__/result-task-{id}.md`. Parse:
    - `status` line → PASS, PARTIAL, or FAIL
@@ -446,17 +456,18 @@ After polling completes, process all wave results in a single batch:
 
 3. **Handle missing result files** (agent crash recovery): If a result file is missing after polling:
    - Check if `context-task-{id}.md` exists (agent may have crashed between context and result write)
-   - Fall back to `TaskOutput` (blocking read) for the crashed agent to capture any diagnostic output
+   - The `TaskOutput` call in step 1 already captured diagnostic output for the crashed agent
    - Treat as FAIL with the TaskOutput content as failure details
 
 4. Log a status line for each task: `[{id}] {subject}: {PASS|PARTIAL|FAIL}`
 
 5. **Batch update `task_log.md`**: Read the current file once, append ALL wave rows, Write the complete file once:
    ```markdown
-   | {id1} | {subject1} | {PASS/PARTIAL/FAIL} | {attempt}/{max_retries} | {duration} | N/A |
-   | {id2} | {subject2} | {PASS/PARTIAL/FAIL} | {attempt}/{max_retries} | {duration} | N/A |
+   | {id1} | {subject1} | {PASS/PARTIAL/FAIL} | {attempt}/{max_retries} | {task_duration} | {task_tokens} |
+   | {id2} | {subject2} | {PASS/PARTIAL/FAIL} | {attempt}/{max_retries} | {task_duration} | {task_tokens} |
    ...
    ```
+   Where `{task_duration}` and `{task_tokens}` come from the TaskOutput metadata extracted in step 1.
 
 6. **Batch update `progress.md`**: Read the current file once, move ALL completed tasks from Active to Completed, Write the complete file once:
    ```markdown
@@ -464,8 +475,8 @@ After polling completes, process all wave results in a single batch:
    {only tasks still running, if any}
 
    ## Completed This Session
-   - [{id1}] {subject1} — PASS ({wave_duration})
-   - [{id2}] {subject2} — FAIL ({wave_duration})
+   - [{id1}] {subject1} — PASS ({task_duration})
+   - [{id2}] {subject2} — FAIL ({task_duration})
    {prior completed entries}
    ```
 
@@ -480,10 +491,12 @@ After batch processing identifies failed tasks:
    - Read the failure details from `result-task-{id}.md` (Issues section and Verification section)
    - Delete the old `result-task-{id}.md` file before re-launching
    - Launch a new background agent (`run_in_background: true`) with failure context from the result file included in the prompt
+   - **Record the new `background_task_id`** from each Task tool response (same mapping as 7c)
    - Update `progress.md` active task entry: `- [{id}] {subject} — Retrying ({n}/{max})`
 3. If any retry agents were launched:
    - Enter a new multi-round polling loop for the retry agents' result files (same `poll-for-results.sh` pattern as 7c step 5, with only the retry task IDs as arguments and `timeout: 480000` on each Bash invocation)
-   - After polling completes (all retry result files found or cumulative timeout reached), process retry results using the same batch approach as 7d
+   - After polling completes (all retry result files found or cumulative timeout reached), **reap retry agents**: call `TaskOutput` on each retry `background_task_id` to extract `duration_ms` and `total_tokens` (same pattern as 7d step 1). If `TaskOutput` times out, call `TaskStop` to force-terminate.
+   - Process retry results using the same batch approach as 7d (using the freshly extracted per-task duration and token values for task_log rows)
    - Repeat 7e if any retries still have attempts remaining
 4. If retries exhausted for a task:
    - Leave task as `in_progress`
@@ -538,8 +551,8 @@ Tasks executed: {total attempted}
 
 Waves completed: {wave_count}
 Max parallel: {max_parallel}
-Total execution time: {sum of all task durations}
-Token Usage: {total tokens if tracked, otherwise "N/A"}
+Total execution time: {sum of all task duration_ms values, formatted}
+Token Usage: {sum of all task total_tokens values, formatted with commas}
 
 Remaining:
   Pending: {count}

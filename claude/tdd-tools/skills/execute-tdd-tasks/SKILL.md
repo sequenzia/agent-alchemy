@@ -12,6 +12,8 @@ allowed-tools:
   - Grep
   - Bash
   - Task
+  - TaskOutput
+  - TaskStop
   - AskUserQuestion
   - TaskCreate
   - TaskGet
@@ -292,7 +294,9 @@ Read `.claude/sessions/__live_session__/execution_context.md` and hold as baseli
 1. Mark all wave tasks as `in_progress` via `TaskUpdate`
 2. Record `wave_start_time`
 3. Update `progress.md` with active tasks
-4. Launch all wave agents simultaneously using **parallel Task tool calls in a single message turn** with `run_in_background: true`
+4. Launch all wave agents simultaneously using **parallel Task tool calls in a single message turn** with `run_in_background: true`.
+
+**Record the background task_id mapping**: After the Task tool returns for each agent, record the mapping `{task_list_id → background_task_id}` from each response. The `background_task_id` is needed later to call `TaskOutput` for process reaping and usage extraction.
 
 **Route each task to the correct agent:**
 
@@ -432,19 +436,28 @@ Task:
 
 After polling completes, process all wave results in a single batch:
 
-1. Calculate `wave_duration` (format: <60s = `{s}s`, <60m = `{m}m {s}s`, >=60m = `{h}h {m}m {s}s`)
+1. **Reap background agents and extract usage**: For each task in the wave, call `TaskOutput(task_id=<background_task_id>, block=true, timeout=60000)` using the mapping recorded in 8c. This serves two purposes:
+   - **Process reaping**: Terminates the background agent process (prevents lingering subagents)
+   - **Usage extraction**: Returns metadata with `duration_ms` and `total_tokens` per agent
+
+   Extract per-task values:
+   - `task_duration`: From `duration_ms` in TaskOutput metadata. Format: <60s = `{s}s`, <60m = `{m}m {s}s`, >=60m = `{h}h {m}m {s}s`
+   - `task_tokens`: From `total_tokens` in TaskOutput metadata. Format with comma separators (e.g., `45,230`)
+
+   If `TaskOutput` times out (agent truly stuck), call `TaskStop(task_id=<background_task_id>)` to force-terminate the process, then set `task_duration = "N/A"` and `task_tokens = "N/A"`.
 
 2. **Read result files**: For each task in the wave, read `.claude/sessions/__live_session__/result-task-{id}.md`. Parse status, attempt, verification, files modified, and issues. For TDD tasks, also parse the `## TDD Compliance` section (RED Verified, GREEN Verified, Refactored, Coverage Delta).
 
-3. **Handle missing result files**: If a result file is missing after polling, fall back to `TaskOutput` for the crashed agent. Treat as FAIL.
+3. **Handle missing result files**: If a result file is missing after polling, the `TaskOutput` call in step 1 already captured diagnostic output for the crashed agent. Treat as FAIL.
 
 4. Determine task type label: `TDD/RED`, `TDD/GREEN`, or `non-TDD`
 5. Log status for each task: `[{id}] {subject}: {PASS|PARTIAL|FAIL} ({type})`
 
 6. **Batch update `task_log.md`**: Read once, append ALL wave rows, Write once:
    ```
-   | {id} | {subject} | {TDD/RED|TDD/GREEN|non-TDD} | {PASS/PARTIAL/FAIL} | {attempt}/{max} | {wave_duration} | N/A |
+   | {id} | {subject} | {TDD/RED|TDD/GREEN|non-TDD} | {PASS/PARTIAL/FAIL} | {attempt}/{max} | {task_duration} | {task_tokens} |
    ```
+   Where `{task_duration}` and `{task_tokens}` come from the TaskOutput metadata extracted in step 1.
 
 7. **Batch update `progress.md`**: Read once, move ALL completed tasks from Active to Completed, Write once.
 
@@ -461,11 +474,13 @@ After batch processing identifies failed tasks:
    - Read failure details from `result-task-{id}.md` (Issues and TDD Compliance sections)
    - Delete the old `result-task-{id}.md` file before re-launching
    - Launch a new background agent (`run_in_background: true`) with failure context from the result file
+   - **Record the new `background_task_id`** from each Task tool response (same mapping as 8c)
    - For TDD tasks, include TDD-specific retry guidance in the prompt
    - Update `progress.md`: `- [{id}] {subject} -- Retrying ({n}/{max})`
 3. If any retry agents were launched:
    - Enter a new multi-round polling loop for the retry agents' result files (same `poll-for-results.sh` pattern as 8c step 5, with only the retry task IDs as arguments)
-   - Process retry results using the same batch approach as 8d
+   - After polling completes, **reap retry agents**: call `TaskOutput` on each retry `background_task_id` to extract `duration_ms` and `total_tokens` (same pattern as 8d step 1). If `TaskOutput` times out, call `TaskStop` to force-terminate.
+   - Process retry results using the same batch approach as 8d (using the freshly extracted per-task duration and token values for task_log rows)
    - Repeat 8e if any retries still have attempts remaining
 4. If retries exhausted:
    - Leave task as `in_progress`
@@ -523,8 +538,8 @@ TDD Compliance Rate: {compliant_pairs}/{total_pairs} ({percentage}%)
 Waves completed: {wave_count}
 Max parallel: {max_parallel}
 TDD Strictness: {strictness}
-Total execution time: {total_duration}
-Token Usage: {total tokens or N/A}
+Total execution time: {sum of all task duration_ms values, formatted}
+Token Usage: {sum of all task total_tokens values, formatted with commas}
 
 Remaining:
   Pending: {count}
@@ -591,6 +606,7 @@ See `references/tdd-verification-patterns.md` for complete verification rules.
 
 - **Autonomous execution loop**: After user confirms the plan, no further prompts between tasks
 - **Background agent execution**: Agents run as background tasks (`run_in_background: true`), returning ~3 lines instead of ~100+ lines of full output. This reduces orchestrator context consumption by ~79% per wave.
+- **Agent process reaping**: After polling confirms result files exist, the orchestrator calls `TaskOutput` on each background task_id to reap the process and extract per-task `duration_ms` and `total_tokens` usage metadata. If `TaskOutput` times out, `TaskStop` force-terminates the stuck agent. This prevents lingering background processes.
 - **Result file protocol**: Each agent writes a compact `result-task-{id}.md` as its very last action. TDD result files include a `## TDD Compliance` section. The orchestrator polls for these files via `poll-for-results.sh` in multi-round Bash invocations (each with `timeout: 480000`), with progress output between rounds, then batch-reads them for processing.
 - **Batched session file updates**: `task_log.md` and `progress.md` are updated once per wave (batch read-modify-write) instead of per-task.
 - **Wave-based TDD parallelism**: Test tasks (RED) in one wave, their paired implementation tasks (GREEN) in the next. Multiple features run in parallel within a wave
