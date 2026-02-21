@@ -3,7 +3,7 @@ name: create-spec
 description: Create a new specification through an adaptive interview process with proactive recommendations and optional research. Use when user says "create spec", "new spec", "generate spec", or wants to start a specification document.
 user-invocable: true
 disable-model-invocation: false
-allowed-tools: AskUserQuestion, Task, Read, Write, Glob, Grep, Bash, TeamCreate, TeamDelete, TaskCreate, TaskUpdate, TaskList, TaskGet, SendMessage
+allowed-tools: AskUserQuestion, Task, Read, Write, Glob, Grep, Bash
 ---
 
 # Create Spec Skill
@@ -254,36 +254,29 @@ Maintain internal tracking of detected triggers and accepted recommendations:
 
 If the product type is "New feature for existing product":
 
-1. **Run deep-analysis workflow:**
-   1. Read the deep-analysis skill: `${CLAUDE_PLUGIN_ROOT}/../core-tools/skills/deep-analysis/SKILL.md`
-   2. Follow its full workflow (Phases 1-6) with analysis context set to:
-      ```
-      Feature exploration for spec: {spec_name}. Description: {user's description from Phase 2}.
-      Focus on: existing patterns, conventions, integration points, data models to extend,
-      and similar features that could serve as implementation references.
-      ```
-   3. After the analysis completes and control returns, store the synthesized findings internally as "Codebase Context" for use in subsequent interview rounds and spec compilation
-   4. Present a brief summary of key findings to the user before starting the interview
+1. **Read the exploration procedure:** `${CLAUDE_PLUGIN_ROOT}/skills/create-spec/references/codebase-exploration.md`
+2. **Follow all 4 steps** (Quick Reconnaissance → Plan Focus Areas → Parallel Exploration → Synthesis)
+3. After synthesis, store the merged findings internally as "Codebase Context" for use in subsequent interview rounds and spec compilation
+4. Present a brief summary of key findings to the user before starting the interview
 
-   **Note:** Deep-analysis may return cached results if a valid exploration cache exists. In skill-invoked mode, cache hits are auto-accepted — this is expected behavior that avoids redundant exploration.
-
-   **Error handling / fallback:**
-   If the deep-analysis workflow fails at any point (TeamCreate fails, agents fail, etc.):
-   1. Inform the user that deep analysis encountered an issue
-   2. Use `AskUserQuestion` to offer fallback:
-      ```yaml
-      questions:
-        - header: "Fallback"
-          question: "Deep analysis encountered an issue. How would you like to proceed?"
-          options:
-            - label: "Quick exploration"
-              description: "Fall back to basic Glob/Grep/Read exploration"
-            - label: "Skip"
-              description: "Continue without codebase analysis"
-          multiSelect: false
-      ```
-   3. If quick exploration: use basic Glob/Grep/Read to understand existing patterns, related features, integration points, and data models
-   4. If skip: continue to Phase 3 Round 1 with whatever findings were gathered
+**Error handling / fallback:**
+If exploration agents fail (Task tool errors, agent timeouts, etc.):
+1. If some agents succeeded: continue with partial findings — merge what's available
+2. If all agents failed: use the reconnaissance findings from Step 1 as minimal context
+3. If reconnaissance also failed, use `AskUserQuestion` to offer fallback:
+   ```yaml
+   questions:
+     - header: "Fallback"
+       question: "Codebase exploration encountered an issue. How would you like to proceed?"
+       options:
+         - label: "Quick exploration"
+           description: "Fall back to basic Glob/Grep/Read exploration"
+         - label: "Skip"
+           description: "Continue without codebase analysis"
+       multiSelect: false
+   ```
+4. If quick exploration: use basic Glob/Grep/Read to understand existing patterns, related features, integration points, and data models
+5. If skip: continue to Phase 3 Round 1 with whatever findings were gathered
 
 ### Using Exploration Findings in Interview
 

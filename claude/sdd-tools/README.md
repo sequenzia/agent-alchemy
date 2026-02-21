@@ -2,6 +2,8 @@
 
 Spec-Driven Development — turn ideas into structured specifications, decompose them into executable tasks, and run autonomous implementation with wave-based parallelism.
 
+> **Standalone plugin** — sdd-tools has no external plugin dependencies. Codebase exploration for "new feature" specs uses a built-in `codebase-explorer` agent instead of cross-plugin references.
+
 ## Skills
 
 | Skill | Invocable | Description |
@@ -17,6 +19,7 @@ Spec-Driven Development — turn ideas into structured specifications, decompose
 
 | Agent | Model | Purpose |
 |-------|-------|---------|
+| `codebase-explorer` | sonnet | Explores codebases to discover architecture, patterns, and feature-relevant code. Spawned in parallel by `/create-spec` for "new feature" type specs. |
 | `researcher` | — | Technical and domain research for spec creation. Searches external sources for architecture decisions and best practices. |
 | `spec-analyzer` | — | Quality analysis agent that reviews specs against criteria and generates structured reports. |
 | `task-executor` | — | Autonomous implementation agent with 4-phase workflow. Writes execution context and progress updates consumed by the Task Manager. Also used by `tdd-tools` `/execute-tdd-tasks` for non-TDD tasks. |
@@ -62,6 +65,7 @@ When re-running `/create-tasks` on an updated spec, the skill uses `task_uid` me
 ```
 sdd-tools/
 ├── agents/
+│   ├── codebase-explorer.md    # Codebase exploration agent (sonnet)
 │   ├── researcher.md           # Research agent
 │   ├── spec-analyzer.md        # Spec quality agent
 │   └── task-executor.md        # Implementation agent
@@ -72,6 +76,7 @@ sdd-tools/
 │   ├── create-spec/
 │   │   ├── SKILL.md            # Interview workflow (665 lines)
 │   │   └── references/
+│   │       ├── codebase-exploration.md
 │   │       ├── interview-questions.md
 │   │       ├── recommendation-triggers.md
 │   │       ├── recommendation-format.md

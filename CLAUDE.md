@@ -63,11 +63,10 @@ pnpm lint                      # Lint all packages
 
 ### Cross-Plugin Dependencies
 
-`deep-analysis` (core-tools) is the keystone skill, loaded by 4 skills across 3 plugin groups:
+`deep-analysis` (core-tools) is the keystone skill, loaded by 3 skills across 2 plugin groups:
 - `codebase-analysis` (core-tools) — wraps deep-analysis with reporting + post-analysis actions
 - `feature-dev` (dev-tools) — loads in Phase 2 for codebase exploration
 - `docs-manager` (dev-tools) — loads for codebase understanding before doc generation
-- `create-spec` (sdd-tools) — optionally loads for "new feature" type specs
 
 **Cross-plugin reference convention:** Always use `${CLAUDE_PLUGIN_ROOT}/../{source-dir-name}/` for cross-plugin references, where `{source-dir-name}` is the directory name under `claude/` (e.g., `core-tools`, `tdd-tools`). Same-plugin references use `${CLAUDE_PLUGIN_ROOT}/` directly. Never use full marketplace names (e.g., `agent-alchemy-core-tools`) in path references — use the short source directory name.
 
@@ -83,7 +82,7 @@ pnpm lint                      # Lint all packages
 feature-dev -> deep-analysis -> code-explorer (sonnet) x N + code-synthesizer (opus) x 1
 feature-dev -> code-architect (core-tools, opus) x 2-3 -> code-reviewer (opus) x 3
 
-create-spec -> deep-analysis (optional, for "new feature" type)
+create-spec -> codebase-explorer (sonnet) x 2-3 (optional, for "new feature" type)
 create-spec -> researcher agent (for technical research)
 
 create-tasks -> reads spec -> generates task JSON
@@ -128,7 +127,7 @@ dependency-checker -> reads all plugin groups -> builds dependency graph -> 7 an
 |-------|--------|--------|---------|
 | core-tools | deep-analysis, codebase-analysis, language-patterns, project-conventions | code-explorer, code-synthesizer, code-architect | 0.1.2 |
 | dev-tools | feature-dev, architecture-patterns, code-quality, changelog-format, docs-manager, release-python-package | code-reviewer, changelog-manager, docs-writer | 0.1.1 |
-| sdd-tools | create-spec, analyze-spec, create-tasks, execute-tasks | researcher, spec-analyzer, task-executor | 0.1.5 |
+| sdd-tools | create-spec, analyze-spec, create-tasks, execute-tasks | codebase-explorer, researcher, spec-analyzer, task-executor | 0.1.5 |
 | tdd-tools | generate-tests, tdd-cycle, analyze-coverage, create-tdd-tasks, execute-tdd-tasks | test-writer, tdd-executor, test-reviewer | 0.1.3 |
 | git-tools | git-commit | — | 0.1.0 |
 | plugin-tools | port-plugin, validate-adapter, update-ported-plugin, dependency-checker, bump-plugin-version | researcher, port-converter | 0.1.1 |
