@@ -1,6 +1,6 @@
 # Dev Tools
 
-**Version:** 0.2.0 | **Skills:** 7 | **Agents:** 3
+**Version:** 0.3.0 | **Skills:** 9 | **Agents:** 4
 
 Dev Tools provides the development lifecycle toolkit — from feature implementation through code review, documentation, and changelog management.
 

@@ -129,7 +129,7 @@ bug-killer (deep) -> code-explorer (core-tools, sonnet) x 2-3 + bug-investigator
 | Group | Skills | Agents | Version |
 |-------|--------|--------|---------|
 | core-tools | deep-analysis, codebase-analysis, language-patterns, project-conventions | code-explorer, code-synthesizer, code-architect | 0.2.0 |
-| dev-tools | feature-dev, bug-killer, architecture-patterns, code-quality, project-learnings, changelog-format, docs-manager, release-python-package, document-changes | code-reviewer, bug-investigator, changelog-manager, docs-writer | 0.2.0 |
+| dev-tools | feature-dev, bug-killer, architecture-patterns, code-quality, project-learnings, changelog-format, docs-manager, release-python-package, document-changes | code-reviewer, bug-investigator, changelog-manager, docs-writer | 0.3.0 |
 | sdd-tools | create-spec, analyze-spec, create-tasks, execute-tasks | codebase-explorer, researcher, spec-analyzer, task-executor | 0.2.0 |
 | tdd-tools | generate-tests, tdd-cycle, analyze-coverage, create-tdd-tasks, execute-tdd-tasks | test-writer, tdd-executor, test-reviewer | 0.2.0 |
 | git-tools | git-commit | — | 0.1.0 |
