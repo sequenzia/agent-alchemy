@@ -7,11 +7,13 @@ Developer agents and skills for the full feature development lifecycle — from 
 | Skill | Invocable | Description |
 |-------|-----------|-------------|
 | `/feature-dev` | Yes | 7-phase feature development: Discovery, Exploration (via deep-analysis), Questions, Architecture (code-architect agents), Implementation, Review (code-reviewer agents), Summary. |
+| `/bug-killer` | Yes | Hypothesis-driven debugging: Triage & Reproduction, Investigation (code-explorer agents on deep track), Root Cause Analysis (bug-investigator agents), Fix & Verify, Wrap-up & Report. Supports `--deep` flag. |
 | `/docs-manager` | Yes | Documentation updates with MkDocs integration. Generates markdown files, updates navigation, handles change summaries. |
 | `/release-python-package` | Yes | Python package release automation workflow. |
 | `/document-changes` | Yes | Generate a markdown report documenting session changes — files affected, change details, and commit history. |
 | `architecture-patterns` | No (loaded by feature-dev) | Design patterns and architectural approaches for the implementation phase. |
-| `code-quality` | No (loaded by feature-dev) | Quality criteria and review guidelines for the review phase. |
+| `code-quality` | No (loaded by feature-dev, bug-killer) | Quality criteria and review guidelines for the review phase. |
+| `project-learnings` | No (loaded by bug-killer) | Captures project-specific patterns and anti-patterns into the project's CLAUDE.md for future sessions. |
 | `changelog-format` | No (loaded by feature-dev) | Keep a Changelog format guidelines with entry examples. |
 
 ## Agents
@@ -19,6 +21,7 @@ Developer agents and skills for the full feature development lifecycle — from 
 | Agent | Model | Purpose |
 |-------|-------|---------|
 | `code-reviewer` | Opus | Quality review with confidence-scored findings. Spawned 3x in parallel by feature-dev for independent review perspectives. |
+| `bug-investigator` | Sonnet | Diagnostic investigation agent for testing debugging hypotheses. Runs tests, traces execution, checks git history, reports evidence. Spawned by bug-killer in deep track. |
 | `changelog-manager` | — | Manages CHANGELOG.md entries following Keep a Changelog format. |
 | `docs-writer` | — | Generates and updates documentation files. |
 
@@ -42,11 +45,20 @@ The **feature-dev** skill orchestrates a complete development lifecycle:
 dev-tools/
 ├── agents/
 │   ├── code-reviewer.md        # Opus review agent
+│   ├── bug-investigator.md     # Sonnet investigation agent
 │   ├── changelog-manager.md    # Changelog automation
 │   └── docs-writer.md          # Documentation agent
 ├── skills/
 │   ├── feature-dev/
 │   │   └── SKILL.md            # 7-phase workflow (272 lines)
+│   ├── bug-killer/
+│   │   ├── SKILL.md            # 5-phase debugging workflow (~480 lines)
+│   │   └── references/
+│   │       ├── python-debugging.md
+│   │       ├── typescript-debugging.md
+│   │       └── general-debugging.md
+│   ├── project-learnings/
+│   │   └── SKILL.md            # Internal skill for CLAUDE.md learnings
 │   ├── architecture-patterns/
 │   │   └── SKILL.md            # Design patterns
 │   ├── code-quality/

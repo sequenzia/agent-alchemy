@@ -11,7 +11,7 @@ agent-alchemy/
 ├── claude/                    # Claude Code plugins (markdown-as-code)
 │   ├── .claude-plugin/        # Plugin marketplace registry
 │   ├── core-tools/            # Codebase analysis, deep exploration, language patterns (includes hooks/)
-│   ├── dev-tools/             # Feature dev, code review, docs, changelog
+│   ├── dev-tools/             # Feature dev, debugging, code review, docs, changelog
 │   ├── sdd-tools/             # Spec-Driven Development pipeline
 │   ├── tdd-tools/             # TDD workflows: test generation, RED-GREEN-REFACTOR, coverage
 │   ├── git-tools/             # Git commit automation
@@ -98,6 +98,9 @@ validate-adapter -> researcher (sonnet) x 1 -> compare adapter sections against 
 update-ported-plugin -> validate-adapter (phases 1-3) + git diff -> incremental re-conversion
 
 dependency-checker -> reads all plugin groups -> builds dependency graph -> 7 analysis passes + doc drift checks
+
+bug-killer (quick) -> reads error location, targeted investigation, fix + regression test -> project-learnings
+bug-killer (deep) -> code-explorer (core-tools, sonnet) x 2-3 + bug-investigator (sonnet) x 1-3 -> code-quality (same plugin) for fix validation -> project-learnings
 ```
 
 ### Task Manager (apps/task-manager/)
@@ -126,7 +129,7 @@ dependency-checker -> reads all plugin groups -> builds dependency graph -> 7 an
 | Group | Skills | Agents | Version |
 |-------|--------|--------|---------|
 | core-tools | deep-analysis, codebase-analysis, language-patterns, project-conventions | code-explorer, code-synthesizer, code-architect | 0.2.0 |
-| dev-tools | feature-dev, architecture-patterns, code-quality, changelog-format, docs-manager, release-python-package, document-changes | code-reviewer, changelog-manager, docs-writer | 0.2.0 |
+| dev-tools | feature-dev, bug-killer, architecture-patterns, code-quality, project-learnings, changelog-format, docs-manager, release-python-package, document-changes | code-reviewer, bug-investigator, changelog-manager, docs-writer | 0.2.0 |
 | sdd-tools | create-spec, analyze-spec, create-tasks, execute-tasks | codebase-explorer, researcher, spec-analyzer, task-executor | 0.2.0 |
 | tdd-tools | generate-tests, tdd-cycle, analyze-coverage, create-tdd-tasks, execute-tdd-tasks | test-writer, tdd-executor, test-reviewer | 0.2.0 |
 | git-tools | git-commit | — | 0.1.0 |
@@ -144,6 +147,7 @@ dependency-checker -> reads all plugin groups -> builds dependency graph -> 7 an
 | `claude/sdd-tools/skills/create-tasks/SKILL.md` | 653 | Spec-to-task decomposition with `task_uid` merge mode |
 | `claude/sdd-tools/skills/execute-tasks/SKILL.md` | 262 | Wave-based parallel execution with session management |
 | `claude/dev-tools/skills/feature-dev/SKILL.md` | 273 | 7-phase lifecycle spawning architect + reviewer agent teams |
+| `claude/dev-tools/skills/bug-killer/SKILL.md` | ~480 | Hypothesis-driven debugging — triage-based quick/deep track with agent investigation |
 | `claude/tdd-tools/skills/tdd-cycle/SKILL.md` | 727 | 7-phase RED-GREEN-REFACTOR TDD workflow |
 | `claude/tdd-tools/skills/generate-tests/SKILL.md` | 524 | Test generation from acceptance criteria or source code |
 | `claude/tdd-tools/skills/create-tdd-tasks/SKILL.md` | 687 | SDD-to-TDD task pair transformation |
