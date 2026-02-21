@@ -126,7 +126,7 @@ dependency-checker -> reads all plugin groups -> builds dependency graph -> 7 an
 | Group | Skills | Agents | Version |
 |-------|--------|--------|---------|
 | core-tools | deep-analysis, codebase-analysis, language-patterns, project-conventions | code-explorer, code-synthesizer, code-architect | 0.2.0 |
-| dev-tools | feature-dev, architecture-patterns, code-quality, changelog-format, docs-manager, release-python-package | code-reviewer, changelog-manager, docs-writer | 0.1.1 |
+| dev-tools | feature-dev, architecture-patterns, code-quality, changelog-format, docs-manager, release-python-package, document-changes | code-reviewer, changelog-manager, docs-writer | 0.2.0 |
 | sdd-tools | create-spec, analyze-spec, create-tasks, execute-tasks | codebase-explorer, researcher, spec-analyzer, task-executor | 0.2.0 |
 | tdd-tools | generate-tests, tdd-cycle, analyze-coverage, create-tdd-tasks, execute-tdd-tasks | test-writer, tdd-executor, test-reviewer | 0.2.0 |
 | git-tools | git-commit | — | 0.1.0 |

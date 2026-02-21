@@ -9,6 +9,7 @@ Developer agents and skills for the full feature development lifecycle — from 
 | `/feature-dev` | Yes | 7-phase feature development: Discovery, Exploration (via deep-analysis), Questions, Architecture (code-architect agents), Implementation, Review (code-reviewer agents), Summary. |
 | `/docs-manager` | Yes | Documentation updates with MkDocs integration. Generates markdown files, updates navigation, handles change summaries. |
 | `/release-python-package` | Yes | Python package release automation workflow. |
+| `/document-changes` | Yes | Generate a markdown report documenting session changes — files affected, change details, and commit history. |
 | `architecture-patterns` | No (loaded by feature-dev) | Design patterns and architectural approaches for the implementation phase. |
 | `code-quality` | No (loaded by feature-dev) | Quality criteria and review guidelines for the review phase. |
 | `changelog-format` | No (loaded by feature-dev) | Keep a Changelog format guidelines with entry examples. |
@@ -60,7 +61,9 @@ dev-tools/
 │   │       ├── change-summary-templates.md
 │   │       ├── markdown-file-templates.md
 │   │       └── mkdocs-config-template.md
-│   └── release-python-package/
-│       └── SKILL.md            # Python release workflow
+│   ├── release-python-package/
+│   │   └── SKILL.md            # Python release workflow
+│   └── document-changes/
+│       └── SKILL.md            # Change report generator
 └── README.md
 ```
