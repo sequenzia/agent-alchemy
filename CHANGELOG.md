@@ -16,3 +16,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Bump core-tools from 0.1.2 to 0.2.0, sdd-tools from 0.1.5 to 0.2.0, and tdd-tools from 0.1.3 to 0.2.0
 - Bump dev-tools from 0.1.1 to 0.2.0
 - Bump dev-tools from 0.2.0 to 0.3.0
+- Bump sdd-tools from 0.2.0 to 0.2.1

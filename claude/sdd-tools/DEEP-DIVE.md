@@ -79,9 +79,10 @@ sdd-tools/
 │   └── auto-approve-session.sh # Session directory auto-approve
 ├── skills/
 │   ├── create-spec/
-│   │   ├── SKILL.md            # Interview workflow (660 lines)
+│   │   ├── SKILL.md            # Interview workflow (~723 lines)
 │   │   └── references/
 │   │       ├── codebase-exploration.md
+│   │       ├── complexity-signals.md
 │   │       ├── interview-questions.md
 │   │       ├── recommendation-triggers.md
 │   │       ├── recommendation-format.md
@@ -122,7 +123,7 @@ sdd-tools/
 | Skills | 4 | create-spec, analyze-spec, create-tasks, execute-tasks |
 | Agents | 4 | codebase-explorer, researcher, spec-analyzer, task-executor |
 | Hooks | 1 | auto-approve-session (PreToolUse) |
-| Reference files | 14 | Question banks, templates, criteria, patterns |
+| Reference files | 15 | Question banks, complexity signals, templates, criteria, patterns |
 | Spec templates | 3 | High-level, detailed, full-tech |
 
 ---
@@ -187,14 +188,23 @@ flowchart TD
 
 ### Purpose
 
-Transforms a product idea into a structured specification through an adaptive, multi-round interview process. The skill adjusts its questioning depth, provides proactive recommendations, and can explore the existing codebase for context.
+Transforms a product idea into a structured specification through an adaptive, multi-round interview process. Accepts optional context input (file path or inline text) that makes the interview smarter — asking more targeted questions informed by the context rather than generic ones. Detects project complexity via signal-based analysis and dynamically expands interview budgets when warranted. The skill also adjusts its questioning depth, provides proactive recommendations, and can explore the existing codebase for context.
 
 ### Workflow (6 Phases)
 
 ```mermaid
 flowchart TD
-    P1["Phase 1: Settings Check"] --> P2["Phase 2: Initial Inputs"]
-    P2 --> |"Name, Type, Depth, Description"| P3["Phase 3: Adaptive Interview"]
+    P1["Phase 1: Settings Check"] --> P2["Phase 2: Initial Inputs & Context"]
+
+    P2 --> |"Has $ARGUMENTS?"| CTX["Context Loading"]
+    CTX --> |"Signals detected?"| CX["Complexity Assessment"]
+    CX --> |"User opts in"| EXP["Expanded Budgets"]
+    CX --> |"Standard"| STD["Standard Budgets"]
+    P2 --> |"No arguments"| STD
+
+    EXP --> GI["Gather Initial Inputs"]
+    STD --> GI
+    GI --> |"Name, Type, Depth, Description"| P3["Phase 3: Adaptive Interview"]
 
     P3 --> |"For 'new feature' type"| CE["Codebase Exploration"]
     CE --> |"findings"| P3
@@ -202,11 +212,13 @@ flowchart TD
     P3 --> |"Trigger detected"| RES["External Research"]
     RES --> |"findings"| P3
 
-    P3 --> |"2-5 rounds"| P4["Phase 4: Recommendations Round"]
+    P3 --> |"2-8 rounds"| P4["Phase 4: Recommendations Round"]
     P4 --> P5["Phase 5: Pre-Compilation Summary"]
     P5 --> |"User confirms"| P6["Phase 6: Spec Compilation"]
     P6 --> SPEC["specs/SPEC-{name}.md"]
 
+    style CTX fill:#fff3e0,stroke:#FF9800,color:#333
+    style CX fill:#fce4ec,stroke:#e91e63,color:#333
     style P3 fill:#e8f4fd,stroke:#2196F3,color:#333
     style CE fill:#fff3e0,stroke:#FF9800,color:#333
     style RES fill:#f3e5f5,stroke:#9C27B0,color:#333
@@ -217,11 +229,13 @@ flowchart TD
 
 The interview adapts based on the requested depth level:
 
-| Level | Rounds | Questions | Focus | Output |
-|-------|--------|-----------|-------|--------|
-| **High-level overview** | 2-3 | 6-10 | Problem, goals, key features, success metrics | Executive summary |
-| **Detailed specifications** | 3-4 | 12-18 | Balanced coverage, acceptance criteria, technical constraints | Standard PRD |
-| **Full technical documentation** | 4-5 | 18-25 | Deep probing, API endpoints, data models, performance | Comprehensive tech spec |
+| Level | Rounds | Questions | Expanded Rounds* | Expanded Questions* | Focus | Output |
+|-------|--------|-----------|------------------|---------------------|-------|--------|
+| **High-level overview** | 2-3 | 6-10 | 3-5 | 10-18 | Problem, goals, key features, success metrics | Executive summary |
+| **Detailed specifications** | 3-4 | 12-18 | 5-7 | 20-30 | Balanced coverage, acceptance criteria, technical constraints | Standard PRD |
+| **Full technical documentation** | 4-5 | 18-25 | 6-8 | 28-40 | Deep probing, API endpoints, data models, performance | Comprehensive tech spec |
+
+*Expanded budgets activate when complexity is detected in user-supplied context and the user opts in. Soft ceiling: ~8 rounds / ~35 questions.
 
 ### Question Categories
 
@@ -231,6 +245,25 @@ Each interview round covers four categories (depth-adjusted):
 2. **Functional Requirements** — Features, user stories, acceptance criteria, workflows
 3. **Technical Specs** — Architecture, tech stack, data models, APIs, constraints
 4. **Implementation** — Phases, dependencies, risks, out-of-scope items
+
+### Context Input
+
+The skill accepts optional context via `$ARGUMENTS` — either a file path or inline text describing what to build. Context makes the interview smarter by enabling targeted questions, gap probing, and assumption confirmation. It does NOT pre-fill answers or skip questions.
+
+- **File path detection**: Arguments ending in `.md`/`.txt`/`.markdown`, starting with `/`/`./`/`../`/`~`, or containing path separators are read as files
+- **Inline text**: All other arguments are treated as inline context
+- **No arguments**: Skill behaves exactly as before (fully backward compatible)
+
+### Complexity Detection
+
+When context is provided, the skill scans for complexity signals defined in `references/complexity-signals.md`:
+
+- **11 signal categories** across 3 weight tiers (high, medium, low)
+- **High-weight signals**: Multiple subsystems, integration density (3+ APIs), compliance/regulatory, distributed architecture
+- **Medium-weight signals**: Multi-role auth (3+ roles), complex data models (5+ entities), security concerns, real-time requirements, scale requirements
+- **Low-weight signals**: Multi-platform, phased rollout
+- **Threshold**: Complex if 3+ high-weight signals OR 5+ any-weight signals
+- **User opt-in**: When threshold is met, user is notified and can choose expanded or standard budgets
 
 ### Proactive Features
 
@@ -671,12 +704,15 @@ sequenceDiagram
 
     Note over U,TM: Phase 1: Specification
 
-    U->>CS: /create-spec
+    U->>CS: /create-spec context.md
+    CS->>CS: Load context, assess complexity
+    CS->>U: Complexity detected — thorough interview?
+    U->>CS: "Yes, let's be thorough"
     CS->>U: What type? "New feature"
     CS->>U: What depth? "Detailed"
     CS->>CE: Explore auth patterns (Sonnet × 2)
     CE-->>CS: Architecture findings
-    CS->>U: Interview rounds (3-4 rounds, 12-18 questions)
+    CS->>U: Interview rounds (5-7 rounds, 20-30 questions, context-informed)
     CS->>U: Recommendations round
     CS->>U: Pre-compilation summary — confirm?
     U->>CS: Confirmed
@@ -723,7 +759,7 @@ sequenceDiagram
 
 ### Step-by-Step
 
-1. **`/create-spec`** — Developer initiates spec creation. The skill asks about type ("new feature"), depth ("detailed"), and runs a 3-4 round interview. For new features, it spawns codebase explorers to understand existing patterns. It produces `specs/SPEC-User-Auth.md`.
+1. **`/create-spec context.md`** — Developer initiates spec creation with a context file. The skill loads the context, detects complexity signals (e.g., HIPAA + microservices + 5 roles), and offers an expanded interview. After the user opts in, it asks about type ("new feature"), depth ("detailed"), and runs a 5-7 round context-informed interview with expanded budgets. For new features, it spawns codebase explorers to understand existing patterns. It produces `specs/SPEC-User-Auth.md`.
 
 2. **`/analyze-spec specs/SPEC-User-Auth.md`** (optional but recommended) — The spec is analyzed for quality issues. The developer reviews findings via CLI or HTML interface, fixing critical issues before task generation.
 
@@ -886,7 +922,7 @@ Settings are configured in `.claude/agent-alchemy.local.md` (not committed):
 
 | Skill | Arguments | Description |
 |-------|-----------|-------------|
-| `/create-spec` | (none) | Starts interactive interview |
+| `/create-spec` | `[context-file-or-text]` | Optional context — file path or inline text for smarter questioning |
 | `/analyze-spec` | `[spec-path]` | Path to spec file |
 | `/create-tasks` | `[spec-path]` | Path to spec file |
 | `/execute-tasks` | `[task-id] [--task-group <group>] [--retries <n>] [--max-parallel <n>]` | Flexible execution control |
@@ -897,7 +933,8 @@ Settings are configured in `.claude/agent-alchemy.local.md` (not committed):
 
 | Skill | File | Purpose | Contents |
 |-------|------|---------|----------|
-| create-spec | `interview-questions.md` | Question bank | Questions organized by category and depth |
+| create-spec | `complexity-signals.md` | Complexity detection | Signal categories, thresholds, and assessment format |
+| create-spec | `interview-questions.md` | Question bank | Questions organized by category and depth (includes expanded budgets) |
 | create-spec | `recommendation-triggers.md` | Trigger patterns | Keyword patterns for proactive recommendations |
 | create-spec | `recommendation-format.md` | Recommendation templates | How to present recommendations to users |
 | create-spec | `codebase-exploration.md` | Exploration procedure | 4-step codebase exploration workflow |

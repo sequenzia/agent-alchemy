@@ -1,9 +1,14 @@
 ---
 name: create-spec
 description: Create a new specification through an adaptive interview process with proactive recommendations and optional research. Use when user says "create spec", "new spec", "generate spec", or wants to start a specification document.
+argument-hint: "[context-file-or-text]"
 user-invocable: true
 disable-model-invocation: false
 allowed-tools: AskUserQuestion, Task, Read, Write, Glob, Grep, Bash
+arguments:
+  - name: context
+    description: Optional context — a file path (.md, .txt) to read or inline text describing what to build
+    required: false
 ---
 
 # Create Spec Skill
@@ -82,7 +87,49 @@ Check if there is a settings file at `.claude/agent-alchemy.local.md` to get any
 
 ---
 
-## Phase 2: Initial Inputs
+## Phase 2: Initial Inputs & Context
+
+### Context Loading
+
+If `$ARGUMENTS` is provided, load user-supplied context before gathering initial inputs:
+
+1. **Determine input type**:
+   - If the argument looks like a file path (ends in `.md`, `.txt`, or `.markdown`; or starts with `/`, `./`, `../`, or `~`; or contains path separators and the file exists) → read the file using the `Read` tool
+   - Otherwise → treat the entire argument string as inline context text
+
+2. **Store internally** as "User-Supplied Context" for use throughout the interview
+
+3. **CRITICAL**: User-supplied context makes the interview *smarter*, not shorter. Do NOT pre-fill answers or skip questions based on context. Instead:
+   - Ask more targeted, specific questions informed by the context
+   - Probe areas the context doesn't cover
+   - Confirm implicit assumptions the context makes
+   - Reference specific details from the context when asking questions
+
+If `$ARGUMENTS` is empty, skip this subsection entirely — the skill behaves exactly as before.
+
+### Complexity Assessment
+
+If user-supplied context was loaded, assess its complexity:
+
+1. **Read** `references/complexity-signals.md` for signal definitions and thresholds
+2. **Scan** the user-supplied context for complexity signals
+3. **If threshold is met** (3+ high-weight signals OR 5+ any-weight signals), present a brief notice via `AskUserQuestion`:
+   ```yaml
+   questions:
+     - header: "Complexity"
+       question: "This appears to involve significant complexity (e.g., {top 2-3 complexity areas}). The interview will be more thorough to ensure complete coverage. Ready to proceed?"
+       options:
+         - label: "Yes, let's be thorough"
+           description: "Use expanded interview budgets for deeper coverage"
+         - label: "Keep it brief"
+           description: "Use standard interview budgets"
+       multiSelect: false
+   ```
+4. If user selects "Yes, let's be thorough" → set internal `complexity_detected` flag for expanded budgets
+5. If user selects "Keep it brief" → proceed with standard budgets
+6. If no context was loaded or threshold was not met → proceed with standard budgets (no alert shown)
+
+### Gather Initial Inputs
 
 Use `AskUserQuestion` to gather the essential starting information with these four questions:
 
@@ -108,7 +155,8 @@ Use `AskUserQuestion` to gather the essential starting information with these fo
 
 **Question 4 - Description:**
 - Header: "Description"
-- Question: "Briefly describe the product/feature and its key requirements"
+- **If context was loaded**: "I've loaded the context you provided. Is there anything it doesn't cover, or would you like to highlight specific priorities?"
+- **If no context**: "Briefly describe the product/feature and its key requirements"
 - Options: Allow text input describing the problem, main features, and constraints
 
 ---
@@ -157,6 +205,10 @@ Cover all four categories, but adjust depth based on level:
 3. **Technical Specs**: Architecture, tech stack, data models, APIs, constraints
 4. **Implementation**: Phases, dependencies, risks, out of scope items
 
+#### Expanded Budgets
+
+When `complexity_detected` is set (user opted in after complexity assessment), use expanded budgets from `references/interview-questions.md` (section "Expanded Budgets (Complexity Detected)") instead of the standard budgets above. Soft ceiling of ~8 rounds / ~35 questions applies.
+
 #### Adaptive Behavior
 
 - **Build on previous answers**: Reference what the user already told you
@@ -164,6 +216,16 @@ Cover all four categories, but adjust depth based on level:
 - **Probe deeper on important areas**: If user indicates something is critical, ask follow-up questions
 - **Explore codebase when helpful**: For "new feature" type, offer to explore relevant code (with user approval)
 - **If something is unclear, ask for clarification** rather than assuming
+
+#### Context-Informed Questioning
+
+When user-supplied context was loaded in Phase 2, apply these strategies throughout the interview:
+
+1. **Reference specifics from context** when asking questions — e.g., "Your context mentions a notification service — what events should trigger notifications?"
+2. **Identify gaps in context and probe those first** — areas the context doesn't address are the highest-value questions
+3. **Confirm assumptions the context implies but doesn't state** — e.g., "The context describes multiple services. Should these be independently deployable microservices?"
+4. **Skip surface-level questions and go deeper** — don't ask "what are you building?" when the context already describes it; instead ask about edge cases, constraints, and trade-offs
+5. **Cross-reference with complexity signals** — ensure areas that drove the complexity assessment get thorough coverage in the interview
 
 ### Round Structure
 
@@ -651,7 +713,8 @@ Structure specs for optimal AI assistant consumption:
 
 ## Reference Files
 
-- `references/interview-questions.md` — Question bank organized by category and depth level
+- `references/interview-questions.md` — Question bank organized by category and depth level (includes expanded budgets for complex projects)
+- `references/complexity-signals.md` — Signal definitions, thresholds, and assessment format for complexity detection
 - `references/recommendation-triggers.md` — Trigger patterns for proactive recommendations
 - `references/recommendation-format.md` — Templates for presenting recommendations
 - `references/templates/high-level.md` — Streamlined executive overview template
