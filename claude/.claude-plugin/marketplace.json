@@ -10,7 +10,7 @@
   "plugins": [
     {
       "name": "agent-alchemy-core-tools",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "description": "Agent Alchemy Core Tools — utilities and essential functions for AI agents",
       "source": "./core-tools",
       "homepage": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/core-tools",
@@ -19,7 +19,7 @@
     },
     {
       "name": "agent-alchemy-dev-tools",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "description": "Agent Alchemy Dev Tools — dev utilities, debugging, and workflow enhancements",
       "source": "./dev-tools",
       "homepage": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/dev-tools",

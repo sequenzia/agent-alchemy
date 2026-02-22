@@ -91,6 +91,10 @@ pnpm lint                      # Lint all packages
 - `feature-dev` (dev-tools) — loads in Phase 2 for codebase exploration
 - `docs-manager` (dev-tools) — loads for codebase understanding before doc generation
 
+`technical-diagrams` (core-tools) is a reference skill loaded by:
+- `codebase-analysis` (core-tools) — loads in Phase 2 for Mermaid diagrams in reports
+- `docs-writer` agent (dev-tools) — auto-loaded via `skills:` frontmatter for consistent diagram quality
+
 **Cross-plugin reference convention:** Always use `${CLAUDE_PLUGIN_ROOT}/../{source-dir-name}/` for cross-plugin references, where `{source-dir-name}` is the directory name under `claude/` (e.g., `core-tools`, `tdd-tools`). Same-plugin references use `${CLAUDE_PLUGIN_ROOT}/` directly. Never use full marketplace names (e.g., `agent-alchemy-core-tools`) in path references — use the short source directory name.
 
 ### Model Tiering
@@ -124,6 +128,9 @@ dependency-checker -> reads all plugin groups -> builds dependency graph -> 7 an
 
 bug-killer (quick) -> reads error location, targeted investigation, fix + regression test -> project-learnings
 bug-killer (deep) -> code-explorer (core-tools, sonnet) x 2-3 + bug-investigator (sonnet) x 1-3 -> code-quality (same plugin) for fix validation -> project-learnings
+
+codebase-analysis -> technical-diagrams (loaded in Phase 2 for report diagrams)
+docs-manager -> docs-writer -> technical-diagrams (auto-loaded via skills: frontmatter)
 ```
 
 ### Task Manager (apps/task-manager/)
@@ -151,8 +158,8 @@ bug-killer (deep) -> code-explorer (core-tools, sonnet) x 2-3 + bug-investigator
 
 | Group | Skills | Agents | Version |
 |-------|--------|--------|---------|
-| core-tools | deep-analysis, codebase-analysis, language-patterns, project-conventions | code-explorer, code-synthesizer, code-architect | 0.2.0 |
-| dev-tools | feature-dev, bug-killer, architecture-patterns, code-quality, project-learnings, changelog-format, docs-manager, release-python-package, document-changes | code-reviewer, bug-investigator, changelog-manager, docs-writer | 0.3.0 |
+| core-tools | deep-analysis, codebase-analysis, language-patterns, project-conventions, technical-diagrams | code-explorer, code-synthesizer, code-architect | 0.2.1 |
+| dev-tools | feature-dev, bug-killer, architecture-patterns, code-quality, project-learnings, changelog-format, docs-manager, release-python-package, document-changes | code-reviewer, bug-investigator, changelog-manager, docs-writer | 0.3.1 |
 | sdd-tools | create-spec, analyze-spec, create-tasks, execute-tasks | codebase-explorer, researcher, spec-analyzer, task-executor | 0.2.0 |
 | tdd-tools | generate-tests, tdd-cycle, analyze-coverage, create-tdd-tasks, execute-tdd-tasks | test-writer, tdd-executor, test-reviewer | 0.2.0 |
 | git-tools | git-commit | — | 0.1.0 |
@@ -175,6 +182,7 @@ bug-killer (deep) -> code-explorer (core-tools, sonnet) x 2-3 + bug-investigator
 | `claude/tdd-tools/skills/generate-tests/SKILL.md` | 524 | Test generation from acceptance criteria or source code |
 | `claude/tdd-tools/skills/create-tdd-tasks/SKILL.md` | 687 | SDD-to-TDD task pair transformation |
 | `claude/tdd-tools/skills/execute-tdd-tasks/SKILL.md` | 630 | TDD-aware wave execution with agent routing |
+| `claude/core-tools/skills/technical-diagrams/SKILL.md` | 345 | Mermaid diagram syntax, styling rules, and quick reference — loaded by codebase-analysis and docs-writer |
 | `claude/plugin-tools/skills/dependency-checker/SKILL.md` | 651 | Ecosystem dependency analysis with 7 detection passes + doc drift |
 
 ## Known Challenges

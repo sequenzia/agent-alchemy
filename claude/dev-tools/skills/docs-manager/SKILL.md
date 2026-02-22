@@ -264,6 +264,7 @@ Project: [project name] at [project root]
 MkDocs site context:
 - Theme: Material for MkDocs
 - Extensions available: admonitions, code highlighting, tabbed content, Mermaid diagrams
+- Diagram guidance: The technical-diagrams skill is loaded — use Mermaid for all diagrams. Follow its styling rules (dark text on nodes).
 - Existing pages: [list of current doc pages]
 
 Exploration findings:
@@ -293,6 +294,7 @@ Existing file content (if updating):
 
 Generate the complete file content in standard GitHub-flavored Markdown.
 Do NOT use MkDocs-specific extensions (admonitions, tabbed content, code block titles).
+Diagram guidance: The technical-diagrams skill is loaded — use Mermaid for all diagrams. Follow its styling rules (dark text on nodes). GitHub renders Mermaid natively.
 ```
 
 ### Step 4 — Review generated content

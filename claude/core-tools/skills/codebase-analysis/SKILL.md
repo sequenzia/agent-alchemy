@@ -54,11 +54,15 @@ Execute a structured 3-phase codebase analysis workflow to gather insights.
 
 **Goal:** Present a structured analysis to the user.
 
-1. **Load report template:**
+1. **Load diagram guidance:**
+   - Read `${CLAUDE_PLUGIN_ROOT}/skills/technical-diagrams/SKILL.md`
+   - Use Mermaid diagrams in the Architecture Overview and Relationship Map sections
+
+2. **Load report template:**
    - Read `${CLAUDE_PLUGIN_ROOT}/skills/codebase-analysis/references/report-template.md`
    - Use it to structure the presentation
 
-2. **Present the analysis:**
+3. **Present the analysis:**
    Structure the report with these sections:
    - **Executive Summary** — Lead with the most important finding
    - **Architecture Overview** — How the codebase is structured
@@ -70,7 +74,7 @@ Execute a structured 3-phase codebase analysis workflow to gather insights.
    - **Recommendations** — Actionable next steps, each citing the challenge it addresses
    - **Analysis Methodology** — Agents used, cache status, scope, and duration
 
-3. **IMPORTANT: Proceed immediately to Phase 3.**
+4. **IMPORTANT: Proceed immediately to Phase 3.**
    Do NOT stop here. Do NOT wait for user input. The report is presented, but the workflow requires Post-Analysis Actions. Continue directly to Phase 3 now.
 
 ---

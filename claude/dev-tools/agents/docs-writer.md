@@ -7,6 +7,8 @@ tools:
   - Glob
   - Grep
   - Bash
+skills:
+  - technical-diagrams
 ---
 
 # Documentation Writer Agent

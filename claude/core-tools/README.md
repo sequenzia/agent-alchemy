@@ -10,6 +10,7 @@ Foundational skills and agents for codebase analysis, deep exploration, and lang
 | `/codebase-analysis` | Yes | Structured 3-phase workflow: deep analysis, reporting, and post-analysis actions (save report, update docs, address insights). |
 | `language-patterns` | No (loaded by agents) | TypeScript, Python, and React patterns, idioms, and best practices. |
 | `project-conventions` | No (loaded by agents) | Discovers and applies project-specific conventions (naming, structure, patterns). |
+| `technical-diagrams` | No (loaded by agents) | Mermaid diagram syntax, styling, and best practices for flowcharts, sequence, class, state, ER, and C4 diagrams. |
 
 ## Agents
 
@@ -49,7 +50,16 @@ core-tools/
 │   │       └── actionable-insights-template.md
 │   ├── language-patterns/
 │   │   └── SKILL.md            # TS/Python/React patterns
-│   └── project-conventions/
-│       └── SKILL.md            # Convention discovery
+│   ├── project-conventions/
+│   │   └── SKILL.md            # Convention discovery
+│   └── technical-diagrams/
+│       ├── SKILL.md            # Mermaid diagram guidance
+│       └── references/
+│           ├── flowcharts.md
+│           ├── sequence-diagrams.md
+│           ├── class-diagrams.md
+│           ├── state-diagrams.md
+│           ├── er-diagrams.md
+│           └── c4-diagrams.md
 └── README.md
 ```

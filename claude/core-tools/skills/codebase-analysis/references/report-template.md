@@ -30,6 +30,26 @@ Use this template when presenting analysis findings in Phase 2.
 - The design philosophy and architectural style
 - Key architectural decisions and their rationale
 
+{Include a Mermaid architecture diagram (flowchart or C4 Context) showing the major layers/components. Use `classDef` with `color:#000` for all node styles. Example:}
+
+```mermaid
+flowchart TD
+    subgraph presentation["Presentation"]
+        A[Web UI]:::primary
+    end
+    subgraph application["Application"]
+        B[API Server]:::secondary
+    end
+    subgraph data["Data"]
+        C[(Database)]:::neutral
+    end
+    A --> B --> C
+
+    classDef primary fill:#dbeafe,stroke:#2563eb,color:#000
+    classDef secondary fill:#f3e8ff,stroke:#7c3aed,color:#000
+    classDef neutral fill:#f3f4f6,stroke:#6b7280,color:#000
+```
+
 ---
 
 ## Tech Stack
@@ -78,19 +98,44 @@ Use this template when presenting analysis findings in Phase 2.
 
 ## Relationship Map
 
-{Describe how key components connect — limit to 15-20 most significant connections}
+{Describe how key components connect — limit to 15-20 most significant connections. Use Mermaid flowcharts for both data flows and dependency maps.}
 
 **Data Flow:**
-- `Input` → `Processing` → `Output`
+
+```mermaid
+flowchart LR
+    A[Input]:::primary --> B[Processing]:::secondary --> C[Output]:::success
+
+    classDef primary fill:#dbeafe,stroke:#2563eb,color:#000
+    classDef secondary fill:#f3e8ff,stroke:#7c3aed,color:#000
+    classDef success fill:#dcfce7,stroke:#16a34a,color:#000
+```
 
 **Component Dependencies:**
-- `Component A` → calls → `Component B`
-- `Module` depends on `Service` for configuration
+
+```mermaid
+flowchart LR
+    A[Component A]:::primary -->|calls| B[Component B]:::primary
+    C[Module]:::secondary -->|depends on| D[Service]:::secondary
+
+    classDef primary fill:#dbeafe,stroke:#2563eb,color:#000
+    classDef secondary fill:#f3e8ff,stroke:#7c3aed,color:#000
+```
 
 **Cross-Cutting Concerns:**
-- `Logger` ← used by ← `Component A`, `Component B`, `Module`
 
-{For complex architectures, group connections by subsystem rather than listing individually}
+```mermaid
+flowchart RL
+    A[Component A]:::primary --> L[Logger]:::neutral
+    B[Component B]:::primary --> L
+    C[Module]:::secondary --> L
+
+    classDef primary fill:#dbeafe,stroke:#2563eb,color:#000
+    classDef secondary fill:#f3e8ff,stroke:#7c3aed,color:#000
+    classDef neutral fill:#f3f4f6,stroke:#6b7280,color:#000
+```
+
+{For complex architectures, group connections by subsystem using subgraphs rather than listing individually}
 
 ---
 
@@ -142,7 +187,7 @@ Use this template when presenting analysis findings in Phase 2.
 - Use directional language (calls, depends on, triggers, reads from)
 - Highlight any circular dependencies or unexpected couplings
 - **Depth**: Include 2-3 levels of dependency depth — direct dependencies and their key subdependencies
-- **Format**: Use ASCII diagrams for linear flows, prose with arrows (`→`) for complex webs. Choose whichever is clearer.
+- **Format**: Use Mermaid flowcharts for both linear flows and complex dependency webs. Apply `classDef` with `color:#000` for readability.
 - **Scope limit**: Cap at 15-20 connections. If more exist, group related connections under subsystem labels.
 
 ### Challenges & Risks
