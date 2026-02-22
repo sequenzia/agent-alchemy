@@ -2,7 +2,7 @@
 
 Spec-Driven Development (SDD) Tools is the core workflow engine of Agent Alchemy. It provides a structured pipeline that transforms ideas into specifications, decomposes specifications into executable tasks, and runs autonomous implementation with wave-based parallelism.
 
-**Plugin:** `agent-alchemy-sdd-tools` | **Version:** 0.2.0 | **Skills:** 4 | **Agents:** 3
+**Plugin:** `agent-alchemy-sdd-tools` | **Version:** 0.2.0 | **Skills:** 4 | **Agents:** 4
 
 ## The SDD Pipeline
 
@@ -424,6 +424,16 @@ Researches technical documentation, domain knowledge, competitive landscape, and
 | **Used by** | `/analyze-spec` |
 
 Performs systematic analysis across four categories (inconsistencies, missing information, ambiguities, structure issues) and guides users through resolving findings interactively. Read-only access to the codebase with write access limited to the spec and report files.
+
+### codebase-explorer
+
+| Property | Value |
+|----------|-------|
+| **Model** | Sonnet |
+| **Tools** | Read, Glob, Grep, Bash |
+| **Used by** | `/create-spec` (optional, for new feature type specs) |
+
+Explores codebases to discover architecture, patterns, and feature-relevant code during spec creation. Spawned in parallel with specific focus areas when the user creates a spec for a new feature that needs codebase context. This is a lightweight, non-team agent distinct from core-tools' `code-explorer` — it works independently and returns its findings as a final message without team coordination.
 
 ### task-executor
 

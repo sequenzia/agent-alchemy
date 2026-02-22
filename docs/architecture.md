@@ -152,7 +152,7 @@ claude/sdd-tools/skills/create-spec/
 ```
 
 !!! info "Plugin Inventory"
-    The platform ships with **6 plugin groups**, **25 skills**, **14 agents**, and **30+ reference files**. See the [Plugins](plugins/index.md) documentation for the full catalog.
+    The platform ships with **6 plugin groups**, **28 skills**, **16 agents**, and **30+ reference files**. See the [Plugins](plugins/index.md) documentation for the full catalog.
 
 ---
 
@@ -230,6 +230,7 @@ Skills using this pattern:
 | `feature-dev` | 7 | Discovery through Exploration, Design, Implementation, Review, and Summary |
 | `deep-analysis` | 6 | Session Setup through Recon, Approval, Assembly, Exploration, and Synthesis |
 | `tdd-cycle` | 7 | Discovery through Analysis, Plan, RED, GREEN, REFACTOR, and Report |
+| `bug-killer` | 5 | Triage through Investigation, Root Cause, Fix & Verify, and Wrap-up |
 
 ### Agent Tool Restrictions
 
@@ -241,6 +242,7 @@ Agents enforce separation of concerns through their tool permissions. Architect 
 | `code-synthesizer` | Opus | Read, Glob, Grep, Bash, SendMessage | Read-only |
 | `code-architect` (core-tools) | Opus | Read, Glob, Grep, SendMessage | Read-only |
 | `code-reviewer` (dev-tools) | Opus | Read, Glob, Grep, SendMessage | Read-only |
+| `bug-investigator` (dev-tools) | Sonnet | Read, Glob, Grep, Bash, SendMessage | Read-only |
 | `task-executor` | — | Read, Write, Edit, Glob, Grep, Bash | Full access |
 | `tdd-executor` | Opus | Read, Write, Edit, Glob, Grep, Bash | Full access |
 
@@ -347,6 +349,16 @@ execute-tasks → task-executor agent x N per wave
 
 tdd-cycle → tdd-executor (Opus) x 1 per feature
   └─ 7-phase RED-GREEN-REFACTOR lifecycle
+
+bug-killer (quick track)
+  └─ read error location, targeted investigation
+  └─ fix + regression test → project-learnings
+
+bug-killer (deep track)
+  └─ code-explorer (core-tools, Sonnet) x 2-3
+  └─ bug-investigator (Sonnet) x 1-3
+  └─ code-quality for fix validation
+  └─ project-learnings
 ```
 
 ---

@@ -26,6 +26,7 @@ graph LR
 - **Test-Driven Development** — RED-GREEN-REFACTOR workflows with framework auto-detection for pytest, Jest, and Vitest ([TDD Tools](plugins/tdd-tools.md))
 - **Deep Codebase Analysis** — Multi-agent hub-and-spoke exploration with intelligent caching ([Core Tools](plugins/core-tools.md))
 - **Feature Development** — Structured implementation with architect and reviewer agent teams ([Dev Tools](plugins/dev-tools.md))
+- **Hypothesis-Driven Debugging** — Systematic bug investigation with triage-based routing, parallel agent exploration, and automatic learning capture ([Dev Tools](plugins/dev-tools.md))
 - **Real-Time Task Dashboard** — Kanban board that visualizes task execution as it happens ([Task Manager](task-manager.md))
 - **Plugin Authoring** — Schema validation and autocomplete for building your own plugins ([VS Code Extension](vscode-extension.md))
 
@@ -46,6 +47,7 @@ Then try:
 /create-spec           # Start a spec interview
 /deep-analysis         # Explore a codebase
 /feature-dev           # Implement a feature
+/bug-killer            # Debug with hypothesis-driven investigation
 /generate-tests        # Generate tests from code
 ```
 

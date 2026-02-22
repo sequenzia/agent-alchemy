@@ -572,6 +572,24 @@ The strictness setting controls how the RED phase handles tests that pass before
 
 ---
 
+## Hooks
+
+TDD Tools includes a PreToolUse hook that auto-approves file operations within execution session directories, enabling autonomous TDD task execution without permission prompts. This mirrors the same pattern used by SDD Tools and Core Tools.
+
+| Hook | Event | Matcher | Timeout |
+|------|-------|---------|---------|
+| `auto-approve-session.sh` | PreToolUse | `Write\|Edit\|Bash` | 5s |
+
+**What it approves:**
+
+- `Write`/`Edit` operations targeting files inside `.claude/sessions/`
+- `Write`/`Edit` operations targeting `$HOME/.claude/tasks/*/execution_pointer.md`
+- `Bash` commands targeting `.claude/sessions/`
+
+All other operations pass through to the normal permission flow.
+
+---
+
 ## Reference Materials
 
 TDD Tools includes extensive reference materials loaded by skills and agents during execution:
