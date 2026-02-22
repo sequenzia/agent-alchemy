@@ -4,6 +4,10 @@ Spec-Driven Development — turn ideas into structured specifications, decompose
 
 > **Standalone plugin** — sdd-tools has no external plugin dependencies. Codebase exploration for "new feature" specs uses a built-in `codebase-explorer` agent instead of cross-plugin references.
 
+## Documentation
+
+- [Deep Dive](./DEEP-DIVE.md) — Comprehensive architecture overview, data flow diagrams, end-to-end workflow walkthroughs, and detailed skill/agent documentation.
+
 ## Skills
 
 | Skill | Invocable | Description |
