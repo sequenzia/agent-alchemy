@@ -1101,10 +1101,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#create-tdd-tasks-sdd-tools" class="md-nav__link">
+  <a href="#create-tdd-tasks" class="md-nav__link">
     <span class="md-ellipsis">
       
-        /create-tdd-tasks (sdd-tools)
+        /create-tdd-tasks
       
     </span>
   </a>
@@ -1112,10 +1112,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#execute-tdd-tasks-sdd-tools" class="md-nav__link">
+  <a href="#execute-tdd-tasks" class="md-nav__link">
     <span class="md-ellipsis">
       
-        /execute-tdd-tasks (sdd-tools)
+        /execute-tdd-tasks
       
     </span>
   </a>
@@ -1174,6 +1174,17 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hooks
+      
+    </span>
+  </a>
   
 </li>
       
@@ -1762,10 +1773,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#create-tdd-tasks-sdd-tools" class="md-nav__link">
+  <a href="#create-tdd-tasks" class="md-nav__link">
     <span class="md-ellipsis">
       
-        /create-tdd-tasks (sdd-tools)
+        /create-tdd-tasks
       
     </span>
   </a>
@@ -1773,10 +1784,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#execute-tdd-tasks-sdd-tools" class="md-nav__link">
+  <a href="#execute-tdd-tasks" class="md-nav__link">
     <span class="md-ellipsis">
       
-        /execute-tdd-tasks (sdd-tools)
+        /execute-tdd-tasks
       
     </span>
   </a>
@@ -1839,6 +1850,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#hooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hooks
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#reference-materials" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1870,7 +1892,7 @@
 
 
 <h1 id="tdd-tools">TDD Tools<a class="headerlink" href="#tdd-tools" title="Permanent link">&para;</a></h1>
-<p>The TDD Tools plugin (<code>v0.1.0</code>) brings Test-Driven Development workflows to Agent Alchemy. It provides three skills and three agents that automate the RED-GREEN-REFACTOR cycle, generate behavior-driven tests, and analyze test coverage -- all with framework auto-detection and deep integration into the SDD pipeline.</p>
+<p>The TDD Tools plugin (<code>v0.2.0</code>) brings Test-Driven Development workflows to Agent Alchemy. It provides five skills and three agents that automate the RED-GREEN-REFACTOR cycle, generate behavior-driven tests, analyze test coverage, and orchestrate TDD task execution -- all with framework auto-detection and deep integration into the SDD pipeline.</p>
 <h2 id="philosophy">Philosophy<a class="headerlink" href="#philosophy" title="Permanent link">&para;</a></h2>
 <p>TDD Tools follows five core principles:</p>
 <ol>
@@ -1908,6 +1930,18 @@
 <td>Skill</td>
 <td>--</td>
 <td>Coverage analysis with gap identification</td>
+</tr>
+<tr>
+<td><code>create-tdd-tasks</code></td>
+<td>Skill</td>
+<td>--</td>
+<td>Transform SDD tasks into test-first TDD task pairs</td>
+</tr>
+<tr>
+<td><code>execute-tdd-tasks</code></td>
+<td>Skill</td>
+<td>--</td>
+<td>TDD-aware wave execution with agent routing</td>
 </tr>
 <tr>
 <td><code>tdd-executor</code></td>
@@ -2401,17 +2435,17 @@
 </div>
 <hr />
 <h2 id="sdd-pipeline-integration">SDD Pipeline Integration<a class="headerlink" href="#sdd-pipeline-integration" title="Permanent link">&para;</a></h2>
-<p>TDD Tools integrates with the Spec-Driven Development pipeline through two skills in the <code>sdd-tools</code> plugin.</p>
+<p>TDD Tools extends the Spec-Driven Development pipeline with two skills that bridge SDD task generation and TDD execution.</p>
 <h3 id="task-flow">Task Flow<a class="headerlink" href="#task-flow" title="Permanent link">&para;</a></h3>
 <pre class="mermaid"><code>flowchart LR
-    A["/create-tasks"] --&gt; B["/create-tdd-tasks"]
+    A["/create-tasks&lt;br/&gt;(sdd-tools)"] --&gt; B["/create-tdd-tasks"]
     B --&gt; C["/execute-tdd-tasks"]
     C --&gt; D["tdd-executor"]
-    C --&gt; E["task-executor"]
+    C --&gt; E["task-executor&lt;br/&gt;(sdd-tools)"]
 
     style D fill:#7b1fa2,color:#fff
     style E fill:#455a64,color:#fff</code></pre>
-<h3 id="create-tdd-tasks-sdd-tools"><code>/create-tdd-tasks</code> (sdd-tools)<a class="headerlink" href="#create-tdd-tasks-sdd-tools" title="Permanent link">&para;</a></h3>
+<h3 id="create-tdd-tasks"><code>/create-tdd-tasks</code><a class="headerlink" href="#create-tdd-tasks" title="Permanent link">&para;</a></h3>
 <p>Transforms SDD implementation tasks into test-first TDD task pairs. For each implementation task, it creates a paired test task that <strong>blocks</strong> it -- enforcing test-first development at the pipeline level.</p>
 <ul>
 <li>Preserves existing SDD dependency chains</li>
@@ -2419,13 +2453,14 @@
 <li>Converts acceptance criteria into test descriptions for the paired test task</li>
 <li>Adds minimal metadata: <code>tdd_mode</code>, <code>tdd_phase</code>, <code>paired_task_id</code></li>
 </ul>
-<h3 id="execute-tdd-tasks-sdd-tools"><code>/execute-tdd-tasks</code> (sdd-tools)<a class="headerlink" href="#execute-tdd-tasks-sdd-tools" title="Permanent link">&para;</a></h3>
+<h3 id="execute-tdd-tasks"><code>/execute-tdd-tasks</code><a class="headerlink" href="#execute-tdd-tasks" title="Permanent link">&para;</a></h3>
 <p>Orchestrates wave-based execution of TDD task pairs. Routes tasks to the appropriate agent:</p>
 <table>
 <thead>
 <tr>
 <th>Task Type</th>
 <th>Agent</th>
+<th>Source</th>
 <th>Workflow</th>
 </tr>
 </thead>
@@ -2433,19 +2468,21 @@
 <tr>
 <td>TDD task (<code>tdd_mode: true</code>)</td>
 <td><code>tdd-executor</code> (Opus)</td>
+<td>Same plugin</td>
 <td>6-phase RED-GREEN-REFACTOR</td>
 </tr>
 <tr>
 <td>Non-TDD task</td>
 <td><code>task-executor</code></td>
+<td>sdd-tools (cross-plugin)</td>
 <td>Standard implementation</td>
 </tr>
 </tbody>
 </table>
 <p>Reports aggregate TDD compliance across all executed task pairs.</p>
 <div class="admonition note">
-<p class="admonition-title">Cross-Plugin Dependency</p>
-<p><code>execute-tdd-tasks</code> requires the <code>tdd-tools</code> plugin to be installed. It uses the <code>tdd-executor</code> and <code>test-writer</code> agents from this plugin. If <code>tdd-tools</code> is not available, the skill aborts with a clear error message.</p>
+<p class="admonition-title">Soft Dependency on sdd-tools</p>
+<p><code>execute-tdd-tasks</code> routes non-TDD tasks to the <code>task-executor</code> agent from <code>sdd-tools</code>. Since the TDD pipeline requires <code>/create-tasks</code> (sdd-tools) to generate tasks in the first place, sdd-tools is always installed when this skill runs. Claude Code resolves agent names globally across installed plugins.</p>
 </div>
 <hr />
 <h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">&para;</a></h2>
@@ -2519,6 +2556,34 @@
 </div>
 </div>
 </div>
+<hr />
+<h2 id="hooks">Hooks<a class="headerlink" href="#hooks" title="Permanent link">&para;</a></h2>
+<p>TDD Tools includes a PreToolUse hook that auto-approves file operations within execution session directories, enabling autonomous TDD task execution without permission prompts. This mirrors the same pattern used by SDD Tools and Core Tools.</p>
+<table>
+<thead>
+<tr>
+<th>Hook</th>
+<th>Event</th>
+<th>Matcher</th>
+<th>Timeout</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>auto-approve-session.sh</code></td>
+<td>PreToolUse</td>
+<td><code>Write\|Edit\|Bash</code></td>
+<td>5s</td>
+</tr>
+</tbody>
+</table>
+<p><strong>What it approves:</strong></p>
+<ul>
+<li><code>Write</code>/<code>Edit</code> operations targeting files inside <code>.claude/sessions/</code></li>
+<li><code>Write</code>/<code>Edit</code> operations targeting <code>$HOME/.claude/tasks/*/execution_pointer.md</code></li>
+<li><code>Bash</code> commands targeting <code>.claude/sessions/</code></li>
+</ul>
+<p>All other operations pass through to the normal permission flow.</p>
 <hr />
 <h2 id="reference-materials">Reference Materials<a class="headerlink" href="#reference-materials" title="Permanent link">&para;</a></h2>
 <p>TDD Tools includes extensive reference materials loaded by skills and agents during execution:</p>

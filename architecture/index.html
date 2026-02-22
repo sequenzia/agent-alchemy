@@ -1767,7 +1767,7 @@
 </span></code></pre></div>
 <div class="admonition info">
 <p class="admonition-title">Plugin Inventory</p>
-<p>The platform ships with <strong>6 plugin groups</strong>, <strong>25 skills</strong>, <strong>14 agents</strong>, and <strong>30+ reference files</strong>. See the <a href="../plugins/">Plugins</a> documentation for the full catalog.</p>
+<p>The platform ships with <strong>6 plugin groups</strong>, <strong>28 skills</strong>, <strong>16 agents</strong>, and <strong>30+ reference files</strong>. See the <a href="../plugins/">Plugins</a> documentation for the full catalog.</p>
 </div>
 <hr />
 <h2 id="plugin-composition-patterns">Plugin Composition Patterns<a class="headerlink" href="#plugin-composition-patterns" title="Permanent link">&para;</a></h2>
@@ -1847,6 +1847,11 @@
 <td>7</td>
 <td>Discovery through Analysis, Plan, RED, GREEN, REFACTOR, and Report</td>
 </tr>
+<tr>
+<td><code>bug-killer</code></td>
+<td>5</td>
+<td>Triage through Investigation, Root Cause, Fix &amp; Verify, and Wrap-up</td>
+</tr>
 </tbody>
 </table>
 <h3 id="agent-tool-restrictions">Agent Tool Restrictions<a class="headerlink" href="#agent-tool-restrictions" title="Permanent link">&para;</a></h3>
@@ -1883,6 +1888,12 @@
 <td><code>code-reviewer</code> (dev-tools)</td>
 <td>Opus</td>
 <td>Read, Glob, Grep, SendMessage</td>
+<td>Read-only</td>
+</tr>
+<tr>
+<td><code>bug-investigator</code> (dev-tools)</td>
+<td>Sonnet</td>
+<td>Read, Glob, Grep, Bash, SendMessage</td>
 <td>Read-only</td>
 </tr>
 <tr>
@@ -2010,6 +2021,16 @@
 </span><span id="__span-6-14"><a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>
 </span><span id="__span-6-15"><a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a>tdd-cycle → tdd-executor (Opus) x 1 per feature
 </span><span id="__span-6-16"><a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a>  └─ 7-phase RED-GREEN-REFACTOR lifecycle
+</span><span id="__span-6-17"><a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a>
+</span><span id="__span-6-18"><a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a>bug-killer (quick track)
+</span><span id="__span-6-19"><a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a>  └─ read error location, targeted investigation
+</span><span id="__span-6-20"><a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a>  └─ fix + regression test → project-learnings
+</span><span id="__span-6-21"><a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a>
+</span><span id="__span-6-22"><a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a>bug-killer (deep track)
+</span><span id="__span-6-23"><a id="__codelineno-6-23" name="__codelineno-6-23" href="#__codelineno-6-23"></a>  └─ code-explorer (core-tools, Sonnet) x 2-3
+</span><span id="__span-6-24"><a id="__codelineno-6-24" name="__codelineno-6-24" href="#__codelineno-6-24"></a>  └─ bug-investigator (Sonnet) x 1-3
+</span><span id="__span-6-25"><a id="__codelineno-6-25" name="__codelineno-6-25" href="#__codelineno-6-25"></a>  └─ code-quality for fix validation
+</span><span id="__span-6-26"><a id="__codelineno-6-26" name="__codelineno-6-26" href="#__codelineno-6-26"></a>  └─ project-learnings
 </span></code></pre></div>
 <hr />
 <h2 id="real-time-data-flow-task-manager">Real-Time Data Flow (Task Manager)<a class="headerlink" href="#real-time-data-flow-task-manager" title="Permanent link">&para;</a></h2>

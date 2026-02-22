@@ -712,6 +712,67 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#bug-killer-hypothesis-driven-debugging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        /bug-killer — Hypothesis-Driven Debugging
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="/bug-killer — Hypothesis-Driven Debugging">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#track-routing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Track Routing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hypothesis-journal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hypothesis Journal
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deep-track-agent-teams" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deep Track Agent Teams
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#document-changes-session-change-reports" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        /document-changes — Session Change Reports
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#release-python-package-release" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1057,6 +1118,67 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#bug-killer-hypothesis-driven-debugging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        /bug-killer — Hypothesis-Driven Debugging
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="/bug-killer — Hypothesis-Driven Debugging">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#track-routing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Track Routing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hypothesis-journal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hypothesis Journal
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deep-track-agent-teams" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deep Track Agent Teams
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#document-changes-session-change-reports" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        /document-changes — Session Change Reports
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#release-python-package-release" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1126,7 +1248,7 @@
 
 
 <h1 id="dev-tools">Dev Tools<a class="headerlink" href="#dev-tools" title="Permanent link">&para;</a></h1>
-<p><strong>Version:</strong> 0.1.1 | <strong>Skills:</strong> 6 | <strong>Agents:</strong> 3</p>
+<p><strong>Version:</strong> 0.3.0 | <strong>Skills:</strong> 9 | <strong>Agents:</strong> 4</p>
 <p>Dev Tools provides the development lifecycle toolkit — from feature implementation through code review, documentation, and changelog management.</p>
 <h2 id="skills">Skills<a class="headerlink" href="#skills" title="Permanent link">&para;</a></h2>
 <h3 id="feature-dev-feature-development-workflow"><code>/feature-dev</code> — Feature Development Workflow<a class="headerlink" href="#feature-dev-feature-development-workflow" title="Permanent link">&para;</a></h3>
@@ -1160,10 +1282,78 @@
 </span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>/docs-manager<span class="w"> </span>mkdocs<span class="w">             </span><span class="c1"># Set up MkDocs site</span>
 </span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>/docs-manager<span class="w"> </span>changelog<span class="w">          </span><span class="c1"># Create change summary</span>
 </span></code></pre></div>
+<h3 id="bug-killer-hypothesis-driven-debugging"><code>/bug-killer</code> — Hypothesis-Driven Debugging<a class="headerlink" href="#bug-killer-hypothesis-driven-debugging" title="Permanent link">&para;</a></h3>
+<p>A systematic debugging skill that enforces investigation before fixes. Every bug gets a hypothesis journal, evidence gathering, and root cause confirmation before any code changes are applied.</p>
+<div class="highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>/bug-killer<span class="w"> </span>TypeError:<span class="w"> </span>Cannot<span class="w"> </span><span class="nb">read</span><span class="w"> </span>property<span class="w"> </span><span class="s1">&#39;id&#39;</span><span class="w"> </span>of<span class="w"> </span>undefined
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>/bug-killer<span class="w"> </span>tests/test_auth.py::test_login_fails<span class="w"> </span>--deep
+</span></code></pre></div>
+<p><strong>5-Phase Workflow:</strong></p>
+<ol>
+<li><strong>Triage &amp; Reproduction</strong> — Reproduce the bug, form an initial hypothesis, route to quick or deep track</li>
+<li><strong>Investigation</strong> — Gather evidence with language-specific debugging techniques</li>
+<li><strong>Root Cause Analysis</strong> — Confirm root cause through hypothesis testing</li>
+<li><strong>Fix &amp; Verify</strong> — Apply minimal fix, run tests, write regression test</li>
+<li><strong>Wrap-up &amp; Report</strong> — Document the investigation trail, capture project learnings</li>
+</ol>
+<h4 id="track-routing">Track Routing<a class="headerlink" href="#track-routing" title="Permanent link">&para;</a></h4>
+<p>The triage phase routes bugs to one of two investigation tracks:</p>
+<table>
+<thead>
+<tr>
+<th>Track</th>
+<th>Trigger</th>
+<th>Investigation</th>
+<th>Agents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Quick</strong></td>
+<td>Localized bug (1-2 files), clear error, obvious fix</td>
+<td>Read error location + immediate callers</td>
+<td>None</td>
+</tr>
+<tr>
+<td><strong>Deep</strong></td>
+<td>Multi-file bug, unclear root cause, concurrency/state issues, <code>--deep</code> flag</td>
+<td>2-3 code-explorer agents (core-tools) + 1-3 bug-investigator agents</td>
+<td>Sonnet workers</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition info">
+<p class="admonition-title">Auto-Escalation</p>
+<p>If 2 hypotheses are rejected during the quick track, the workflow automatically escalates to the deep track. All hypothesis journal entries are preserved across escalation.</p>
+</div>
+<h4 id="hypothesis-journal">Hypothesis Journal<a class="headerlink" href="#hypothesis-journal" title="Permanent link">&para;</a></h4>
+<p>The core artifact of every debugging session. Each hypothesis follows a structured format with evidence for/against, a test plan, and status (Pending/Confirmed/Rejected). Rejected hypotheses are never deleted — they provide context for the investigation trail.</p>
+<h4 id="deep-track-agent-teams">Deep Track Agent Teams<a class="headerlink" href="#deep-track-agent-teams" title="Permanent link">&para;</a></h4>
+<p>On the deep track, bug-killer orchestrates two types of agent teams:</p>
+<ul>
+<li><strong>Phase 2:</strong> Spawns 2-3 <code>code-explorer</code> agents (from core-tools, Sonnet) to explore focus areas related to the bug</li>
+<li><strong>Phase 3:</strong> Spawns 1-3 <code>bug-investigator</code> agents (Sonnet) to test specific hypotheses in parallel</li>
+<li><strong>Phase 4:</strong> Loads <code>code-quality</code> skill for fix validation and scans for related issues across the codebase</li>
+</ul>
+<p>After the fix, bug-killer loads the <code>project-learnings</code> skill to evaluate whether the bug reveals project-specific knowledge worth capturing in CLAUDE.md.</p>
+<hr />
+<h3 id="document-changes-session-change-reports"><code>/document-changes</code> — Session Change Reports<a class="headerlink" href="#document-changes-session-change-reports" title="Permanent link">&para;</a></h3>
+<p>Generates a structured markdown report documenting codebase changes from the current working session. Captures files added, modified, and deleted, along with commit history and a human-readable summary.</p>
+<div class="highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>/document-changes<span class="w">                    </span><span class="c1"># Auto-infer scope from changes</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>/document-changes<span class="w"> </span>auth<span class="w"> </span>refactor<span class="w">      </span><span class="c1"># Specify scope for the report</span>
+</span></code></pre></div>
+<p><strong>4-Step Workflow:</strong></p>
+<ol>
+<li><strong>Validate</strong> — Confirm the directory is a git repository</li>
+<li><strong>Gather</strong> — Collect uncommitted changes, staged changes, and recent commits via git</li>
+<li><strong>Locate</strong> — Determine report path (default: <code>internal/reports/&lt;scope&gt;-YYYY-MM-DD.md</code>)</li>
+<li><strong>Generate</strong> — Write a structured markdown report with metadata, file table, change details, git status, and commit log</li>
+</ol>
+<p>The report is suitable for team reviews, handoff documentation, or personal session records.</p>
+<hr />
 <h3 id="release-python-package-release"><code>/release</code> — Python Package Release<a class="headerlink" href="#release-python-package-release" title="Permanent link">&para;</a></h3>
 <p>Automates Python package releases using <code>uv</code> and <code>ruff</code>. Handles version calculation, changelog updates, and tag creation. Runs on the Haiku model for speed.</p>
-<div class="highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>/release<span class="w">              </span><span class="c1"># Auto-calculate next version</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>/release<span class="w"> </span><span class="m">1</span>.2.0<span class="w">        </span><span class="c1"># Specify version override</span>
+<div class="highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>/release<span class="w">              </span><span class="c1"># Auto-calculate next version</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>/release<span class="w"> </span><span class="m">1</span>.2.0<span class="w">        </span><span class="c1"># Specify version override</span>
 </span></code></pre></div>
 <h3 id="supporting-skills-agent-loaded">Supporting Skills (Agent-loaded)<a class="headerlink" href="#supporting-skills-agent-loaded" title="Permanent link">&para;</a></h3>
 <p>These skills are not directly invoked — they're loaded by agents as reference knowledge:</p>
@@ -1184,12 +1374,17 @@
 <tr>
 <td><code>code-quality</code></td>
 <td>SOLID, DRY, testing strategies, review best practices</td>
-<td>code-reviewer agent</td>
+<td>code-reviewer agent, bug-killer (deep track)</td>
 </tr>
 <tr>
 <td><code>changelog-format</code></td>
 <td>Keep a Changelog specification and entry writing guidelines</td>
 <td>changelog-manager agent</td>
+</tr>
+<tr>
+<td><code>project-learnings</code></td>
+<td>Captures project-specific patterns and anti-patterns into CLAUDE.md</td>
+<td>bug-killer (Phase 5), feature-dev</td>
 </tr>
 </tbody>
 </table>
@@ -1209,6 +1404,12 @@
 <td>Opus</td>
 <td>Read, Glob, Grep (read-only)</td>
 <td>Reviews code for correctness, security, maintainability with confidence scores</td>
+</tr>
+<tr>
+<td><strong>bug-investigator</strong></td>
+<td>Sonnet</td>
+<td>Read, Glob, Grep, Bash (read-only)</td>
+<td>Executes diagnostic investigation tasks to test debugging hypotheses</td>
 </tr>
 <tr>
 <td><strong>changelog-manager</strong></td>
@@ -1239,7 +1440,11 @@
     FD --&gt; CA["code-architect x 2-3&lt;br/&gt;(core-tools)"]
     FD --&gt; CR["code-reviewer x 3"]
     DM["/docs-manager"] --&gt; DA
-    DM --&gt; DW["docs-writer x N"]</code></pre>
+    DM --&gt; DW["docs-writer x N"]
+    BK["/bug-killer"] --&gt; CE2["code-explorer x 2-3&lt;br/&gt;(core-tools)"]
+    BK --&gt; BI["bug-investigator x 1-3"]
+    BK --&gt; CQ["code-quality"]
+    BK --&gt; PL["project-learnings"]</code></pre>
 
 
 

@@ -1254,28 +1254,28 @@
 <td>Codebase analysis and exploration</td>
 <td>4</td>
 <td>3</td>
-<td>0.1.1</td>
+<td>0.2.0</td>
 </tr>
 <tr>
 <td><a href="dev-tools/">Dev Tools</a></td>
 <td>Feature development, review, docs</td>
-<td>6</td>
-<td>3</td>
-<td>0.1.1</td>
+<td>9</td>
+<td>4</td>
+<td>0.3.0</td>
 </tr>
 <tr>
 <td><a href="sdd-tools/">SDD Tools</a></td>
 <td>Spec-Driven Development pipeline</td>
-<td>6</td>
-<td>3</td>
-<td>0.1.2</td>
+<td>4</td>
+<td>4</td>
+<td>0.2.0</td>
 </tr>
 <tr>
 <td><a href="tdd-tools/">TDD Tools</a></td>
 <td>Test-Driven Development workflows</td>
+<td>5</td>
 <td>3</td>
-<td>3</td>
-<td>0.1.0</td>
+<td>0.2.0</td>
 </tr>
 <tr>
 <td><a href="git-tools/">Git Tools</a></td>
@@ -1358,12 +1358,12 @@
 <p><strong>Key skills:</strong> <code>/feature-dev</code>, <code>/docs-manager</code>, <code>/changelog-format</code></p>
 <p><a href="dev-tools/">Read the full Dev Tools guide →</a></p>
 <h3 id="sdd-tools">SDD Tools<a class="headerlink" href="#sdd-tools" title="Permanent link">&para;</a></h3>
-<p>The structured development pipeline. Transforms ideas into specs via adaptive interviews, decomposes specs into dependency-ordered tasks, and executes them autonomously with wave-based parallelism. Optionally extends into TDD with test-first task pairing.</p>
+<p>The structured development pipeline. Transforms ideas into specs via adaptive interviews, decomposes specs into dependency-ordered tasks, and executes them autonomously with wave-based parallelism.</p>
 <p><strong>Key skills:</strong> <code>/create-spec</code> → <code>/analyze-spec</code> → <code>/create-tasks</code> → <code>/execute-tasks</code></p>
 <p><a href="sdd-tools/">Read the full SDD Tools guide →</a></p>
 <h3 id="tdd-tools">TDD Tools<a class="headerlink" href="#tdd-tools" title="Permanent link">&para;</a></h3>
-<p>Test-Driven Development workflows. Automates the RED-GREEN-REFACTOR cycle, generates behavior-driven tests from acceptance criteria or source code, and analyzes test coverage with gap identification. Auto-detects pytest, Jest, and Vitest.</p>
-<p><strong>Key skills:</strong> <code>/tdd-cycle</code>, <code>/generate-tests</code>, <code>/analyze-coverage</code></p>
+<p>Test-Driven Development workflows. Automates the RED-GREEN-REFACTOR cycle, generates behavior-driven tests from acceptance criteria or source code, analyzes test coverage, and orchestrates TDD task execution with wave-based parallelism. Auto-detects pytest, Jest, and Vitest.</p>
+<p><strong>Key skills:</strong> <code>/tdd-cycle</code>, <code>/generate-tests</code>, <code>/analyze-coverage</code>, <code>/create-tdd-tasks</code>, <code>/execute-tdd-tasks</code></p>
 <p><a href="tdd-tools/">Read the full TDD Tools guide →</a></p>
 <h3 id="git-tools">Git Tools<a class="headerlink" href="#git-tools" title="Permanent link">&para;</a></h3>
 <p>Lightweight git automation. A single skill that analyzes staged changes and generates conventional commit messages using the Haiku model for fast, low-cost operation.</p>
@@ -1381,26 +1381,25 @@
     DA --&gt; DM["docs-manager&lt;br/&gt;(dev-tools)"]
     DA --&gt; CS["create-spec&lt;br/&gt;(sdd-tools)"]
 
-    CTT["create-tdd-tasks&lt;br/&gt;(sdd-tools)"] -.-&gt;|"requires"| TDD["tdd-executor&lt;br/&gt;(tdd-tools)"]
-    ETT["execute-tdd-tasks&lt;br/&gt;(sdd-tools)"] -.-&gt;|"requires"| TDD
+    ETT["execute-tdd-tasks&lt;br/&gt;(tdd-tools)"] -.-&gt;|"soft dep"| TE["task-executor&lt;br/&gt;(sdd-tools)"]
 
     DC["dependency-checker&lt;br/&gt;(plugin-tools)"] -.-&gt;|"reads all"| DA
     DC -.-&gt;|"reads all"| FD
     DC -.-&gt;|"reads all"| CS
-    DC -.-&gt;|"reads all"| TDD
+    DC -.-&gt;|"reads all"| TDD["tdd-executor&lt;br/&gt;(tdd-tools)"]
 
     style DA fill:#7c4dff,color:#fff
     style CA fill:#7c4dff,color:#fff
     style FD fill:#00bcd4,color:#fff
     style DM fill:#00bcd4,color:#fff
     style CS fill:#f44336,color:#fff
-    style CTT fill:#f44336,color:#fff
-    style ETT fill:#f44336,color:#fff
+    style TE fill:#f44336,color:#fff
+    style ETT fill:#4caf50,color:#fff
     style TDD fill:#4caf50,color:#fff
     style DC fill:#ff9800,color:#fff</code></pre>
 <ul>
 <li><strong>deep-analysis</strong> (core-tools) is loaded by 4 skills across core-tools, dev-tools, and sdd-tools</li>
-<li><strong>TDD variant skills</strong> (sdd-tools) require the tdd-tools plugin for the <code>tdd-executor</code> agent</li>
+<li><strong>execute-tdd-tasks</strong> (tdd-tools) has a soft dependency on <code>task-executor</code> from sdd-tools for non-TDD task routing</li>
 <li><strong>dependency-checker</strong> (plugin-tools) reads all plugin groups to build its dependency graph</li>
 <li>All other cross-references are optional — skills degrade gracefully when dependencies are missing</li>
 </ul>
