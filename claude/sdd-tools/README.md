@@ -12,7 +12,7 @@ Spec-Driven Development — turn ideas into structured specifications, decompose
 
 | Skill | Invocable | Description |
 |-------|-----------|-------------|
-| `/create-spec` | Yes | Adaptive interview process that generates structured specifications. Supports 3 depth levels (high-level, detailed, full-tech) with proactive recommendations, optional codebase exploration, and external research. |
+| `/create-spec` | Yes | Adaptive interview process that generates structured specifications. Accepts optional context input (file path or inline text) for smarter questioning. Supports 3 depth levels (high-level, detailed, full-tech) with signal-based complexity detection, proactive recommendations, optional codebase exploration, and external research. |
 | `/analyze-spec` | Yes | Spec quality analysis that checks for inconsistencies, ambiguities, and missing requirements. Generates HTML and markdown reports. |
 | `/create-tasks` | Yes | Decomposes specs into dependency-ordered Claude Code Tasks with acceptance criteria. Supports merge mode for incremental updates via `task_uid`. |
 | `/execute-tasks` | Yes | Wave-based task execution orchestrator with session management, per-task context isolation, concurrent agent execution, and interrupted session recovery. |
@@ -44,11 +44,13 @@ Spec-Driven Development — turn ideas into structured specifications, decompose
 
 ### Depth Levels
 
-| Level | Interview Rounds | Questions | Tasks per Feature |
-|-------|-----------------|-----------|-------------------|
-| High-level | 2-3 | 6-10 | 1-2 |
-| Detailed | 3-4 | 12-18 | 3-5 |
-| Full-tech | 4-5 | 18-25 | 5-10 |
+| Level | Interview Rounds | Questions | Expanded Rounds* | Expanded Questions* | Tasks per Feature |
+|-------|-----------------|-----------|------------------|---------------------|-------------------|
+| High-level | 2-3 | 6-10 | 3-5 | 10-18 | 1-2 |
+| Detailed | 3-4 | 12-18 | 5-7 | 20-30 | 3-5 |
+| Full-tech | 4-5 | 18-25 | 6-8 | 28-40 | 5-10 |
+
+*Expanded budgets activate when complexity is detected in user-supplied context and the user opts in.
 
 ### Task Merge Mode
 
@@ -78,9 +80,10 @@ sdd-tools/
 │   └── auto-approve-session.sh # Session auto-approve script
 ├── skills/
 │   ├── create-spec/
-│   │   ├── SKILL.md            # Interview workflow (665 lines)
+│   │   ├── SKILL.md            # Interview workflow (~723 lines)
 │   │   └── references/
 │   │       ├── codebase-exploration.md
+│   │       ├── complexity-signals.md
 │   │       ├── interview-questions.md
 │   │       ├── recommendation-triggers.md
 │   │       ├── recommendation-format.md

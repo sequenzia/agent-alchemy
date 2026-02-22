@@ -299,3 +299,54 @@ Before compiling spec, ensure you have gathered:
 - [ ] Security requirements documented
 - [ ] Testing strategy outlined
 - [ ] Deployment plan created
+
+---
+
+## Expanded Budgets (Complexity Detected)
+
+When complexity is detected via `complexity-signals.md` and the user opts in, use these expanded budgets instead of the standard ones above.
+
+### Budget Comparison
+
+| Depth | Base Rounds | Expanded Rounds | Base Questions | Expanded Questions |
+|-------|-------------|-----------------|----------------|--------------------|
+| High-level | 2-3 | 3-5 | 6-10 | 10-18 |
+| Detailed | 3-4 | 5-7 | 12-18 | 20-30 |
+| Full-tech | 4-5 | 6-8 | 18-25 | 28-40 |
+
+### Expanded Round Structure
+
+#### High-Level Overview (3-5 rounds, expanded)
+- **Round 1**: Problem, goals, key users, must-have features
+- **Round 2**: Success metrics, scope boundaries, subsystem boundaries
+- **Round 3**: Integration points, compliance requirements, major risks
+- **Round 4** (if needed): Cross-cutting concerns, architectural constraints
+- **Round 5** (if needed): Clarifications and open questions
+
+#### Detailed Specifications (5-7 rounds, expanded)
+- **Round 1**: Problem deep-dive, user personas, success metrics
+- **Round 2**: Feature breakdown per subsystem, acceptance criteria
+- **Round 3**: User workflows, role-based access, edge cases
+- **Round 4**: Technical constraints, integrations, data model relationships
+- **Round 5**: Security requirements, compliance details, performance targets
+- **Round 6**: Implementation phases, dependencies, risks
+- **Round 7** (if needed): Clarifications and gap filling
+
+#### Full Technical Documentation (6-8 rounds, expanded)
+- **Round 1**: Problem analysis, business value, user research
+- **Round 2**: Detailed features per subsystem, edge cases, error handling
+- **Round 3**: Architecture decisions, service boundaries, communication patterns
+- **Round 4**: Data models, API specifications, schema design
+- **Round 5**: Performance SLAs, security architecture, compliance implementation
+- **Round 6**: Scalability strategy, monitoring, deployment pipeline
+- **Round 7**: Implementation plan, testing strategy, migration path
+- **Round 8** (if needed): Final clarifications and gap filling
+
+### Soft Ceiling
+
+Expanded interviews have a soft ceiling of **~8 rounds** or **~35 questions**, whichever is reached first.
+
+After hitting the soft ceiling:
+1. Evaluate coverage across all four question categories
+2. If critical gaps remain (e.g., no security requirements for a compliance project), continue for up to **2 more rounds**
+3. If coverage is adequate, proceed to the Recommendations Round (Phase 4)
