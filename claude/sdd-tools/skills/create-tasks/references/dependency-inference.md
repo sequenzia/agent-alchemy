@@ -104,13 +104,22 @@ Add {Integration} tests
 
 ### Section 9 (Implementation Plan) Mapping
 
-When spec has implementation phases:
+When spec has implementation phases and tasks include `spec_phase` metadata, apply cross-phase dependencies based on three scenarios:
 
+**Scenario 1 — Phase N-1 tasks exist in current generation:**
 ```
 Phase 1 tasks ← Phase 2 tasks ← Phase 3 tasks
 ```
+All tasks in Phase N are blocked by completion of Phase N-1. Standard `blockedBy` relationships.
 
-All tasks in Phase N are blocked by completion of Phase N-1.
+**Scenario 2 — Phase N-1 tasks exist from prior generation (merge mode):**
+When `create-tasks` runs with `--phase 2` and Phase 1 tasks already exist from a prior run, create `blockedBy` relationships to the existing Phase 1 task IDs (identified via `metadata.spec_phase` on existing tasks).
+
+**Scenario 3 — Phase N-1 not generated and no existing tasks:**
+When `create-tasks` runs with `--phase 2` but no Phase 1 tasks exist:
+- Do NOT add `blockedBy` to non-existent tasks
+- Add a "Prerequisites" note to Phase 2 task descriptions listing assumed-complete deliverables from Phase 1
+- Emit a one-time warning about missing predecessor phases
 
 ### Section 10 (Dependencies) Mapping
 
