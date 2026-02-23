@@ -37,7 +37,7 @@
     },
     {
       "name": "agent-alchemy-sdd-tools",
-      "version": "0.5.0",
+      "version": "0.5.1",
       "description": "Agent Alchemy SDD Tools — Spec Driven Development tools for AI agents",
       "source": "./sdd-tools",
       "homepage": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/sdd-tools",
