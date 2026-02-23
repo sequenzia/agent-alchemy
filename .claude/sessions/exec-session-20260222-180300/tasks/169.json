@@ -1,0 +1,27 @@
+{
+  "id": "169",
+  "subject": "Run end-to-end validation session",
+  "description": "Execute a real task session with all hardening features active to validate the complete pipeline works end-to-end.\n\n**What to implement:**\n\n1. Generate tasks from an existing spec using `/create-tasks` (with `produces_for` field)\n2. Run `/execute-tasks` with all hardening features active\n3. Verify each feature works in integration:\n   - **File conflict detection**: Confirm conflicts logged in execution_plan.md, tasks rearranged\n   - **Result validation hook**: Confirm validate-result.sh fires on result file writes, invalid files caught\n   - **Progress streaming**: Confirm wave completion summaries visible to user\n   - **Event-driven completion**: Confirm fswatch used (or polling fallback on systems without fswatch)\n   - **Structured context**: Confirm execution_context.md has 6-section structure after merge\n   - **Embedded agent rules**: Confirm agents don't read reference files explicitly\n   - **Prompt injection**: Confirm produces_for results injected into dependent task prompts\n   - **Adaptive polling**: Confirm fallback polling uses progressive intervals (if triggered)\n   - **Retry escalation**: Trigger with intentionally failing task if feasible, or verify logic paths\n   - **Merge validation**: Confirm post-merge validation runs without errors\n4. Document results: pass/fail per feature, any issues discovered\n\n**Files to read/verify (not modify):**\n- Session directory files (execution_plan.md, execution_context.md, task_log.md, result files, context files)\n- Hook debug logs (if AGENT_ALCHEMY_HOOK_DEBUG=1)\n\n**Acceptance Criteria:**\n\n_Functional:_\n- [ ] Full execution session completes successfully\n- [ ] All 10 hardening features verified as operational\n- [ ] No regressions in existing behavior (wave execution, result processing, context merging)\n- [ ] Session summary generated at end\n\n_Edge Cases:_\n- [ ] At least one wave with multiple parallel tasks to test conflict detection\n- [ ] At least one produces_for relationship to test prompt injection\n\n_Error Handling:_\n- [ ] Any feature failure → document issue, note for follow-up fix\n\n**Testing Requirements:**\n• Integration: This IS the integration test\n• Coverage: All 10 features validated in a single session\n\nSource: internal/specs/execute-tasks-hardening-SPEC.md Section 10.3",
+  "activeForm": "Running end-to-end validation",
+  "status": "completed",
+  "blocks": [
+    "170"
+  ],
+  "blockedBy": [
+    "163",
+    "164",
+    "165",
+    "166",
+    "167",
+    "168"
+  ],
+  "metadata": {
+    "priority": "high",
+    "complexity": "L",
+    "source_section": "10.3 Integration Validation",
+    "spec_path": "internal/specs/execute-tasks-hardening-SPEC.md",
+    "feature_name": "End-to-End Validation",
+    "task_uid": "internal/specs/execute-tasks-hardening-SPEC.md:integration:e2e:001",
+    "task_group": "execute-tasks-hardening"
+  }
+}

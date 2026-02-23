@@ -1,0 +1,23 @@
+{
+  "id": "164",
+  "subject": "Add produces_for prompt injection logic to orchestration and SKILL.md",
+  "description": "Implement the `produces_for` mechanism that injects producer task results directly into dependent task prompts for richer context than wave-granular merging alone.\n\n**What to implement:**\n\n1. Define `produces_for` field in task JSON schema (in orchestration.md):\n   - Array of task IDs that consume this task's output\n   - Optional field: tasks without it use wave-granular context only\n\n2. Add injection logic to `claude/sdd-tools/references/orchestration.md`:\n   - When launching a dependent task, check if any of its blockedBy tasks have `produces_for` pointing to it\n   - Read the producer's result file content\n   - Inject into task prompt: `## UPSTREAM TASK OUTPUT (Task #{id}: {name})\\n{result file content}\\n---`\n   - Multiple producers injected in task ID order\n   - Injection after execution context loading, before codebase exploration\n   - If producer result file missing (task failed): inject `## UPSTREAM TASK #{id} FAILED\\n{failure summary from task_log.md}`\n\n3. Update `claude/sdd-tools/skills/execute-tasks/SKILL.md`:\n   - Add prompt injection step to agent launch procedure\n   - Reference orchestration.md for detailed injection format\n\n**Task JSON schema extension:**\n```json\n{\n  \"produces_for\": [\"8\", \"12\"]\n}\n```\n\n**Pattern reference:** execute-tdd-tasks' `PAIRED TEST TASK OUTPUT` mechanism.\n\n**Files to modify:**\n- `claude/sdd-tools/references/orchestration.md` (~611 lines)\n- `claude/sdd-tools/skills/execute-tasks/SKILL.md` (~271 lines)\n\n**Acceptance Criteria:**\n\n_Functional:_\n- [ ] `produces_for` field defined in task JSON schema documentation\n- [ ] Producer result files injected into dependent task prompts\n- [ ] Injection format: `## UPSTREAM TASK OUTPUT (Task #{id}: {name})\\n{content}\\n---`\n- [ ] Multiple producers injected in task ID order\n- [ ] Injection happens after context loading, before exploration\n- [ ] Tasks without produces_for behave unchanged (wave-granular context only)\n\n_Edge Cases:_\n- [ ] Producer task failed → inject failure notice instead of result\n- [ ] Producer result file missing entirely → inject failure notice\n- [ ] No produces_for relationships in task set → no injection overhead\n\n_Error Handling:_\n- [ ] Missing producer result file → log warning, inject failure notice, continue\n\n**Testing Requirements:**\n• Manual: Verify injection format in orchestration.md\n• Integration: Validated during end-to-end execution session (Task 15)\n\nSource: internal/specs/execute-tasks-hardening-SPEC.md Section 5.5",
+  "activeForm": "Adding prompt injection logic",
+  "status": "completed",
+  "blocks": [
+    "165",
+    "169"
+  ],
+  "blockedBy": [
+    "158"
+  ],
+  "metadata": {
+    "priority": "high",
+    "complexity": "M",
+    "source_section": "5.5 Generalized Prompt Injection",
+    "spec_path": "internal/specs/execute-tasks-hardening-SPEC.md",
+    "feature_name": "Prompt Injection",
+    "task_uid": "internal/specs/execute-tasks-hardening-SPEC.md:prompt-injection:orchestration:001",
+    "task_group": "execute-tasks-hardening"
+  }
+}

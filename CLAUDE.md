@@ -12,7 +12,7 @@ agent-alchemy/
 │   ├── .claude-plugin/        # Plugin marketplace registry
 │   ├── core-tools/            # Codebase analysis, deep exploration, language patterns (includes hooks/)
 │   ├── dev-tools/             # Feature dev, debugging, code review, docs, changelog
-│   ├── sdd-tools/             # Spec-Driven Development pipeline
+│   ├── sdd-tools/             # Spec-Driven Development pipeline (includes hooks/, tests/fixtures/, scripts/)
 │   ├── tdd-tools/             # TDD workflows: test generation, RED-GREEN-REFACTOR, coverage
 │   ├── git-tools/             # Git commit automation
 │   └── plugin-tools/          # Plugin porting, adapter validation, ported plugin maintenance, ecosystem health
@@ -48,7 +48,7 @@ pnpm lint                      # Lint all packages
 
 - **Skills** are defined in `SKILL.md` with YAML frontmatter and markdown body
 - **Agents** are defined in `{name}.md` with YAML frontmatter (model, tools, skills)
-- **Hooks** are JSON configs in `hooks/hooks.json` for lifecycle events
+- **Hooks** are JSON configs in `hooks/hooks.json` for lifecycle events (PreToolUse, PostToolUse); sdd-tools includes `auto-approve-session.sh` (PreToolUse) and `validate-result.sh` (PostToolUse for result file format validation)
 - Skills compose by loading other skills: `Read ${CLAUDE_PLUGIN_ROOT}/skills/{name}/SKILL.md`
 - Complex skills use `references/` subdirectories for supporting materials
 
@@ -65,9 +65,15 @@ pnpm lint                      # Lint all packages
 
 - **Artifact chain**: `/create-spec` → spec markdown → `/create-tasks` → task JSON → `/execute-tasks` → code + session logs
 - **Wave-based execution**: Tasks grouped by topological sort level; N agents per wave, configurable via `--max-parallel`
-- **Result file protocol**: Each task-executor writes a compact `result-task-{id}.md` (~18 lines) as its last action; orchestrator polls for these instead of consuming full agent output (79% context reduction per wave)
-- **Per-task context isolation**: Each agent writes to `context-task-{id}.md`; orchestrator merges into shared `execution_context.md` between waves — eliminates write contention
-- **Merge mode**: `/create-tasks` uses `task_uid` composite keys for idempotent re-runs — completed tasks preserved, pending tasks updated, new tasks created
+- **File conflict detection**: Pre-wave scan extracts file paths from task descriptions and detects overlapping edits; conflicting tasks are moved to separate waves to prevent concurrent modification
+- **Producer-consumer injection**: `/create-tasks` detects `produces_for` relationships between tasks; orchestrator injects completed producer task results into dependent task prompts via `CONTEXT FROM COMPLETED DEPENDENCIES` header
+- **Result file protocol**: Each task-executor writes a compact `result-task-{id}.md` (~18 lines) as its last action; a PostToolUse hook (`validate-result.sh`) validates format on write and renames malformed files to `.invalid`
+- **Event-driven completion detection**: Orchestrator uses `watch-for-results.sh` (fswatch-based, <1s latency) with automatic fallback to `poll-for-results.sh` (adaptive intervals: 5s→30s) when fswatch is unavailable
+- **Per-task context isolation**: Each agent writes to `context-task-{id}.md` using a structured 6-section schema; orchestrator merges into shared `execution_context.md` between waves — eliminates write contention
+- **Post-wave merge validation**: After merging context files, orchestrator validates `execution_context.md` structure (OK/WARN/ERROR); auto-repairs missing headers; forces compaction at >1000 lines
+- **Retry escalation**: 3-tier strategy — Standard retry (attempt 2) → Context Enrichment with extra guidance (attempt 3) → User Escalation via AskUserQuestion (after all retries exhausted)
+- **Progress streaming**: Orchestrator emits session start banner, wave start announcements, and wave completion summaries with per-task status, duration, and token usage between waves
+- **Merge mode**: `/create-tasks` uses `task_uid` composite keys for idempotent re-runs — completed tasks preserved, pending tasks updated, new tasks created; Phase 6 detects producer-consumer relationships for `produces_for` field
 - **Session management**: Single-session invariant via `.lock` file; interrupted sessions auto-recovered with in_progress tasks reset to pending
 
 ### Session Directory Layout
@@ -75,14 +81,26 @@ pnpm lint                      # Lint all packages
 ```
 .claude/sessions/__live_session__/       # Active execution session
 ├── execution_plan.md                    # Wave plan from orchestrator
-├── execution_context.md                 # Shared learnings across tasks
+├── execution_context.md                 # Shared learnings (structured 6-section schema)
 ├── task_log.md                          # Per-task status, duration, tokens
 ├── progress.md                          # Real-time progress tracking
 ├── tasks/                               # Archived completed task JSONs
-├── context-task-{id}.md                 # Per-task context (ephemeral)
-├── result-task-{id}.md                  # Per-task result (ephemeral)
+├── context-task-{id}.md                 # Per-task context (structured, ephemeral)
+├── result-task-{id}.md                  # Per-task result (validated by hook, ephemeral)
+├── result-task-{id}.md.invalid          # Renamed by validate-result hook if malformed
 └── .lock                                # Concurrency guard
 ```
+
+**Structured Context Schema** (`execution_context.md` and `context-task-{id}.md`):
+
+Both files follow a 6-section schema. The orchestrator initializes `execution_context.md` with these sections and merges per-task context files after each wave:
+
+1. **Project Setup** — Tech stack, build commands, environment details
+2. **File Patterns** — File naming, directory structure, import conventions
+3. **Conventions** — Coding style, error handling, logging patterns
+4. **Key Decisions** — Architecture choices made during execution
+5. **Known Issues** — Problems encountered, workarounds applied
+6. **Task History** — Per-task outcomes with files modified and learnings (compacted at 10+ entries)
 
 ### Cross-Plugin Dependencies
 
@@ -160,7 +178,7 @@ docs-manager -> docs-writer -> technical-diagrams (auto-loaded via skills: front
 |-------|--------|--------|---------|
 | core-tools | deep-analysis, codebase-analysis, language-patterns, project-conventions, technical-diagrams | code-explorer, code-synthesizer, code-architect | 0.2.1 |
 | dev-tools | feature-dev, bug-killer, architecture-patterns, code-quality, project-learnings, changelog-format, docs-manager, release-python-package, document-changes | code-reviewer, bug-investigator, changelog-manager, docs-writer | 0.3.1 |
-| sdd-tools | create-spec, analyze-spec, create-tasks, execute-tasks | codebase-explorer, researcher, spec-analyzer, task-executor | 0.2.1 |
+| sdd-tools | create-spec, analyze-spec, create-tasks, execute-tasks | codebase-explorer, researcher, spec-analyzer, task-executor | 0.3.1 |
 | tdd-tools | generate-tests, tdd-cycle, analyze-coverage, create-tdd-tasks, execute-tdd-tasks | test-writer, tdd-executor, test-reviewer | 0.2.0 |
 | git-tools | git-commit | — | 0.1.0 |
 | plugin-tools | port-plugin, validate-adapter, update-ported-plugin, dependency-checker, bump-plugin-version | researcher, port-converter | 0.1.1 |
@@ -174,8 +192,10 @@ docs-manager -> docs-writer -> technical-diagrams (auto-loaded via skills: front
 | `claude/plugin-tools/skills/validate-adapter/SKILL.md` | 625 | Adapter validation against live platform docs (4 phases) |
 | `claude/plugin-tools/skills/update-ported-plugin/SKILL.md` | 793 | Incremental ported plugin updates with dual-track change detection (5 phases) |
 | `claude/sdd-tools/skills/create-spec/SKILL.md` | ~722 | Adaptive interview with context input, complexity detection, and depth-aware questioning |
-| `claude/sdd-tools/skills/create-tasks/SKILL.md` | 653 | Spec-to-task decomposition with `task_uid` merge mode |
-| `claude/sdd-tools/skills/execute-tasks/SKILL.md` | 262 | Wave-based parallel execution with session management |
+| `claude/sdd-tools/skills/create-tasks/SKILL.md` | ~738 | Spec-to-task decomposition with `task_uid` merge mode and `produces_for` detection (9 phases) |
+| `claude/sdd-tools/skills/execute-tasks/SKILL.md` | 273 | Wave-based parallel execution with session management |
+| `claude/sdd-tools/skills/execute-tasks/references/orchestration.md` | ~1223 | 10-step orchestration loop with conflict detection, retry escalation, progress streaming, and merge validation |
+| `claude/sdd-tools/agents/task-executor.md` | 414 | Task executor agent with embedded verification rules |
 | `claude/dev-tools/skills/feature-dev/SKILL.md` | 273 | 7-phase lifecycle spawning architect + reviewer agent teams |
 | `claude/dev-tools/skills/bug-killer/SKILL.md` | ~480 | Hypothesis-driven debugging — triage-based quick/deep track with agent investigation |
 | `claude/tdd-tools/skills/tdd-cycle/SKILL.md` | 727 | 7-phase RED-GREEN-REFACTOR TDD workflow |

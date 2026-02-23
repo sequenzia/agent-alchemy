@@ -1,0 +1,23 @@
+{
+  "id": "158",
+  "subject": "Create result validation hook (validate-result.sh + hooks.json)",
+  "description": "Create a PostToolUse hook that validates result files written by task-executor agents. Register the hook in hooks.json.\n\n**What to implement:**\n\n1. Create `claude/sdd-tools/hooks/validate-result.sh` (~50 lines):\n   - Trigger on Write operations targeting `result-task-*.md` in session directory\n   - Filter: only act when file path matches `*/result-task-*.md`\n   - Validate first line matches `status: (PASS|PARTIAL|FAIL)`\n   - Validate required sections present: `## Summary`, `## Files Modified`, `## Context Contribution`\n   - Validate corresponding `context-task-{id}.md` exists (write-ordering invariant)\n   - If context file missing: create stub `### Task [{id}]: No learnings captured`\n   - If invalid: rename to `result-task-{id}.md.invalid` with error description appended\n   - NEVER exit non-zero (defensive: trap on ERR, fall through on any error)\n   - Debug logging to stderr via `AGENT_ALCHEMY_HOOK_DEBUG=1` env var\n   - Follow patterns from existing `auto-approve-session.sh`\n\n2. Update `claude/sdd-tools/hooks/hooks.json`:\n   - Add PostToolUse hook entry for validate-result.sh\n   - Pattern: `Write`\n   - Command: `${CLAUDE_PLUGIN_ROOT}/hooks/validate-result.sh`\n   - Timeout: 5000ms\n\n**Reference for hook patterns:**\n- Read `claude/sdd-tools/hooks/auto-approve-session.sh` (~75 lines) as model\n\n**Files to create:**\n- `claude/sdd-tools/hooks/validate-result.sh` (new, ~50 lines)\n\n**Files to modify:**\n- `claude/sdd-tools/hooks/hooks.json` (~20 lines)\n\n**Acceptance Criteria:**\n\n_Functional:_\n- [ ] Hook triggers on Write to result-task-*.md files\n- [ ] Valid result files (PASS/PARTIAL/FAIL status, all sections) are accepted unchanged\n- [ ] Missing status line causes file to be renamed to .invalid\n- [ ] Invalid status value causes file to be renamed to .invalid\n- [ ] Missing required section (Summary, Files Modified, Context Contribution) causes .invalid rename\n- [ ] Missing context-task-{id}.md triggers stub creation, result file still accepted\n- [ ] Hook registered in hooks.json with PostToolUse event, Write pattern, 5s timeout\n\n_Edge Cases:_\n- [ ] Non-session file writes (unrelated paths) are ignored by hook\n- [ ] Result files with >25 lines are accepted (first sections validated, extra content allowed with warning)\n- [ ] Agent writes result before context: stub created, result accepted\n\n_Error Handling:_\n- [ ] Hook NEVER exits non-zero (trap on ERR falls through)\n- [ ] Malformed input to hook is caught by trap, exits 0\n- [ ] Debug logging only when AGENT_ALCHEMY_HOOK_DEBUG=1\n\n_Performance:_\n- [ ] Hook execution < 100ms per invocation\n\n**Testing Requirements:**\n• Shell (bats): Valid PASS/FAIL/PARTIAL result accepted\n• Shell (bats): Missing status line → .invalid rename\n• Shell (bats): Invalid status value → .invalid rename\n• Shell (bats): Missing section → .invalid rename\n• Shell (bats): Missing context file → stub created\n• Shell (bats): Non-session file → ignored\n• Shell (bats): Hook error → trap catches, exit 0\n\nSource: internal/specs/execute-tasks-hardening-SPEC.md Section 5.2",
+  "activeForm": "Creating result validation hook",
+  "status": "completed",
+  "blocks": [
+    "162",
+    "164"
+  ],
+  "blockedBy": [
+    "155"
+  ],
+  "metadata": {
+    "priority": "critical",
+    "complexity": "M",
+    "source_section": "5.2 Result File Validation Hook",
+    "spec_path": "internal/specs/execute-tasks-hardening-SPEC.md",
+    "feature_name": "Result File Validation Hook",
+    "task_uid": "internal/specs/execute-tasks-hardening-SPEC.md:result-validation:hook:001",
+    "task_group": "execute-tasks-hardening"
+  }
+}

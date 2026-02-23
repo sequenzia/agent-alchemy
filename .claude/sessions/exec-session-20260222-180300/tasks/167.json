@@ -1,0 +1,22 @@
+{
+  "id": "167",
+  "subject": "Add progress streaming to orchestration and SKILL.md",
+  "description": "Add wave completion summaries that are emitted as text output visible to the human operator during execution, eliminating the current ~50 minutes of silence.\n\n**What to implement:**\n\n1. Add progress streaming procedures to `claude/sdd-tools/references/orchestration.md`:\n   - After each wave completes, emit structured human-readable summary:\n     ```\n     Wave 2/6 complete: 3/3 tasks passed (2m 34s)\n       [3] Create test-writer agent — PASS (1m 52s, 48K tokens)\n       [5] Create tdd-workflow reference — PASS (2m 22s, 54K tokens)\n       [7] Create test patterns reference — PASS (2m 34s, 61K tokens)\n     ```\n   - Before starting next wave: `Starting Wave {N}/{total}: {count} tasks...`\n   - On session start: `Execution plan: {total_tasks} tasks across {total_waves} waves (max {max_parallel} parallel)`\n   - Data sourced from result files and TaskOutput reaping (already collected)\n   - Wave-level granularity only (no per-task streaming during a wave)\n\n2. Update `claude/sdd-tools/skills/execute-tasks/SKILL.md`:\n   - Add progress output steps between wave processing\n   - Include session start summary in initial setup\n\n**Files to modify:**\n- `claude/sdd-tools/references/orchestration.md` (~611 lines)\n- `claude/sdd-tools/skills/execute-tasks/SKILL.md` (~271 lines)\n\n**Acceptance Criteria:**\n\n_Functional:_\n- [ ] Wave completion summary emitted after each wave (wave N/total, pass/fail count, duration)\n- [ ] Per-task breakdown in summary: task ID, name, status, duration, token count\n- [ ] \"Starting Wave N/total: count tasks...\" emitted before each wave\n- [ ] Session start message: \"Execution plan: X tasks across Y waves (max Z parallel)\"\n- [ ] Summaries are structured but human-readable (not JSON)\n\n_Edge Cases:_\n- [ ] Wave with failures includes FAIL/PARTIAL status per task\n- [ ] Single-wave session still shows summary\n- [ ] Token count unavailable → omit from per-task line\n\n_Performance:_\n- [ ] No additional file I/O required (data from existing result processing)\n\n**Testing Requirements:**\n• Manual: Verify summary format matches spec example\n• Integration: Confirm summaries visible during end-to-end execution (Task 15)\n\nSource: internal/specs/execute-tasks-hardening-SPEC.md Section 5.3",
+  "activeForm": "Adding progress streaming",
+  "status": "completed",
+  "blocks": [
+    "169"
+  ],
+  "blockedBy": [
+    "161"
+  ],
+  "metadata": {
+    "priority": "critical",
+    "complexity": "S",
+    "source_section": "5.3 Progress Streaming",
+    "spec_path": "internal/specs/execute-tasks-hardening-SPEC.md",
+    "feature_name": "Progress Streaming",
+    "task_uid": "internal/specs/execute-tasks-hardening-SPEC.md:progress-streaming:orchestration:001",
+    "task_group": "execute-tasks-hardening"
+  }
+}

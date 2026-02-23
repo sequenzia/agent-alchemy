@@ -1,5 +1,5 @@
 {
-  "description": "Auto-approve file operations for execute-tasks session management",
+  "description": "Session management hooks: auto-approve file operations and validate result files",
   "hooks": {
     "PreToolUse": [
       {
@@ -8,6 +8,18 @@
           {
             "type": "command",
             "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/auto-approve-session.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/validate-result.sh",
             "timeout": 5
           }
         ]

@@ -1,0 +1,21 @@
+{
+  "id": "155",
+  "subject": "Define structured context schema and update orchestration.md merge procedures",
+  "description": "Define the 6-section structured context schema for `execution_context.md` and per-task `context-task-{id}.md` files. Update `claude/sdd-tools/references/orchestration.md` with section-based merge procedures.\n\n**What to implement:**\n\n1. Define the 6 fixed section headers for execution_context.md:\n   - `## Project Setup` — Package manager, runtime, frameworks, build tools\n   - `## File Patterns` — Test file patterns, component patterns, API route patterns\n   - `## Conventions` — Import style, error handling, state management, naming\n   - `## Key Decisions` — Choices made during execution with task references\n   - `## Known Issues` — Problems encountered, workarounds, gotchas\n   - `## Task History` — Compact log: task ID, name, status, key contribution\n\n2. Define per-task context-task-{id}.md format using same 6 section headers (empty sections omitted)\n\n3. Update orchestration.md merge procedures:\n   - Split on `## ` markers as merge anchors\n   - Append entries under matching section headers\n   - Deduplicate entries within sections during merge\n   - Compaction at 10+ entries per section: summarize older entries into paragraph\n   - Initial execution_context.md created with all 6 headers and empty content\n\n**Files to modify:**\n- `claude/sdd-tools/references/orchestration.md` (~611 lines)\n\n**Acceptance Criteria:**\n\n_Functional:_\n- [ ] execution_context.md template defined with 6 section headers and HTML comments\n- [ ] Per-task context-task-{id}.md format defined with same 6 headers\n- [ ] Orchestrator merge procedure uses section headers as merge anchors\n- [ ] Entries appended under matching section headers during merge\n- [ ] Duplicate entries within a section are deduplicated during merge\n\n_Edge Cases:_\n- [ ] Empty sections in per-task files are omitted by agents (documented as convention)\n- [ ] Content outside any section header is handled gracefully during merge\n- [ ] Merge handles context files with only some sections present\n\n_Error Handling:_\n- [ ] Malformed context file (missing all headers) logged as warning, content placed under `## Key Decisions`\n\n_Performance:_\n- [ ] Compaction triggered at 10+ entries per section to prevent unbounded growth\n\n**Testing Requirements:**\n• Manual: Verify template renders correctly as markdown\n• Manual: Verify merge procedure instructions are clear and unambiguous\n• Integration: Validated during end-to-end execution session (Task 15)\n\nSource: internal/specs/execute-tasks-hardening-SPEC.md Section 5.7",
+  "activeForm": "Defining structured context schema",
+  "status": "completed",
+  "blocks": [
+    "157",
+    "158"
+  ],
+  "blockedBy": [],
+  "metadata": {
+    "priority": "high",
+    "complexity": "M",
+    "source_section": "5.7 Structured Context Schema",
+    "spec_path": "internal/specs/execute-tasks-hardening-SPEC.md",
+    "feature_name": "Structured Context Schema",
+    "task_uid": "internal/specs/execute-tasks-hardening-SPEC.md:structured-context:schema:001",
+    "task_group": "execute-tasks-hardening"
+  }
+}

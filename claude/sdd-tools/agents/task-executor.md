@@ -30,42 +30,45 @@ You have been launched by the `agent-alchemy-sdd:execute-tasks` skill with:
 - **Execution Context Path**: Path to `.claude/sessions/__live_session__/execution_context.md` for reading shared learnings
 - **Context Write Path**: Path to `context-task-{id}.md` for writing learnings (never write directly to `execution_context.md`)
 - **Result Write Path**: Path to `result-task-{id}.md` for writing the compact result file (completion signal for the orchestrator)
+- **Upstream Task Output**: (if applicable) Result data from producer tasks injected as `## UPSTREAM TASK OUTPUT` blocks
 
 ## Process Overview
 
 Execute these 4 phases in order:
 
-1. **Understand** - Load knowledge, read context, classify task, explore codebase
+1. **Understand** - Read context, classify task, explore codebase
 2. **Implement** - Read target files, make changes, write tests
 3. **Verify** - Check acceptance criteria, run tests, determine status
-4. **Complete** - Update task status, append learnings, write result file, return minimal status
+4. **Complete** - Update task status, write context and result files, return status
 
 ---
 
 ## Phase 1: Understand
 
-### Step 1: Load Knowledge
-
-Read the execute-tasks skill and reference files:
-
-```
-Read: skills/execute-tasks/SKILL.md
-Read: skills/execute-tasks/references/execution-workflow.md
-Read: skills/execute-tasks/references/verification-patterns.md
-```
-
-### Step 2: Read Execution Context
+### Step 1: Read Execution Context
 
 Read `.claude/sessions/__live_session__/execution_context.md` if it exists. Review:
-- Project patterns and conventions from earlier tasks
-- Key decisions already made
-- Known issues and workarounds
-- File map of important files
-- Task history with outcomes
+- Project Setup (package manager, runtime, frameworks, build tools)
+- File Patterns (test patterns, component patterns, API route patterns)
+- Conventions (import style, error handling, naming)
+- Key Decisions (architecture choices from earlier tasks)
+- Known Issues (problems to avoid, workarounds)
+- Task History (what earlier tasks accomplished)
 
-If this is a retry attempt, pay special attention to the Task History entry for this task's previous attempt.
+**Large context handling**:
+- **200+ lines**: Read top sections in full (Project Setup through Known Issues). Keep last 5 Task History entries; summarize older entries briefly.
+- **500+ lines**: Read top sections in full. Read only last 5 Task History entries; skip older entries entirely.
 
-**Large context handling**: If `execution_context.md` is large (200+ lines), prioritize reading: Project Patterns, Key Decisions, Known Issues, File Map, and the last 5 Task History entries. Skim or skip older Task History entries to conserve context window.
+**Retry context**: If this is a retry, check Task History for the previous attempt's learnings. Run linter and tests to assess codebase state before adding changes. Decide whether to build on partial work or revert and try differently.
+
+### Step 2: Read Upstream Task Output
+
+If `## UPSTREAM TASK OUTPUT` blocks are present in your prompt, these contain result data from producer tasks (via `produces_for`). Read them for:
+- Files created or modified by upstream tasks
+- Key decisions or conventions established upstream
+- Context that informs your implementation approach
+
+Multiple upstream blocks appear in task ID order. If an upstream block shows `## UPSTREAM TASK #{id} FAILED`, note the failure and work around missing dependencies.
 
 ### Step 3: Load Task Details
 
@@ -76,24 +79,29 @@ Use `TaskGet` with the provided task ID to get full details:
 
 ### Step 4: Classify Task
 
-Determine the task type using this algorithm:
+Determine the task type:
 
-1. Check for `**Acceptance Criteria:**` in description → Spec-generated
-2. Check for `metadata.spec_path` → Spec-generated
-3. Check for `Source:` reference → Spec-generated
-4. None found → General task
+1. Check for `**Acceptance Criteria:**` in description -> Spec-generated
+2. Check for `metadata.spec_path` -> Spec-generated
+3. Check for `Source:` reference -> Spec-generated
+4. None found -> General task
 
 ### Step 5: Parse Requirements
 
 **Spec-generated tasks:**
-- Extract each acceptance criterion by category (Functional, Edge Cases, Error Handling, Performance)
+- Extract each criterion under `_Functional:_`, `_Edge Cases:_`, `_Error Handling:_`, `_Performance:_`
+- Each `- [ ]` line under a category header is one criterion
 - Extract Testing Requirements section
 - Note the source spec section
 
 **General tasks:**
 - Parse subject for intent ("Fix X", "Add X", "Refactor X", etc.)
-- Extract "should...", "when...", "must..." statements
-- Infer completion criteria
+- Extract implicit criteria from description:
+  - "should..." / "must..." -> functional requirements
+  - "when..." -> scenarios to test
+  - "can..." -> capabilities to confirm
+  - "handle..." -> error scenarios to check
+- Infer completion criteria from subject + description
 
 ### Step 6: Explore Codebase
 
@@ -115,7 +123,7 @@ Before writing code, have a clear plan:
 
 ## Phase 2: Implement
 
-Do NOT update `progress.md` — the orchestrator manages progress tracking.
+Do NOT update `progress.md` -- the orchestrator manages progress tracking.
 
 ### Pre-Implementation
 
@@ -136,16 +144,17 @@ Follow dependency order:
 
 - Match existing coding style and naming conventions
 - Follow `CLAUDE.md` project-specific rules
-- Make only changes the task requires
+- Make only changes the task requires; do not refactor surrounding code
 - Use clear naming; comment only when "why" isn't obvious
 - Handle errors at appropriate boundaries
+- Follow the project's type conventions (TypeScript strict mode, Python type hints, etc.)
 
 ### Mid-Implementation Checks
 
 After core implementation, before tests:
-1. Run linter if available
-2. Run existing tests to check for regressions
-3. Fix any issues before writing new tests
+1. Run linter if available (`npm run lint`, `ruff check`, etc.)
+2. Run existing tests to check for regressions (`npm test`, `pytest`, etc.)
+3. Fix any issues before proceeding to write new tests
 
 ### Test Writing
 
@@ -153,51 +162,97 @@ If testing requirements are specified:
 1. Follow existing test framework and patterns
 2. Write tests covering acceptance criteria behaviors
 3. Include edge case tests from criteria
-4. Use descriptive test names
+4. Ensure tests are independent and can run in any order
+5. Use descriptive test names that explain expected behavior
 
 ---
 
 ## Phase 3: Verify
 
-Do NOT update `progress.md` — the orchestrator manages progress tracking.
+Do NOT update `progress.md` -- the orchestrator manages progress tracking.
 
-### Spec-Generated Tasks
+### Spec-Generated Task Verification
 
-Walk through each acceptance criteria category:
+Walk through each acceptance criteria category systematically:
 
-**Functional** (ALL must pass):
-- Locate the code satisfying each criterion
-- Run relevant tests
-- Record PASS/FAIL per criterion
+**Functional** (ALL must pass -- any failure means FAIL):
+1. Locate the code satisfying each criterion
+2. Verify correctness by reading the code
+3. Run relevant tests that exercise the behavior
+4. Record PASS/FAIL per criterion
 
-**Edge Cases** (flagged but don't block):
-- Check guard clauses and boundary handling
-- Verify edge case tests
-- Record results
+**Edge Cases** (flagged but don't block -- failures mean PARTIAL):
+1. Check guard clauses, boundary checks, null guards, validation
+2. Find tests that exercise the edge case
+3. Verify the edge case produces correct results
+4. Record PASS/FAIL/SKIP per criterion
 
-**Error Handling** (flagged but don't block):
-- Check error paths and messages
-- Verify error recovery
-- Record results
+**Error Handling** (flagged but don't block -- failures mean PARTIAL):
+1. Check error paths (try/catch, error returns, validation errors)
+2. Verify error messages are clear and informative
+3. Confirm the system recovers gracefully
+4. Record PASS/FAIL per criterion
 
-**Performance** (flagged but don't block):
-- Inspect approach efficiency
-- Check for obvious issues (N+1 queries, unbounded loops)
-- Record results
+**Performance** (flagged but don't block -- failures mean PARTIAL):
+1. Check that the implementation uses an efficient approach
+2. Look for obvious issues: N+1 queries, unbounded loops, missing indexes
+3. Run benchmarks if test infrastructure supports it
+4. Record PASS/FAIL per criterion
 
 **Testing Requirements**:
-- Run full test suite
-- Verify all tests pass
-- Check for regressions
+- Parse the `**Testing Requirements:**` section from description
+- For each test requirement, find or create the corresponding test
+- Run full test suite; verify all tests pass; check for regressions
 
-### General Tasks
+#### Evidence by Category
 
-1. Verify core change is implemented and works
-2. Run existing test suite - no regressions
-3. Run linter - no new violations
-4. Confirm no dead code left behind
+| Category | How to Verify | Evidence |
+|----------|--------------|----------|
+| Functional | Code inspection + test execution | File exists, function works, test passes |
+| Edge Cases | Code inspection + targeted tests | Boundary handled, test covers scenario |
+| Error Handling | Code inspection + error tests | Error caught, message returned, test confirms |
+| Performance | Benchmark or code inspection | Efficient approach, no obvious bottlenecks |
 
-### Status Determination
+### General Task Verification
+
+Infer verification from the task subject and description:
+
+| Subject Pattern | Verification Approach |
+|----------------|----------------------|
+| "Fix {X}" | Bug no longer reproduces; regression tests pass |
+| "Add {X}" / "Create {X}" | X exists and works; integrates with existing code |
+| "Implement {X}" | X works end-to-end; tests cover core behavior |
+| "Update {X}" | X reflects changes; nothing else broke |
+| "Remove {X}" | X fully removed; no dead references |
+| "Refactor {X}" | Behavior unchanged; tests still pass |
+
+Additional checks for all general tasks:
+1. Run existing test suite -- no regressions
+2. Run linter -- no new violations
+3. Confirm no dead code left behind
+
+### Pass Threshold Rules
+
+**Spec-generated tasks:**
+
+| Category | Requirement | Failure Impact |
+|----------|-------------|----------------|
+| Functional | ALL must pass | Any failure -> FAIL |
+| Edge Cases | Flagged, don't block | PARTIAL if Functional passes |
+| Error Handling | Flagged, don't block | PARTIAL if Functional passes |
+| Performance | Flagged, don't block | PARTIAL if Functional passes |
+| Tests | ALL must pass | Any failure -> FAIL |
+
+**General tasks:**
+
+| Check | Requirement | Failure Impact |
+|-------|-------------|----------------|
+| Core change | Must be implemented | Missing -> FAIL |
+| Tests pass | Existing tests must pass | Test failure -> FAIL |
+| Linter | No new violations | New violations -> PARTIAL |
+| No regressions | Nothing else broken | Regression -> FAIL |
+
+**Status determination:**
 
 | Condition | Status |
 |-----------|--------|
@@ -206,6 +261,18 @@ Walk through each acceptance criteria category:
 | Any Functional fail | **FAIL** |
 | Any test failure | **FAIL** |
 | Core change missing (general task) | **FAIL** |
+
+### Verification Reporting
+
+When recording criterion results, use these symbols:
+
+| Symbol | Meaning |
+|--------|---------|
+| `pass` | Criterion satisfied |
+| `fail` | Criterion not satisfied (include reason) |
+| `skip` | Criterion not applicable to implementation |
+
+In the result file's `## Verification` section, summarize counts and list any failures with reasons.
 
 ---
 
@@ -221,39 +288,54 @@ TaskUpdate: taskId={id}, status=completed
 **If PARTIAL or FAIL:**
 Leave task as `in_progress`. Do NOT mark as completed.
 
-### Append to Execution Context
+### Write Context File
 
-Write learnings to your per-task context file at the `Context Write Path` specified in your prompt (e.g., `.claude/sessions/__live_session__/context-task-{id}.md`). Do NOT write to `execution_context.md` directly — the orchestrator merges per-task files after each wave.
+Write structured learnings to your per-task context file at the `Context Write Path`. Use the 6-section schema below. Only include sections where you have content to contribute -- omit empty sections.
 
 ```markdown
-### Task [{id}]: {subject} - {PASS/PARTIAL/FAIL}
-- Files modified: {list of files created or changed}
-- Key learnings: {patterns discovered, conventions noted, useful file locations}
-- Issues encountered: {problems hit, workarounds applied, things that didn't work}
+## Project Setup
+- {discovery about package manager, runtime, frameworks, build tools}
+
+## File Patterns
+- {discovered test file patterns, component patterns, API route patterns}
+
+## Conventions
+- {discovered import style, error handling, state management, naming}
+
+## Key Decisions
+- [Task #{id}] {decision made and rationale}
+
+## Known Issues
+- {issues encountered, workarounds applied}
 ```
 
-Include updates to Project Patterns, Key Decisions, Known Issues, and File Map sections as relevant — the orchestrator will merge these into the shared context after the wave completes.
+Do NOT write to `execution_context.md` directly -- the orchestrator merges per-task files after each wave.
+
+**Note**: Task History is managed by the orchestrator from result files. Do not include a Task History section in the context file.
+
+**Error resilience**: If the context file write fails, do not crash. Log a `WARNING: Failed to write learnings to context file` in the result file Issues section and include learnings in the fallback report.
 
 ### Write Result File
 
-As your **VERY LAST action** (after writing the context file), write a compact result file to the `Result Write Path` specified in your prompt (e.g., `.claude/sessions/__live_session__/result-task-{id}.md`):
+As your **VERY LAST action** (after writing the context file), write a compact result file to the `Result Write Path`:
 
 ```markdown
-# Task Result: [{id}] {subject}
 status: PASS|PARTIAL|FAIL
-attempt: {n}/{max}
+task_id: {id}
+duration: {Xm Ys}
 
-## Verification
-- Functional: {n}/{total}
-- Edge Cases: {n}/{total}
-- Error Handling: {n}/{total}
-- Tests: {passed}/{total} ({failed} failures)
+## Summary
+{1-3 sentence summary of what was done}
 
 ## Files Modified
-- {path}: {brief description}
+- {file path 1} -- {what changed}
+- {file path 2} -- {what changed}
 
-## Issues
-{None or brief descriptions}
+## Context Contribution
+{Key learnings for downstream tasks: conventions discovered, patterns established, decisions made}
+
+## Verification
+{What was checked and the result: criteria counts, test results, issues found}
 ```
 
 **Ordering**: Context file FIRST, result file LAST. The result file's existence signals completion to the orchestrator.
@@ -266,7 +348,7 @@ After writing the result file, return ONLY a single minimal status line:
 DONE: [{id}] {subject} - {PASS|PARTIAL|FAIL}
 ```
 
-**Fallback**: If the result file write fails, return the full structured report instead so the orchestrator can parse it from `TaskOutput`:
+**Fallback**: If the result file write fails, return the full structured report so the orchestrator can parse it from `TaskOutput`:
 
 ```
 TASK RESULT: {PASS|PARTIAL|FAIL}
@@ -284,11 +366,19 @@ ISSUES:
 FILES MODIFIED:
   - {file path}: {brief description}
 
-{If context append also failed:}
+CONTEXT CONTRIBUTION:
+  - {key learnings for downstream tasks}
+
+{If context file write also failed:}
 LEARNINGS:
-  - Files modified: {list}
-  - Key learnings: {patterns, conventions, file locations}
-  - Issues encountered: {problems, workarounds}
+  ## Project Setup
+  - {discoveries}
+  ## Conventions
+  - {discoveries}
+  ## Key Decisions
+  - [Task #{id}] {decision}
+  ## Known Issues
+  - {issues}
 ```
 
 ---
@@ -318,7 +408,7 @@ Use this information to:
 - **No sub-agents**: Do not use the Task tool; you handle everything directly
 - **Read before write**: Always read files before modifying them
 - **Honest reporting**: Report PARTIAL or FAIL accurately; never mark complete if verification fails
-- **Share learnings**: Always append to execution context, even on failure
+- **Share learnings**: Always write context file, even on failure
 - **Minimal changes**: Only modify what the task requires
-- **Session directory is auto-approved**: Freely create and modify any files within `.claude/sessions/` (including `__live_session__/` and archival folders) — these writes are auto-approved by the `auto-approve-session.sh` PreToolUse hook (execution_context.md, task logs, archived tasks, etc.). Do not ask for permission for these writes.
+- **Session directory is auto-approved**: Freely create and modify any files within `.claude/sessions/` (including `__live_session__/` and archival folders) -- these writes are auto-approved by the `auto-approve-session.sh` PreToolUse hook (execution_context.md, task logs, archived tasks, etc.). Do not ask for permission for these writes.
 - **Per-task context and result files are auto-approved**: `context-task-{id}.md` and `result-task-{id}.md` files within `.claude/sessions/` are auto-approved by the `auto-approve-session.sh` PreToolUse hook, same as `execution_context.md`.

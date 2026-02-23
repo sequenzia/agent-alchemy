@@ -1,0 +1,25 @@
+{
+  "id": "157",
+  "subject": "Update execution-workflow.md for structured context and embedded rules",
+  "description": "Update `execution-workflow.md` reference to align with the new structured context schema and embedded agent rules pattern. This file transitions from being agent-loaded to documentation-only.\n\n**What to implement:**\n\n1. Read current `claude/sdd-tools/references/execution-workflow.md` (~318 lines)\n2. Update Phase 1 (context reading) to describe structured 6-section schema\n3. Update Phase 4 (context writing) to describe writing entries under appropriate structured sections\n4. Add note that this file is now documentation-only (not loaded by agents at startup)\n5. Ensure consistency with embedded rules in task-executor.md (Task 2)\n6. Ensure consistency with structured context schema (Task 1)\n\n**Files to modify:**\n- `claude/sdd-tools/references/execution-workflow.md` (~318 lines)\n\n**Acceptance Criteria:**\n\n_Functional:_\n- [ ] Phase 1 references structured 6-section context reading\n- [ ] Phase 4 references structured context writing (entries under section headers, empty sections omitted)\n- [ ] File header notes this is documentation-only, not agent-loaded\n- [ ] Content is consistent with task-executor.md embedded rules\n- [ ] Content is consistent with orchestration.md structured context merge procedures\n\n_Edge Cases:_\n- [ ] No stale references to old free-form context writing pattern\n\n**Testing Requirements:**\n• Manual: Verify consistency across execution-workflow.md, task-executor.md, and orchestration.md\n• Integration: Validated during end-to-end execution session (Task 15)\n\nSource: internal/specs/execute-tasks-hardening-SPEC.md Sections 5.6, 5.7",
+  "activeForm": "Updating execution-workflow.md",
+  "status": "completed",
+  "blocks": [
+    "163",
+    "166",
+    "168"
+  ],
+  "blockedBy": [
+    "155",
+    "156"
+  ],
+  "metadata": {
+    "priority": "high",
+    "complexity": "S",
+    "source_section": "5.6/5.7",
+    "spec_path": "internal/specs/execute-tasks-hardening-SPEC.md",
+    "feature_name": "Execution Workflow Update",
+    "task_uid": "internal/specs/execute-tasks-hardening-SPEC.md:execution-workflow:reference:001",
+    "task_group": "execute-tasks-hardening"
+  }
+}
