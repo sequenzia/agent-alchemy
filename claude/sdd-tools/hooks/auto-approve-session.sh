@@ -15,10 +15,10 @@
 # Any unexpected error exits cleanly as "no opinion" (exit 0, no output)
 trap 'exit 0' ERR
 
-# Optional debug logging: set AGENT_ALCHEMY_HOOK_DEBUG=1 to enable
+# Optional debug logging: set AGENT_ALCHEMY_HOOK_DEBUG=1 or RUN_TASKS_DEBUG=1 to enable
 debug() {
-  if [ "${AGENT_ALCHEMY_HOOK_DEBUG:-}" = "1" ]; then
-    echo "[auto-approve-session] $*" >> "${AGENT_ALCHEMY_HOOK_LOG:-/tmp/agent-alchemy-hook.log}"
+  if [ "${AGENT_ALCHEMY_HOOK_DEBUG:-}" = "1" ] || [ -n "${RUN_TASKS_DEBUG:-}" ]; then
+    echo "[auto-approve-session] $*" >> "${AGENT_ALCHEMY_HOOK_LOG:-/tmp/run-tasks-debug.log}"
   fi
 }
 

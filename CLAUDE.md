@@ -63,15 +63,21 @@ pnpm lint                      # Lint all packages
 
 ### SDD Pipeline Patterns
 
-- **Artifact chain**: `/create-spec` → spec markdown → `/create-tasks` → task JSON → `/execute-tasks` → code + session logs
+- **Artifact chain**: `/create-spec` → spec markdown → `/create-tasks` → task JSON → `/execute-tasks` or `/run-tasks` → code + session logs
 - **Wave-based execution**: Tasks grouped by topological sort level; N agents per wave, configurable via `--max-parallel`
-- **Result file protocol**: Each task-executor writes a compact `result-task-{id}.md` (~18 lines) as its last action; orchestrator polls for these instead of consuming full agent output (79% context reduction per wave)
-- **Per-task context isolation**: Each agent writes to `context-task-{id}.md`; orchestrator merges into shared `execution_context.md` between waves — eliminates write contention
+- **Result file protocol** (execute-tasks): Each task-executor writes a compact `result-task-{id}.md` (~18 lines) as its last action; orchestrator polls for these instead of consuming full agent output (79% context reduction per wave)
+- **Message-based coordination** (run-tasks): Uses Claude Code native Agent Team system (`TeamCreate`/`SendMessage`) — wave-lead collects structured results from executors via `SendMessage`, eliminating file-based signaling, shell scripts, and complex merge pipelines
+- **3-tier agent hierarchy** (run-tasks): Orchestrator (skill) → Wave Lead (team lead, opus) → Context Manager (sonnet) + Task Executors (opus) per wave. Wave-leads handle Tier 1/2 retries autonomously; persistent failures escalate to user
+- **3-tier retry model** (run-tasks): Tier 1 (immediate retry with failure context) → Tier 2 (context-enriched retry via Context Manager) → Tier 3 (user escalation with Fix/Skip/Guide/Abort options)
+- **Wave-lead crash recovery** (run-tasks): Orchestrator detects crash via `TaskOutput`, resets in_progress tasks to pending, auto-retries once with a new wave team; second crash escalates to user
+- **Per-task context isolation** (execute-tasks): Each agent writes to `context-task-{id}.md`; orchestrator merges into shared `execution_context.md` between waves — eliminates write contention
+- **Context Manager** (run-tasks): Dedicated per-wave agent reads `execution_context.md`, distributes summaries to executors via `SendMessage`, collects contributions, and appends wave-grouped learnings — replaces file-based merge pipeline
 - **Merge mode**: `/create-tasks` uses `task_uid` composite keys for idempotent re-runs — completed tasks preserved, pending tasks updated, new tasks created
-- **Session management**: Single-session invariant via `.lock` file; interrupted sessions auto-recovered with in_progress tasks reset to pending
+- **Session management**: Single-session invariant; `execute-tasks` uses `.lock` file, `run-tasks` uses presence of `__live_session__/` content for detection. Interrupted sessions auto-recovered with in_progress tasks reset to pending
 
 ### Session Directory Layout
 
+**execute-tasks engine** (file-based signaling):
 ```
 .claude/sessions/__live_session__/       # Active execution session
 ├── execution_plan.md                    # Wave plan from orchestrator
@@ -82,6 +88,16 @@ pnpm lint                      # Lint all packages
 ├── context-task-{id}.md                 # Per-task context (ephemeral)
 ├── result-task-{id}.md                  # Per-task result (ephemeral)
 └── .lock                                # Concurrency guard
+```
+
+**run-tasks engine** (message-based coordination):
+```
+.claude/sessions/__live_session__/       # Active execution session
+├── execution_context.md                 # Cross-wave learning (grouped by wave)
+├── task_log.md                          # Per-task status, duration
+├── execution_plan.md                    # Wave breakdown
+├── progress.jsonl                       # Structured progress events (JSON Lines)
+└── session_summary.md                   # Final execution report
 ```
 
 ### Cross-Plugin Dependencies
@@ -114,6 +130,7 @@ create-spec -> researcher agent (for technical research)
 
 create-tasks -> reads spec -> generates task JSON
 execute-tasks -> task-executor agent x N per wave -> writes execution context
+run-tasks -> wave-lead (opus) x 1 per wave -> context-manager (sonnet) x 1 + task-executor-v2 (opus) x N per wave
 
 tdd-cycle -> tdd-executor (opus) x 1 per feature (6-phase RED-GREEN-REFACTOR)
 generate-tests -> test-writer (sonnet) x N parallel (criteria-driven or code-analysis)
@@ -160,7 +177,7 @@ docs-manager -> docs-writer -> technical-diagrams (auto-loaded via skills: front
 |-------|--------|--------|---------|
 | core-tools | deep-analysis, codebase-analysis, language-patterns, project-conventions, technical-diagrams | code-explorer, code-synthesizer, code-architect | 0.2.1 |
 | dev-tools | feature-dev, bug-killer, architecture-patterns, code-quality, project-learnings, changelog-format, docs-manager, release-python-package, document-changes | code-reviewer, bug-investigator, changelog-manager, docs-writer | 0.3.1 |
-| sdd-tools | create-spec, analyze-spec, create-tasks, execute-tasks | codebase-explorer, researcher, spec-analyzer, task-executor | 0.2.2 |
+| sdd-tools | create-spec, analyze-spec, create-tasks, execute-tasks, run-tasks | codebase-explorer, researcher, spec-analyzer, task-executor, wave-lead, context-manager, task-executor-v2 | 0.2.2 |
 | tdd-tools | generate-tests, tdd-cycle, analyze-coverage, create-tdd-tasks, execute-tdd-tasks | test-writer, tdd-executor, test-reviewer | 0.2.0 |
 | git-tools | git-commit | — | 0.1.0 |
 | plugin-tools | port-plugin, validate-adapter, update-ported-plugin, dependency-checker, bump-plugin-version | researcher, port-converter | 0.1.1 |
@@ -176,6 +193,9 @@ docs-manager -> docs-writer -> technical-diagrams (auto-loaded via skills: front
 | `claude/sdd-tools/skills/create-spec/SKILL.md` | ~722 | Adaptive interview with context input, complexity detection, and depth-aware questioning |
 | `claude/sdd-tools/skills/create-tasks/SKILL.md` | 653 | Spec-to-task decomposition with `task_uid` merge mode |
 | `claude/sdd-tools/skills/execute-tasks/SKILL.md` | 262 | Wave-based parallel execution with session management |
+| `claude/sdd-tools/skills/run-tasks/SKILL.md` | 192 | Message-based execution engine with 3-tier agent hierarchy |
+| `claude/sdd-tools/skills/run-tasks/references/orchestration.md` | ~941 | 7-step orchestration loop with wave-lead delegation and crash recovery |
+| `claude/sdd-tools/agents/wave-lead.md` | 326 | Wave coordination agent — manages executors, retries, and TaskUpdate state |
 | `claude/dev-tools/skills/feature-dev/SKILL.md` | 273 | 7-phase lifecycle spawning architect + reviewer agent teams |
 | `claude/dev-tools/skills/bug-killer/SKILL.md` | ~480 | Hypothesis-driven debugging — triage-based quick/deep track with agent investigation |
 | `claude/tdd-tools/skills/tdd-cycle/SKILL.md` | 727 | 7-phase RED-GREEN-REFACTOR TDD workflow |
@@ -210,3 +230,8 @@ User preferences are stored in `.claude/agent-alchemy.local.md` (not committed):
 - `plugin-tools.dependency-checker.severity-threshold`: Minimum severity to show (`critical` | `high` | `medium` | `low`, default: `low`)
 - `plugin-tools.dependency-checker.check-docs-drift`: Run Phase 4 CLAUDE.md/README cross-referencing (default: `true`)
 - `plugin-tools.dependency-checker.line-count-tolerance`: Percentage tolerance for line count drift in CLAUDE.md tables (default: `10`)
+- `run-tasks.max_parallel`: Max concurrent task executors per wave (default: `5`)
+- `run-tasks.max_retries`: Autonomous retries per tier before user escalation (default: `1`)
+- `run-tasks.wave_lead_model`: Model for wave-lead agents (default: `opus`)
+- `run-tasks.context_manager_model`: Model for context manager agents (default: `sonnet`)
+- `run-tasks.executor_model`: Model for task executor agents (default: `opus`)
