@@ -1,0 +1,24 @@
+{
+  "id": "23",
+  "subject": "Register claude-tools plugin in marketplace.json",
+  "description": "Add the `agent-alchemy-claude-tools` entry to `claude/.claude-plugin/marketplace.json`.\n\nEntry to add to the `plugins` array:\n```json\n{\n  \"name\": \"agent-alchemy-claude-tools\",\n  \"version\": \"0.1.0\",\n  \"description\": \"Reference skills for Claude Code Tasks and Agent Teams features\",\n  \"source\": \"./claude-tools\",\n  \"homepage\": \"https://github.com/sequenzia/agent-alchemy/tree/main/claude/claude-tools\",\n  \"repository\": \"https://github.com/sequenzia/agent-alchemy/tree/main/claude/claude-tools\",\n  \"license\": \"MIT\"\n}\n```\n\n**Acceptance Criteria:**\n\n_Functional:_\n- [ ] New entry added to marketplace.json plugins array\n- [ ] Name follows convention: `agent-alchemy-claude-tools`\n- [ ] Version set to `0.1.0`\n- [ ] Source path `./claude-tools` resolves correctly relative to marketplace.json location\n- [ ] Homepage and repository URLs are valid\n\n_Edge Cases:_\n- [ ] JSON remains valid after adding entry (no trailing commas, correct structure)\n- [ ] Entry position follows alphabetical ordering if other entries are ordered\n\n_Error Handling:_\n- [ ] Existing entries not modified\n\n**Testing Requirements:**\n• Verification: marketplace.json is valid JSON after edit\n• Verification: Source path resolves to the plugin directory\n\nSource: internal/specs/claude-tools-plugin-SPEC.md Section 5.3 (US-008), Section 13.4",
+  "activeForm": "Registering plugin in marketplace.json",
+  "status": "completed",
+  "blocks": [
+    "25"
+  ],
+  "blockedBy": [
+    "15"
+  ],
+  "metadata": {
+    "priority": "critical",
+    "complexity": "XS",
+    "source_section": "5.3 Plugin Structure & Marketplace Registration",
+    "spec_path": "internal/specs/claude-tools-plugin-SPEC.md",
+    "feature_name": "Plugin Structure & Marketplace Registration",
+    "task_uid": "internal/specs/claude-tools-plugin-SPEC.md:plugin-structure:marketplace:001",
+    "task_group": "claude-tools-plugin",
+    "spec_phase": 1,
+    "spec_phase_name": "Plugin Foundation & Both Skills"
+  }
+}

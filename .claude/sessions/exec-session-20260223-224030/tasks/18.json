@@ -1,0 +1,24 @@
+{
+  "id": "18",
+  "subject": "Create cc-tasks anti-patterns.md reference",
+  "description": "Create `claude/claude-tools/skills/cc-tasks/references/anti-patterns.md` documenting common mistakes when using Claude Code Tasks and their correct alternatives.\n\nMust document at least 6 anti-patterns, each with:\n- **Name**: Short, descriptive title\n- **Description**: What the anti-pattern looks like\n- **Why It's Problematic**: The negative consequences\n- **Correct Alternative**: How to do it right with examples\n\nAnti-patterns to cover:\n\n1. **Circular Dependencies** — Creating A → blockedBy → B → blockedBy → A, causing tasks to never unblock. Show how to detect and break cycles.\n\n2. **Too-Granular Tasks** — Creating tasks for every single line change (e.g., \"Add import statement\", \"Add type annotation\"). Show optimal 1-3 file granularity.\n\n3. **Missing activeForm** — Creating tasks without the `activeForm` field, resulting in no spinner text in the UI. Show imperative subject + present-continuous activeForm pattern.\n\n4. **Batch Status Updates** — Updating multiple tasks to in_progress simultaneously, violating the \"work on one task at a time\" principle. Show sequential claim-work-complete pattern.\n\n5. **Duplicate Task Creation** — Running TaskCreate without checking for existing tasks via task_uid, causing duplicate work. Show idempotent task creation with merge mode.\n\n6. **TaskList-Only Consumption** — Using TaskList alone (summary view) to understand task requirements instead of calling TaskGet for full descriptions. Show the two-step pattern: TaskList for overview → TaskGet for details before starting work.\n\n7. **Missing task_group Metadata** — Creating tasks without `task_group`, making them invisible to group-filtered execution (e.g., `execute-tasks --task-group`).\n\n**Acceptance Criteria:**\n\n_Functional:_\n- [ ] At least 6 anti-patterns documented\n- [ ] Each anti-pattern includes: description, why it's problematic, and correct alternative\n- [ ] Anti-patterns cover: circular dependencies, too-granular tasks, missing activeForm, batch status updates, duplicate task creation, TaskList-only consumption\n- [ ] Each correct alternative includes concrete tool call examples\n\n_Edge Cases:_\n- [ ] Anti-patterns applicable across different skill/agent contexts\n- [ ] File is self-contained and independently loadable\n\n**Testing Requirements:**\n• Verification: All 6+ anti-patterns documented with all three required sections\n• Verification: Correct alternatives include actionable examples\n\nSource: internal/specs/claude-tools-plugin-SPEC.md Section 5.1 (US-003)",
+  "activeForm": "Creating anti-patterns.md reference",
+  "status": "completed",
+  "blocks": [
+    "24"
+  ],
+  "blockedBy": [
+    "16"
+  ],
+  "metadata": {
+    "priority": "critical",
+    "complexity": "M",
+    "source_section": "5.1 cc-tasks Reference Skill",
+    "spec_path": "internal/specs/claude-tools-plugin-SPEC.md",
+    "feature_name": "cc-tasks Reference Skill",
+    "task_uid": "internal/specs/claude-tools-plugin-SPEC.md:cc-tasks:anti-patterns:001",
+    "task_group": "claude-tools-plugin",
+    "spec_phase": 1,
+    "spec_phase_name": "Plugin Foundation & Both Skills"
+  }
+}

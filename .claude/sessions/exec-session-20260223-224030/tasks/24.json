@@ -1,0 +1,30 @@
+{
+  "id": "24",
+  "subject": "Create claude-tools plugin README.md",
+  "description": "Create `claude/claude-tools/README.md` documenting the plugin's purpose, skills, and reference files.\n\nContent must include:\n\n1. **Plugin Header** — Name (`claude-tools`), description, version (0.1.0)\n\n2. **Purpose** — Explain that this plugin provides shared reference skills for Claude Code Tasks and Agent Teams features, enabling consistent usage across the agent-alchemy ecosystem\n\n3. **Skills Overview Table**:\n   | Skill | Description | Type |\n   |-------|-------------|------|\n   | cc-tasks | Claude Code Tasks tool reference | Reference (non-user-invocable) |\n   | cc-teams | Claude Code Agent Teams reference | Reference (non-user-invocable) |\n\n4. **cc-tasks Skill Details**:\n   - What it covers: TaskCreate, TaskGet, TaskUpdate, TaskList tool parameters; status lifecycle; dependency management; metadata conventions\n   - Reference files: task-patterns.md, anti-patterns.md\n   - How to load: `Read ${CLAUDE_PLUGIN_ROOT}/../claude-tools/skills/cc-tasks/SKILL.md`\n\n5. **cc-teams Skill Details**:\n   - What it covers: TeamCreate/Delete; team lifecycle; teammate spawning; idle semantics; SendMessage protocol; environment variables; file structure\n   - Reference files: messaging-protocol.md, orchestration-patterns.md, hooks-integration.md\n   - How to load: `Read ${CLAUDE_PLUGIN_ROOT}/../claude-tools/skills/cc-teams/SKILL.md`\n\n6. **Usage** — How to consume these skills:\n   - Same-plugin agents: `skills:` frontmatter binding\n   - Cross-plugin skills: `Read ${CLAUDE_PLUGIN_ROOT}/../claude-tools/skills/{name}/SKILL.md`\n   - Cross-plugin agents: `Read` directive in agent body\n\n7. **Directory Structure** — File tree showing all files\n\n**Acceptance Criteria:**\n\n_Functional:_\n- [ ] README documents the plugin's purpose, both skills, and all reference files\n- [ ] Cross-plugin load paths documented correctly using short directory name (`claude-tools`)\n- [ ] Skills table with name, description, and type for each skill\n- [ ] Usage section covers same-plugin and cross-plugin loading patterns\n- [ ] Directory structure included\n\n_Edge Cases:_\n- [ ] Load paths use `${CLAUDE_PLUGIN_ROOT}/../claude-tools/` convention (not full marketplace name)\n\n**Testing Requirements:**\n• Verification: All skills and reference files mentioned\n• Verification: Load path examples are syntactically correct\n\nSource: internal/specs/claude-tools-plugin-SPEC.md Section 9.1",
+  "activeForm": "Creating plugin README.md",
+  "status": "completed",
+  "blocks": [
+    "25"
+  ],
+  "blockedBy": [
+    "16",
+    "17",
+    "18",
+    "19",
+    "20",
+    "21",
+    "22"
+  ],
+  "metadata": {
+    "priority": "critical",
+    "complexity": "S",
+    "source_section": "9.1 Implementation Plan",
+    "spec_path": "internal/specs/claude-tools-plugin-SPEC.md",
+    "feature_name": "Plugin Structure & Marketplace Registration",
+    "task_uid": "internal/specs/claude-tools-plugin-SPEC.md:plugin-structure:readme:001",
+    "task_group": "claude-tools-plugin",
+    "spec_phase": 1,
+    "spec_phase_name": "Plugin Foundation & Both Skills"
+  }
+}

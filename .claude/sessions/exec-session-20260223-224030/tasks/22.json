@@ -1,0 +1,24 @@
+{
+  "id": "22",
+  "subject": "Create cc-teams hooks-integration.md reference",
+  "description": "Create `claude/claude-tools/skills/cc-teams/references/hooks-integration.md` documenting how to use Claude Code hooks for team quality enforcement.\n\nContent must cover:\n\n1. **TeammateIdle Hook Event**:\n   - Trigger: Fires when a teammate goes idle (turn ends)\n   - Input schema with field descriptions:\n     - `agent_name`: Name of the idle teammate\n     - `team_name`: Team the teammate belongs to\n     - `session_id`: Teammate's session identifier\n     - Other relevant fields\n   - Hook types supported: command, prompt, agent\n   - Practical example: Quality gate that checks if teammate completed its assigned task before going idle\n\n2. **TaskCompleted Hook Event**:\n   - Trigger: Fires when a task status is set to completed\n   - Input schema with field descriptions:\n     - `task_id`: ID of the completed task\n     - `task_subject`: Task subject line\n     - `owner`: Agent that completed the task\n     - Other relevant fields\n   - Hook types supported: command, prompt, agent\n   - Practical example: Verification hook that runs tests or validates output before accepting completion\n\n3. **Exit Code Behavior**:\n   - Exit 0: Allow action to proceed (hook passes)\n   - Exit 1: Hook error (action proceeds, error logged)\n   - Exit 2: Block action with feedback (hook rejects)\n   - How blocked feedback is delivered back to the agent\n\n4. **Hook Type Support Matrix**:\n   | Event | command | prompt | agent |\n   |-------|---------|--------|-------|\n   | TeammateIdle | ✓ | ✓ | ✓ |\n   | TaskCompleted | ✓ | ✓ | ✓ |\n\n5. **Practical Examples**:\n   - Command hook: Shell script that validates task output files exist\n   - Prompt hook: Natural language instruction to verify acceptance criteria\n   - Agent hook: Subagent that runs tests and reports results\n\n6. **hooks.json Configuration** — How to define these hooks in the plugin's hooks.json file\n\n**Acceptance Criteria:**\n\n_Functional:_\n- [ ] TeammateIdle and TaskCompleted hook events documented\n- [ ] Hook input schemas documented with field descriptions\n- [ ] Exit code behavior explained (exit 2 = block action with feedback)\n- [ ] Practical examples of quality-gate hooks provided\n- [ ] Hook type support matrix included (command/prompt/agent per event)\n\n_Edge Cases:_\n- [ ] File is self-contained and independently loadable\n- [ ] Examples work with both single-agent and multi-agent contexts\n\n**Testing Requirements:**\n• Verification: Both hook events documented with input schemas\n• Verification: Exit code behavior correctly described\n• Verification: At least one practical example per hook type\n\nSource: internal/specs/claude-tools-plugin-SPEC.md Section 5.2 (US-007)",
+  "activeForm": "Creating hooks-integration.md reference",
+  "status": "completed",
+  "blocks": [
+    "24"
+  ],
+  "blockedBy": [
+    "19"
+  ],
+  "metadata": {
+    "priority": "critical",
+    "complexity": "M",
+    "source_section": "5.2 cc-teams Reference Skill",
+    "spec_path": "internal/specs/claude-tools-plugin-SPEC.md",
+    "feature_name": "cc-teams Reference Skill",
+    "task_uid": "internal/specs/claude-tools-plugin-SPEC.md:cc-teams:hooks-integration:001",
+    "task_group": "claude-tools-plugin",
+    "spec_phase": 1,
+    "spec_phase_name": "Plugin Foundation & Both Skills"
+  }
+}

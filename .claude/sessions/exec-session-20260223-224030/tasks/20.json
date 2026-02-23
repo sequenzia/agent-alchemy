@@ -1,0 +1,24 @@
+{
+  "id": "20",
+  "subject": "Create cc-teams messaging-protocol.md reference",
+  "description": "Create `claude/claude-tools/skills/cc-teams/references/messaging-protocol.md` documenting all 5 SendMessage protocol types with complete field tables and usage guidance.\n\nContent must cover all 5 message types:\n\n1. **message** (Direct Message):\n   - Fields: type (\"message\"), recipient (agent name, required), content (message text, required), summary (5-10 word preview, required)\n   - Usage: Default for all teammate communication; always prefer over broadcast\n   - Example with tool call syntax\n\n2. **broadcast** (Team-Wide Message):\n   - Fields: type (\"broadcast\"), content (required), summary (required)\n   - Cost warning: N messages for N team members — expensive, use sparingly\n   - Valid use cases: critical blocking issues, major team-wide announcements\n   - Invalid use cases: responding to one person, normal conversation, task follow-ups\n   - Example with tool call syntax\n\n3. **shutdown_request** (Request Teammate Shutdown):\n   - Fields: type (\"shutdown_request\"), recipient (required), content (optional reason)\n   - Usage: Team lead sends when work is complete\n   - Recipient receives shutdown request with requestId\n   - Example with tool call syntax\n\n4. **shutdown_response** (Respond to Shutdown):\n   - Fields: type (\"shutdown_response\"), request_id (from shutdown request, required), approve (boolean, required), content (rejection reason if approve=false)\n   - Approve flow: sends confirmation, terminates process\n   - Reject flow: sends reason to leader, continues working\n   - Critical: must extract request_id from JSON message; text acknowledgment alone is NOT sufficient\n   - Example with tool call syntax for both approve and reject\n\n5. **plan_approval_response** (Approve/Reject Plan):\n   - Fields: type (\"plan_approval_response\"), request_id (required), recipient (required), approve (boolean, required), content (feedback if rejected)\n   - Triggered when teammate with plan_mode_required calls ExitPlanMode\n   - Approve: teammate exits plan mode, can implement\n   - Reject: teammate receives feedback, revises plan\n   - Example with tool call syntax\n\nAdditional sections:\n- **Peer DM Visibility**: Team leads see brief summaries of teammate-to-teammate DMs in idle notifications\n- **Automatic Message Delivery**: Messages delivered automatically (not polling-based); teammates don't need to check inboxes\n- **Message Best Practices**: Always refer to teammates by name (not UUID), include summary for UI preview, keep content focused\n\n**Acceptance Criteria:**\n\n_Functional:_\n- [ ] All 5 message types documented with field tables\n- [ ] message type: recipient, content, summary fields and usage\n- [ ] broadcast type: content, summary fields with cost warning (N messages for N members)\n- [ ] shutdown_request/shutdown_response types: full lifecycle including request_id handling\n- [ ] plan_approval_response type: approve/reject with feedback\n- [ ] Peer DM visibility for team leads documented\n- [ ] Automatic message delivery mechanism explained (not polling-based)\n- [ ] Each type includes concrete tool call examples\n\n_Edge Cases:_\n- [ ] File is self-contained and independently loadable\n- [ ] Clear distinction between when to use message vs broadcast\n\n**Testing Requirements:**\n• Verification: All 5 message types documented with all required fields\n• Verification: Examples use correct SendMessage tool call syntax\n\nSource: internal/specs/claude-tools-plugin-SPEC.md Section 5.2 (US-005)",
+  "activeForm": "Creating messaging-protocol.md reference",
+  "status": "completed",
+  "blocks": [
+    "24"
+  ],
+  "blockedBy": [
+    "19"
+  ],
+  "metadata": {
+    "priority": "critical",
+    "complexity": "M",
+    "source_section": "5.2 cc-teams Reference Skill",
+    "spec_path": "internal/specs/claude-tools-plugin-SPEC.md",
+    "feature_name": "cc-teams Reference Skill",
+    "task_uid": "internal/specs/claude-tools-plugin-SPEC.md:cc-teams:messaging-protocol:001",
+    "task_group": "claude-tools-plugin",
+    "spec_phase": 1,
+    "spec_phase_name": "Plugin Foundation & Both Skills"
+  }
+}

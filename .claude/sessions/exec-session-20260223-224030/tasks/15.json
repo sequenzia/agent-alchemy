@@ -1,0 +1,24 @@
+{
+  "id": "15",
+  "subject": "Create claude-tools plugin directory structure",
+  "description": "Create the `claude/claude-tools/` directory tree with all required subdirectories for both skills and their reference files.\n\nDirectory structure to create:\n```\nclaude/claude-tools/\n├── skills/\n│   ├── cc-tasks/\n│   │   └── references/\n│   └── cc-teams/\n│       └── references/\n```\n\n**Acceptance Criteria:**\n\n_Functional:_\n- [ ] `claude/claude-tools/` directory exists\n- [ ] `claude/claude-tools/skills/cc-tasks/` directory exists\n- [ ] `claude/claude-tools/skills/cc-tasks/references/` directory exists\n- [ ] `claude/claude-tools/skills/cc-teams/` directory exists\n- [ ] `claude/claude-tools/skills/cc-teams/references/` directory exists\n\n_Edge Cases:_\n- [ ] No extra files or directories created beyond the required structure\n\n**Testing Requirements:**\n• Verification: All directories exist and are accessible\n\nSource: internal/specs/claude-tools-plugin-SPEC.md Section 9.1",
+  "activeForm": "Creating plugin directory structure",
+  "status": "in_progress",
+  "blocks": [
+    "16",
+    "19",
+    "23"
+  ],
+  "blockedBy": [],
+  "metadata": {
+    "priority": "critical",
+    "complexity": "XS",
+    "source_section": "9.1 Implementation Plan",
+    "spec_path": "internal/specs/claude-tools-plugin-SPEC.md",
+    "feature_name": "Plugin Structure & Marketplace Registration",
+    "task_uid": "internal/specs/claude-tools-plugin-SPEC.md:plugin-structure:directory:001",
+    "task_group": "claude-tools-plugin",
+    "spec_phase": 1,
+    "spec_phase_name": "Plugin Foundation & Both Skills"
+  }
+}

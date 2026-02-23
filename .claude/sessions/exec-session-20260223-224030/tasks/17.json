@@ -1,0 +1,24 @@
+{
+  "id": "17",
+  "subject": "Create cc-tasks task-patterns.md reference",
+  "description": "Create `claude/claude-tools/skills/cc-tasks/references/task-patterns.md` containing proven task design patterns for Claude Code Tasks.\n\nContent must cover:\n\n1. **Dependency Graph Design Patterns** — With diagrams/examples for each:\n   - **Linear Chain**: A → B → C (sequential tasks)\n   - **Fan-Out**: A → [B, C, D] (one task unblocks multiple parallel tasks)\n   - **Fan-In**: [A, B, C] → D (multiple tasks must complete before one can start)\n   - **Diamond**: A → [B, C] → D (fan-out then fan-in)\n\n2. **Task Right-Sizing Guidance**:\n   - Optimal granularity: 1-3 files per task\n   - When to split: task touches >5 files, >2 hours estimated work, or crosses system boundaries\n   - When to merge: tasks are trivially small (<10 lines each), always done together\n\n3. **Multi-Agent Coordination Patterns**:\n   - Self-claim workflow: agents call TaskList → find unblocked pending tasks → claim via TaskUpdate(owner)\n   - Task-per-teammate ratio: aim for 2-3 tasks per agent per wave for balanced workload\n   - Wave-based execution: tasks grouped by dependency level, all in one wave can run in parallel\n\n4. **Metadata Strategies**:\n   - Categorization: task_group, feature_name, source_section for filtering\n   - Tracking: priority, complexity, task_uid for deduplication\n   - Phase tracking: spec_phase, spec_phase_name for incremental execution\n   - Custom metadata: produces_for for producer-consumer relationships\n\n**Acceptance Criteria:**\n\n_Functional:_\n- [ ] Includes dependency graph design patterns (linear chain, fan-out, fan-in, diamond) with examples\n- [ ] Task right-sizing guidance provided (optimal granularity: 1-3 files per task)\n- [ ] Multi-agent coordination patterns documented (self-claim workflow, task-per-teammate ratio)\n- [ ] Metadata strategies for categorization and tracking included\n- [ ] Each pattern includes when-to-use guidance\n\n_Edge Cases:_\n- [ ] Patterns applicable to both single-agent and multi-agent scenarios\n- [ ] File is self-contained and independently loadable\n\n**Testing Requirements:**\n• Verification: All four dependency graph patterns documented with examples\n• Verification: Patterns are actionable with concrete tool call examples\n\nSource: internal/specs/claude-tools-plugin-SPEC.md Section 5.1 (US-002)",
+  "activeForm": "Creating task-patterns.md reference",
+  "status": "completed",
+  "blocks": [
+    "24"
+  ],
+  "blockedBy": [
+    "16"
+  ],
+  "metadata": {
+    "priority": "critical",
+    "complexity": "M",
+    "source_section": "5.1 cc-tasks Reference Skill",
+    "spec_path": "internal/specs/claude-tools-plugin-SPEC.md",
+    "feature_name": "cc-tasks Reference Skill",
+    "task_uid": "internal/specs/claude-tools-plugin-SPEC.md:cc-tasks:task-patterns:001",
+    "task_group": "claude-tools-plugin",
+    "spec_phase": 1,
+    "spec_phase_name": "Plugin Foundation & Both Skills"
+  }
+}

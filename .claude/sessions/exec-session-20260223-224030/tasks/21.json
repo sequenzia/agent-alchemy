@@ -1,0 +1,24 @@
+{
+  "id": "21",
+  "subject": "Create cc-teams orchestration-patterns.md reference",
+  "description": "Create `claude/claude-tools/skills/cc-teams/references/orchestration-patterns.md` with at least 5 orchestration pattern templates for multi-agent workflows.\n\nEach pattern must include:\n- **Name**: Descriptive pattern name\n- **Description**: What this pattern does\n- **When to Use**: Conditions that make this pattern appropriate\n- **Team Structure**: Roles, agent types, model tiers (Opus/Sonnet/Haiku)\n- **Task Design**: How tasks are structured and assigned\n- **Communication Flow**: How agents coordinate (messages, task list, etc.)\n- **Practical Example**: Pseudocode showing tool calls (TeamCreate, Task, SendMessage, TaskCreate, etc.)\n\nPatterns to cover:\n\n1. **Parallel Specialists** — Multiple agents work independently on different parts of the same problem. Example: code-explorer agents each exploring a different aspect of the codebase.\n   - Best for: Embarrassingly parallel work (search, analysis, independent file generation)\n   - Team: 1 lead + N specialists (Sonnet for search, Opus for synthesis)\n\n2. **Pipeline with Dependencies** — Tasks flow through stages, each stage's output feeds the next. Example: research → design → implement → review.\n   - Best for: Sequential workflows where each stage transforms the prior stage's output\n   - Team: 1 lead + stage-specific agents\n\n3. **Swarm / Self-Organizing Pool** — Multiple agents claim tasks from a shared pool, working through a large task list autonomously. Example: execute-tasks wave-based execution.\n   - Best for: Large task backlogs with well-defined independent tasks\n   - Team: 1 orchestrator + N worker agents (same type)\n\n4. **Research then Implement** — First phase researches/explores, second phase implements based on findings. Example: feature-dev exploration then architecture.\n   - Best for: Tasks requiring understanding before action\n   - Team: 1 lead + research agents (Sonnet) → implementation agents (Opus/Sonnet)\n\n5. **Plan Approval Gate** — Agent works in plan mode, must get approval before implementing. Example: architect agent proposes design, lead approves.\n   - Best for: High-risk changes where human/lead review is critical\n   - Team: 1 lead + N agents with plan_mode_required\n   - Uses: plan_approval_response message type\n\n6. **Pattern Selection Guide** — Decision matrix helping consumers choose the right pattern based on their use case (parallelizable? sequential? research-heavy? risk-sensitive?)\n\n**Acceptance Criteria:**\n\n_Functional:_\n- [ ] At least 5 orchestration patterns documented\n- [ ] Each pattern includes: name, description, when to use, team structure, task design, and communication flow\n- [ ] Patterns cover: Parallel Specialists, Pipeline with Dependencies, Swarm/Self-Organizing Pool, Research then Implement, Plan Approval Gate\n- [ ] Each pattern includes practical example with pseudocode showing tool calls\n- [ ] Pattern selection guidance helps consumers choose the right pattern\n\n_Edge Cases:_\n- [ ] Patterns applicable to different team sizes (2-agent to 10-agent)\n- [ ] File is self-contained and independently loadable\n- [ ] Examples use actual tool call syntax (not abstract pseudocode)\n\n**Testing Requirements:**\n• Verification: All 5+ patterns documented with all required sections\n• Verification: Practical examples use correct tool call syntax\n\nSource: internal/specs/claude-tools-plugin-SPEC.md Section 5.2 (US-006)",
+  "activeForm": "Creating orchestration-patterns.md reference",
+  "status": "completed",
+  "blocks": [
+    "24"
+  ],
+  "blockedBy": [
+    "19"
+  ],
+  "metadata": {
+    "priority": "critical",
+    "complexity": "M",
+    "source_section": "5.2 cc-teams Reference Skill",
+    "spec_path": "internal/specs/claude-tools-plugin-SPEC.md",
+    "feature_name": "cc-teams Reference Skill",
+    "task_uid": "internal/specs/claude-tools-plugin-SPEC.md:cc-teams:orchestration-patterns:001",
+    "task_group": "claude-tools-plugin",
+    "spec_phase": 1,
+    "spec_phase_name": "Plugin Foundation & Both Skills"
+  }
+}

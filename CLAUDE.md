@@ -10,6 +10,7 @@ Agent Alchemy is a monorepo that extends Claude Code into a structured developme
 agent-alchemy/
 ├── claude/                    # Claude Code plugins (markdown-as-code)
 │   ├── .claude-plugin/        # Plugin marketplace registry
+│   ├── claude-tools/          # Claude Code Tasks & Agent Teams reference skills
 │   ├── core-tools/            # Codebase analysis, deep exploration, language patterns (includes hooks/)
 │   ├── dev-tools/             # Feature dev, debugging, code review, docs, changelog
 │   ├── sdd-tools/             # Spec-Driven Development pipeline
@@ -95,6 +96,9 @@ pnpm lint                      # Lint all packages
 - `codebase-analysis` (core-tools) — loads in Phase 2 for Mermaid diagrams in reports
 - `docs-writer` agent (dev-tools) — auto-loaded via `skills:` frontmatter for consistent diagram quality
 
+`cc-tasks` and `cc-teams` (claude-tools) are reference skills available for cross-plugin loading by any skill that interacts with Claude Code Tasks or Agent Teams:
+- Loaded via `${CLAUDE_PLUGIN_ROOT}/../claude-tools/skills/cc-tasks/SKILL.md` or `${CLAUDE_PLUGIN_ROOT}/../claude-tools/skills/cc-teams/SKILL.md`
+
 **Cross-plugin reference convention:** Always use `${CLAUDE_PLUGIN_ROOT}/../{source-dir-name}/` for cross-plugin references, where `{source-dir-name}` is the directory name under `claude/` (e.g., `core-tools`, `tdd-tools`). Same-plugin references use `${CLAUDE_PLUGIN_ROOT}/` directly. Never use full marketplace names (e.g., `agent-alchemy-core-tools`) in path references — use the short source directory name.
 
 ### Model Tiering
@@ -158,6 +162,7 @@ docs-manager -> docs-writer -> technical-diagrams (auto-loaded via skills: front
 
 | Group | Skills | Agents | Version |
 |-------|--------|--------|---------|
+| claude-tools | cc-tasks, cc-teams | — | 0.1.0 |
 | core-tools | deep-analysis, codebase-analysis, language-patterns, project-conventions, technical-diagrams | code-explorer, code-synthesizer, code-architect | 0.2.1 |
 | dev-tools | feature-dev, bug-killer, architecture-patterns, code-quality, project-learnings, changelog-format, docs-manager, release-python-package, document-changes | code-reviewer, bug-investigator, changelog-manager, docs-writer | 0.3.1 |
 | sdd-tools | create-spec, analyze-spec, create-tasks, execute-tasks | codebase-explorer, researcher, spec-analyzer, task-executor | 0.2.2 |

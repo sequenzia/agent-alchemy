@@ -1,0 +1,32 @@
+{
+  "id": "19",
+  "subject": "Create cc-teams SKILL.md reference skill",
+  "description": "Create the main `cc-teams` reference skill at `claude/claude-tools/skills/cc-teams/SKILL.md`. This is a comprehensive reference for Claude Code's Agent Teams features.\n\nMust include YAML frontmatter:\n```yaml\n---\nname: cc-teams\ndescription: Reference for Claude Code Agent Teams — lifecycle, messaging, spawning, orchestration, and hooks\nuser-invocable: false\ndisable-model-invocation: false\nlast-verified: 2026-02-23\n---\n```\n\nContent must cover (under 400 lines total):\n\n1. **Overview** — Purpose as a shared reference for Agent Teams\n2. **TeamCreate Tool** — Complete parameter table (team_name, description, agent_type), return behavior\n3. **TeamDelete Tool** — Parameters, prerequisites (no active members), cleanup behavior\n4. **Team Lifecycle** — creation → member spawning → coordination → shutdown → cleanup, with state diagram\n5. **Teammate Spawning** — Task tool with team_name parameter, subagent_type selection, name parameter, run_in_background, isolation options\n6. **Idle State Semantics** — Idle is normal (not error), idle teammates can receive messages, automatic idle notifications, do not react to idle unless assigning work\n7. **Environment Variables** — CLAUDE_CODE_TEAM_NAME, CLAUDE_CODE_AGENT_NAME, and other auto-set vars in teammates\n8. **Spawn Backends** — in-process, tmux, iTerm2 with selection guidance\n9. **File Structure** — `~/.claude/teams/{team-name}/config.json`, `~/.claude/tasks/{team-name}/`, inboxes/, member discovery via config.json\n10. **SendMessage Overview** — Brief overview of 5 message types (details in messaging-protocol.md reference)\n11. **Self-Referential Loading Instructions** — How to load reference files:\n    - `Read ${CLAUDE_PLUGIN_ROOT}/skills/cc-teams/references/messaging-protocol.md`\n    - `Read ${CLAUDE_PLUGIN_ROOT}/skills/cc-teams/references/orchestration-patterns.md`\n    - `Read ${CLAUDE_PLUGIN_ROOT}/skills/cc-teams/references/hooks-integration.md`\n\n**Acceptance Criteria:**\n\n_Functional:_\n- [ ] SKILL.md documents TeamCreate and TeamDelete tools with complete parameter tables\n- [ ] Team lifecycle documented: creation → member spawning → coordination → shutdown → cleanup\n- [ ] Teammate spawning via Task tool with team_name parameter documented with all spawn parameters\n- [ ] Idle state semantics explained (idle is normal, not an error; idle teammates can receive messages)\n- [ ] Environment variables auto-set in teammates listed\n- [ ] Spawn backends documented (in-process, tmux, iTerm2) with selection guidance\n- [ ] File structure documented (~/.claude/teams/, ~/.claude/tasks/, config.json, inboxes/)\n- [ ] YAML frontmatter includes `user-invocable: false` and `disable-model-invocation: false`\n- [ ] Self-referential Read instructions for references/ files included\n\n_Edge Cases:_\n- [ ] Sections organized so consumers can skip to relevant parts (e.g., just messaging, not orchestration)\n- [ ] File stays under 400 lines for context efficiency\n- [ ] Optional cross-reference to cc-tasks provided, not mandatory\n\n_Error Handling:_\n- [ ] `Last Verified` date included in frontmatter\n\n**Testing Requirements:**\n• Verification: Valid YAML frontmatter parses correctly\n• Verification: All team tool parameters match Claude Code system prompts\n• Verification: File is under 400 lines\n\nSource: internal/specs/claude-tools-plugin-SPEC.md Section 5.2 (US-004)",
+  "activeForm": "Creating cc-teams SKILL.md",
+  "status": "completed",
+  "blocks": [
+    "20",
+    "21",
+    "22",
+    "24"
+  ],
+  "blockedBy": [
+    "15"
+  ],
+  "metadata": {
+    "priority": "critical",
+    "complexity": "L",
+    "source_section": "5.2 cc-teams Reference Skill",
+    "spec_path": "internal/specs/claude-tools-plugin-SPEC.md",
+    "feature_name": "cc-teams Reference Skill",
+    "task_uid": "internal/specs/claude-tools-plugin-SPEC.md:cc-teams:skill-md:001",
+    "task_group": "claude-tools-plugin",
+    "spec_phase": 1,
+    "spec_phase_name": "Plugin Foundation & Both Skills",
+    "produces_for": [
+      "20",
+      "21",
+      "22"
+    ]
+  }
+}

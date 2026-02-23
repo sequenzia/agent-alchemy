@@ -1,0 +1,30 @@
+{
+  "id": "16",
+  "subject": "Create cc-tasks SKILL.md reference skill",
+  "description": "Create the main `cc-tasks` reference skill at `claude/claude-tools/skills/cc-tasks/SKILL.md`. This is a comprehensive reference for Claude Code's Task tools (TaskCreate, TaskGet, TaskUpdate, TaskList).\n\nMust include YAML frontmatter:\n```yaml\n---\nname: cc-tasks\ndescription: Reference for Claude Code Tasks — tool parameters, status lifecycle, dependency management, and conventions\nuser-invocable: false\ndisable-model-invocation: false\nlast-verified: 2026-02-23\n---\n```\n\nContent must cover (under 400 lines total):\n\n1. **Overview** — Purpose as a shared reference for task tool usage\n2. **TaskCreate** — Complete parameter table (subject, description, activeForm, metadata), all fields with types and required/optional status\n3. **TaskGet** — Parameter table (taskId), return fields\n4. **TaskUpdate** — Parameter table (taskId, status, subject, description, activeForm, owner, metadata, addBlocks, addBlockedBy), status transitions\n5. **TaskList** — No parameters, return format\n6. **Status Lifecycle** — pending → in_progress → completed, transition rules, deleted status\n7. **Naming Conventions** — Imperative subject (\"Create X\") vs present-continuous activeForm (\"Creating X\"), examples\n8. **Dependency Management** — blockedBy/blocks fields, DAG design principles, how blocked tasks cannot start\n9. **Metadata Conventions** — Common key-value patterns (priority, complexity, task_group, spec_path, feature_name, task_uid, spec_phase)\n10. **Self-Referential Loading Instructions** — How to load reference files:\n    - `Read ${CLAUDE_PLUGIN_ROOT}/skills/cc-tasks/references/task-patterns.md`\n    - `Read ${CLAUDE_PLUGIN_ROOT}/skills/cc-tasks/references/anti-patterns.md`\n\n**Acceptance Criteria:**\n\n_Functional:_\n- [ ] SKILL.md documents all four Task tools (TaskCreate, TaskGet, TaskUpdate, TaskList) with complete parameter tables\n- [ ] Each parameter includes: name, type, required/optional status, and description\n- [ ] Status lifecycle (pending → in_progress → completed) is documented with transition rules\n- [ ] activeForm convention is documented (imperative subject vs. present-continuous activeForm)\n- [ ] Dependency management via blockedBy/blocks is documented with DAG design guidance\n- [ ] Metadata usage conventions are described with common key-value patterns (priority, parent, assignee)\n- [ ] YAML frontmatter includes `user-invocable: false` and `disable-model-invocation: false`\n- [ ] Self-referential Read instructions for references/ files included\n\n_Edge Cases:_\n- [ ] Sections organized so consumers can skip to relevant parts\n- [ ] File stays under 400 lines for context efficiency\n\n_Error Handling:_\n- [ ] `Last Verified` date included in frontmatter for tracking currency\n\n**Testing Requirements:**\n• Verification: Valid YAML frontmatter parses correctly\n• Verification: All tool parameters match Claude Code system prompts\n• Verification: File is under 400 lines\n\nSource: internal/specs/claude-tools-plugin-SPEC.md Section 5.1 (US-001)",
+  "activeForm": "Creating cc-tasks SKILL.md",
+  "status": "completed",
+  "blocks": [
+    "17",
+    "18",
+    "24"
+  ],
+  "blockedBy": [
+    "15"
+  ],
+  "metadata": {
+    "priority": "critical",
+    "complexity": "L",
+    "source_section": "5.1 cc-tasks Reference Skill",
+    "spec_path": "internal/specs/claude-tools-plugin-SPEC.md",
+    "feature_name": "cc-tasks Reference Skill",
+    "task_uid": "internal/specs/claude-tools-plugin-SPEC.md:cc-tasks:skill-md:001",
+    "task_group": "claude-tools-plugin",
+    "spec_phase": 1,
+    "spec_phase_name": "Plugin Foundation & Both Skills",
+    "produces_for": [
+      "17",
+      "18"
+    ]
+  }
+}
