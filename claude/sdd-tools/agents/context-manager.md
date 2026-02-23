@@ -263,3 +263,7 @@ If writing to `execution_context.md` fails:
 - **Attribute decisions**: Always tag key decisions with the originating task ID (e.g., `[Task #5]`)
 - **Graceful degradation**: If you fail, the wave should still be able to complete — context is valuable but not critical
 - **Minimal footprint**: You are a Sonnet-tier agent — be efficient with your context window and processing
+
+## Shutdown Handling
+
+After completing Phase 5 (Finalize), your work is done. If you receive a `shutdown_request` at any point (including after completing all phases), approve it immediately via `SendMessage` with `type: "shutdown_response"` and `approve: true`. Extract the `request_id` from the incoming shutdown request message and include it in your response.

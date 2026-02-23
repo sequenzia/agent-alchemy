@@ -413,3 +413,15 @@ If an agent receives a message that does not match the expected schema:
 | 4 | Task Executor -> Context Manager | `CONTEXT CONTRIBUTION` | SendMessage | 2 |
 | 5 | Context Manager -> Task Executors | `SESSION CONTEXT` | SendMessage | 2 |
 | 6 | Context Manager -> Wave Lead | `ENRICHED CONTEXT` | SendMessage | 2 |
+
+---
+
+## Shutdown Lifecycle
+
+Agent shutdown uses the platform's built-in `shutdown_request` / `shutdown_response` message types via `SendMessage` (not custom protocols). The shutdown sequence for each wave follows a hierarchical pattern:
+
+1. **Wave-lead shuts down sub-agents** (wave-lead Step 6b): After Context Manager finalization, the wave-lead sends `shutdown_request` to all executors and the Context Manager. Agents approve immediately. Unresponsive agents are force-stopped via `TaskStop`.
+2. **Orchestrator shuts down wave-lead** (orchestration Step 5g): After receiving and processing the WAVE SUMMARY, the orchestrator sends `shutdown_request` to the wave-lead. The wave-lead approves immediately.
+3. **Orchestrator deletes team** (orchestration Step 5g): After all agents are terminated, `TeamDelete` removes the team and frees resources for the next wave.
+
+**All agents must approve shutdown requests immediately** when they have completed their work. This is documented in each agent's Shutdown Handling section.

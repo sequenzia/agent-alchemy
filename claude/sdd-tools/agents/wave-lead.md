@@ -205,6 +205,15 @@ After all executors (including any retries) have completed:
      - The wave can still complete — context persistence is valuable but not critical
      - Note in the wave summary that context was not persisted for this wave
 
+### Step 6b: Shutdown Sub-Agents
+
+After Context Manager finalization (or skip/failure), shut down all sub-agents before compiling the wave summary. This ensures clean team teardown when the orchestrator calls `TeamDelete` after receiving the wave summary.
+
+1. **Send `shutdown_request` to each task executor** via `SendMessage` with `type: "shutdown_request"`. Include all executors that were spawned, regardless of whether they succeeded or failed.
+2. **Send `shutdown_request` to the Context Manager** via `SendMessage` with `type: "shutdown_request"` (skip if Context Manager was not available).
+3. **Wait for shutdown responses** from all agents. Allow up to 15 seconds total — do not block indefinitely.
+4. **Force-stop unresponsive agents**: Use `TaskStop` on any agent that did not respond to the shutdown request within the timeout window.
+
 ### Step 7: Compile Wave Summary
 
 After all executors have completed (or timed out) and Context Manager finalization is done (or skipped):
@@ -247,14 +256,22 @@ Include spawning failures (rate limit or other) in the RESULTS section with stat
 
 ### Step 9: Handle Shutdown
 
-If you receive a shutdown request from the orchestrator at any point:
+#### Normal Completion (after Step 8)
+
+After sending the WAVE SUMMARY in Step 8, your work is done. You will receive a `shutdown_request` from the orchestrator. Approve it immediately via `SendMessage` with `type: "shutdown_response"` and `approve: true`. Extract the `request_id` from the incoming shutdown request message and include it in your response.
+
+#### Mid-Wave Shutdown (during Steps 1–7)
+
+If you receive a shutdown request from the orchestrator before completing Step 8:
 
 1. Stop spawning new executors
 2. Allow currently running executors to complete (do not terminate them abruptly unless instructed)
 3. Collect any available results from completed executors
 4. Mark any un-started tasks as `failed` with reason "wave shutdown requested"
 5. Signal Context Manager to finalize (if available) with whatever results were collected
-6. Send a partial wave summary with whatever results were collected
+6. Shut down sub-agents: send `shutdown_request` to all spawned executors and the Context Manager, then use `TaskStop` on any that don't respond within 10 seconds
+7. Send a partial wave summary with whatever results were collected
+8. Approve the shutdown request via `SendMessage` with `type: "shutdown_response"` and `approve: true`
 
 ## Task State Management
 
@@ -323,4 +340,5 @@ If sending a message fails (to orchestrator or receiving from executor):
 - **Single source of truth**: Only you call `TaskUpdate` for tasks in this wave
 - **Graceful degradation**: If the Context Manager or some executors fail, continue with those that succeeded
 - **Clean shutdown**: On shutdown request, collect whatever results are available before reporting
+- **Shutdown sub-agents first**: Always shut down executors and context manager (Step 6b) before sending the wave summary — this ensures `TeamDelete` succeeds
 - **Escalation via summary**: Failed tasks after retry exhaustion go in the FAILED TASKS section for the orchestrator to handle; do NOT attempt user interaction directly

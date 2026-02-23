@@ -578,7 +578,7 @@ The orchestrator receives the wave summary containing:
    - **Pending**: Tasks with status `pending` that were assigned to this wave but never started — these are included in the retry.
 2. **Reset in-progress tasks**: For each `in_progress` task, call `TaskUpdate` to set status back to `pending`.
 3. **Build retry task list**: Collect all tasks that are now `pending` (reset tasks + tasks that were never started). If all wave tasks were already completed before the crash, skip retry — there is nothing to retry.
-4. **Clean up failed team**: Delete the crashed wave team via `TeamDelete`.
+4. **Clean up failed team**: Delete the crashed wave team via `TeamDelete`. If `TeamDelete` fails, wait 5 seconds and retry once. In crash scenarios, agents may not have terminated cleanly.
 5. **Log the crash**: Append a note to `task_log.md`:
    ```
    | -- | Wave {N} lead crashed | {N} | CRASH | -- | -- |
@@ -594,7 +594,7 @@ The orchestrator receives the wave summary containing:
 If the retry wave-lead also crashes (same detection criteria), the orchestrator does NOT retry again automatically. Instead:
 
 1. Reset any `in_progress` tasks to `pending` (same as first crash).
-2. Delete the failed retry team via `TeamDelete`.
+2. Delete the failed retry team via `TeamDelete`. If `TeamDelete` fails, wait 5 seconds and retry once.
 3. Escalate to the user via `AskUserQuestion`:
 
 ```yaml
@@ -799,12 +799,30 @@ questions:
 
 **Abort during crash recovery**: If the user selects "Abort session" during a crash recovery escalation (from Step 5e), the same abort procedure applies: mark remaining tasks as failed, proceed to Step 6.
 
-### 5g: Delete Wave Team
+### 5g: Shutdown Wave Team
 
-After processing the wave summary and handling any escalations:
+After processing the wave summary and handling any escalations, shut down the wave team before proceeding to the next wave:
 
-1. Delete the wave team via `TeamDelete`.
-2. This frees up resources for the next wave's team.
+1. **Send `shutdown_request` to the wave-lead** via `SendMessage` with `type: "shutdown_request"`. The wave-lead has already shut down its sub-agents (executors and context manager) in its Step 6b, so only the wave-lead itself remains active.
+2. **Wait for the wave-lead's shutdown response.** Allow up to 15 seconds. The wave-lead should approve immediately since it has already sent its wave summary.
+3. **Delete the wave team** via `TeamDelete`. All team members should be terminated at this point.
+4. **Handle `TeamDelete` failure**: If `TeamDelete` fails (team still has active members):
+   a. Wait 5 seconds and retry `TeamDelete`.
+   b. If the retry also fails, wait 10 seconds and make a final attempt.
+   c. If all 3 attempts fail, escalate to the user via `AskUserQuestion`:
+      ```yaml
+      questions:
+        - header: "Team Cleanup Failed"
+          question: "Failed to delete the Wave {N} team after 3 attempts. This may block subsequent waves."
+          options:
+            - label: "Retry cleanup"
+              description: "Wait and attempt team deletion again"
+            - label: "Abort session"
+              description: "Stop execution entirely and archive partial results"
+          multiSelect: false
+      ```
+      - **Retry cleanup**: Go back to step 3 (TeamDelete) with one more attempt.
+      - **Abort session**: Proceed directly to Step 6 (Summarize & Archive) with partial results.
 
 ### 5h: Loop
 

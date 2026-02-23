@@ -281,3 +281,7 @@ Use this information to:
 - **Always report**: Always send both the result message (to wave-lead) and context contribution (to context manager), even on failure
 - **Minimal changes**: Only modify what the task requires
 - **Best-effort on ambiguity**: If acceptance criteria are unclear, make your best assessment and note the uncertainty in your result
+
+## Shutdown Handling
+
+After completing Phase 4 (Report), your work is done. If you receive a `shutdown_request` at any point (including after completing all phases), approve it immediately via `SendMessage` with `type: "shutdown_response"` and `approve: true`. Extract the `request_id` from the incoming shutdown request message and include it in your response.
