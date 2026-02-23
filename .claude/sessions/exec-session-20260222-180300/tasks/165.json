@@ -1,0 +1,22 @@
+{
+  "id": "165",
+  "subject": "Update create-tasks skill for produces_for field emission",
+  "description": "Update the `create-tasks` skill to detect producer-consumer relationships between tasks and emit the `produces_for` field in generated task JSON.\n\n**What to implement:**\n\n1. Read current `claude/sdd-tools/skills/create-tasks/SKILL.md` (~653 lines)\n2. Add `produces_for` detection logic:\n   - When decomposing tasks, identify relationships where one task's output is directly consumed by another\n   - Common patterns:\n     - Data model tasks → API tasks that use the model\n     - Schema definition tasks → Implementation tasks that implement the schema\n     - Configuration tasks → Tasks that consume the configuration\n     - Foundation tasks → Tasks that build on the foundation\n   - Detect from spec's `blockedBy` relationships: if task B is blocked by task A AND task A's deliverable is directly referenced in task B's description, add `produces_for: [B_id]` to task A\n3. Emit `produces_for` field in task JSON (array of task IDs)\n4. Update the task structure documentation in SKILL.md to include `produces_for`\n5. This is a clean break: new task JSON format (old format not supported)\n\n**Files to modify:**\n- `claude/sdd-tools/skills/create-tasks/SKILL.md` (~653 lines)\n\n**Acceptance Criteria:**\n\n_Functional:_\n- [ ] create-tasks detects producer-consumer relationships\n- [ ] `produces_for` field emitted in task JSON for identified relationships\n- [ ] `produces_for` is optional — tasks without relationships omit the field\n- [ ] Task structure documentation updated with produces_for field\n- [ ] Detection covers: model→API, schema→impl, config→consumer, foundation→builder patterns\n\n_Edge Cases:_\n- [ ] No producer-consumer relationships detected → no produces_for fields emitted\n- [ ] Task produces for multiple consumers → array contains all consumer IDs\n- [ ] Circular production relationships → skip (dependency inference already prevents circular blockedBy)\n\n_Error Handling:_\n- [ ] Uncertain relationships → omit produces_for (conservative approach)\n\n**Testing Requirements:**\n• Manual: Verify detection patterns cover common relationships\n• Integration: Run create-tasks on a test spec and verify produces_for output\n\nSource: internal/specs/execute-tasks-hardening-SPEC.md Section 5.5",
+  "activeForm": "Updating create-tasks for produces_for",
+  "status": "completed",
+  "blocks": [
+    "169"
+  ],
+  "blockedBy": [
+    "164"
+  ],
+  "metadata": {
+    "priority": "high",
+    "complexity": "M",
+    "source_section": "5.5 Generalized Prompt Injection",
+    "spec_path": "internal/specs/execute-tasks-hardening-SPEC.md",
+    "feature_name": "Prompt Injection (create-tasks)",
+    "task_uid": "internal/specs/execute-tasks-hardening-SPEC.md:prompt-injection:create-tasks:001",
+    "task_group": "execute-tasks-hardening"
+  }
+}

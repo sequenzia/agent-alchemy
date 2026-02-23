@@ -1,0 +1,22 @@
+{
+  "id": "166",
+  "subject": "Add retry escalation logic to orchestration and SKILL.md",
+  "description": "Implement a 3-tier retry escalation strategy for failed tasks that progressively provides more help rather than repeating the same approach.\n\n**What to implement:**\n\n1. Add retry escalation procedures to `claude/sdd-tools/references/orchestration.md`:\n   - **Retry #1 (Standard)**: Re-launch agent with failure context from previous attempt (existing behavior, enhanced)\n   - **Retry #2 (Context Enrichment)**: Inject full `execution_context.md` content + result files from related tasks (same wave or shared dependencies) into retry prompt\n   - **Retry #3 (User Escalation)**: Pause execution, present failure details to user via AskUserQuestion with 4 options:\n     - \"Fix manually and continue\" — user fixes externally, execution resumes\n     - \"Skip this task\" — mark as FAIL in task_log.md, continue\n     - \"Provide guidance\" — capture user text, inject into final retry\n     - \"Abort session\" — clean up, present partial summary\n   - If user provides guidance: final retry with user guidance injected\n   - If that also fails: present AskUserQuestion again with updated failure\n   - Track retry escalation level in task_log.md per task\n   - Retry count resets for each new task\n\n2. Update `claude/sdd-tools/skills/execute-tasks/SKILL.md`:\n   - Add retry escalation step to failure handling workflow\n   - Reference orchestration.md for detailed escalation procedures\n\n**Files to modify:**\n- `claude/sdd-tools/references/orchestration.md` (~611 lines)\n- `claude/sdd-tools/skills/execute-tasks/SKILL.md` (~271 lines)\n\n**Acceptance Criteria:**\n\n_Functional:_\n- [ ] Retry #1: Standard retry with failure context\n- [ ] Retry #2: Context enrichment with full execution_context.md + related results\n- [ ] Retry #3: User escalation via AskUserQuestion with 4 options\n- [ ] \"Fix manually and continue\" pauses and resumes\n- [ ] \"Skip this task\" marks FAIL in task_log.md, continues\n- [ ] \"Provide guidance\" captures text, injects into retry\n- [ ] \"Abort session\" cleans up, shows partial summary\n- [ ] Retry level tracked in task_log.md per task\n- [ ] Retry count resets per task (not cumulative)\n\n_Edge Cases:_\n- [ ] User provides guidance but retry still fails → re-present AskUserQuestion\n- [ ] Multiple tasks fail in same wave → each gets independent escalation\n- [ ] Retry #2 succeeds → task passes, no user escalation needed\n\n_Error Handling:_\n- [ ] All automated retries exhausted → user must choose action\n- [ ] User selects abort → graceful session cleanup\n\n**Testing Requirements:**\n• Manual: Verify escalation logic in orchestration.md is clear\n• Integration: Trigger retry with intentionally failing task during e2e (Task 15)\n\nSource: internal/specs/execute-tasks-hardening-SPEC.md Section 5.9",
+  "activeForm": "Adding retry escalation logic",
+  "status": "completed",
+  "blocks": [
+    "169"
+  ],
+  "blockedBy": [
+    "157"
+  ],
+  "metadata": {
+    "priority": "medium",
+    "complexity": "M",
+    "source_section": "5.9 Retry Escalation",
+    "spec_path": "internal/specs/execute-tasks-hardening-SPEC.md",
+    "feature_name": "Retry Escalation",
+    "task_uid": "internal/specs/execute-tasks-hardening-SPEC.md:retry-escalation:orchestration:001",
+    "task_group": "execute-tasks-hardening"
+  }
+}

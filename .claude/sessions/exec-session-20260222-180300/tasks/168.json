@@ -1,0 +1,22 @@
+{
+  "id": "168",
+  "subject": "Add post-wave merge validation to orchestration.md",
+  "description": "Add validation of `execution_context.md` after each context merge to catch corruption or unbounded growth early.\n\n**What to implement:**\n\n1. Add merge validation procedure to `claude/sdd-tools/references/orchestration.md`:\n   - After merging per-task context files, validate:\n     a. All 6 section headers present (`## Project Setup`, `## File Patterns`, `## Conventions`, `## Key Decisions`, `## Known Issues`, `## Task History`)\n     b. Total file size: warn if >500 lines, error if >1000 lines\n     c. No content outside of any section header (malformed sections)\n   - If validation fails:\n     - Log warning in task_log.md\n     - Attempt auto-repair: re-insert missing headers\n   - If size exceeds 1000 lines:\n     - Force compaction of all sections before proceeding\n   - Include validation results in wave completion summary (progress streaming)\n\n2. Runs after context merge, before next wave launch\n3. Leverages structured schema (Task 1) for reliable header detection\n\n**Files to modify:**\n- `claude/sdd-tools/references/orchestration.md` (~611 lines)\n\n**Acceptance Criteria:**\n\n_Functional:_\n- [ ] All 6 section headers validated after each merge\n- [ ] Warn if >500 lines\n- [ ] Error if >1000 lines → force compaction\n- [ ] Missing headers → auto-repair (re-insert)\n- [ ] Content outside section headers → flagged as malformed\n- [ ] Validation results included in wave completion summary\n\n_Edge Cases:_\n- [ ] All headers present, size normal → no action needed\n- [ ] One header missing after merge → auto-repair re-inserts it\n- [ ] Compaction triggered → older entries summarized per-section\n\n_Error Handling:_\n- [ ] Auto-repair fails → log error in task_log.md, continue with best-effort context\n\n**Testing Requirements:**\n• Manual: Verify validation logic is clear in orchestration.md\n• Integration: Validate during end-to-end execution (Task 15)\n\nSource: internal/specs/execute-tasks-hardening-SPEC.md Section 5.10",
+  "activeForm": "Adding post-wave merge validation",
+  "status": "completed",
+  "blocks": [
+    "169"
+  ],
+  "blockedBy": [
+    "157"
+  ],
+  "metadata": {
+    "priority": "medium",
+    "complexity": "S",
+    "source_section": "5.10 Post-Wave Merge Validation",
+    "spec_path": "internal/specs/execute-tasks-hardening-SPEC.md",
+    "feature_name": "Post-Wave Merge Validation",
+    "task_uid": "internal/specs/execute-tasks-hardening-SPEC.md:merge-validation:orchestration:001",
+    "task_group": "execute-tasks-hardening"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "id": "159",
+  "subject": "Create filesystem watch script (watch-for-results.sh)",
+  "description": "Create a new shell script that uses filesystem events (`fswatch` on macOS, `inotifywait` on Linux) to detect result files immediately when agents complete, replacing the fixed-interval polling as the primary completion mechanism.\n\n**What to implement:**\n\n1. Create `claude/sdd-tools/scripts/watch-for-results.sh` (~60 lines):\n   - Usage: `watch-for-results.sh <session_dir> <expected_count> [task_ids...]`\n   - Check tool availability at startup: `command -v fswatch` / `command -v inotifywait`\n   - If neither available: exit with code 2 (not-available signal)\n   - Detect pre-existing result files before starting watch (count toward expected)\n   - Watch for `Created` events only (not Modified) to avoid duplicates\n   - On macOS: use `fswatch --event Created`\n   - On Linux: use `inotifywait -m -e create`\n   - Output one line per detection: `RESULT_FOUND: result-task-{id}.md ({found}/{expected})`\n   - Output `ALL_DONE` when all expected result files found\n   - Configurable timeout via `WATCH_TIMEOUT` env var (default: 2700 seconds = 45 min)\n   - Exit codes: 0 (all found), 1 (timeout), 2 (tools unavailable)\n\n**Files to create:**\n- `claude/sdd-tools/scripts/watch-for-results.sh` (new, ~60 lines)\n\n**Acceptance Criteria:**\n\n_Functional:_\n- [ ] Script detects result files within 1 second of creation (zero-latency)\n- [ ] Emits `RESULT_FOUND: result-task-{id}.md (N/M)` for each detection\n- [ ] Emits `ALL_DONE` when expected count reached\n- [ ] Exits 0 when all results found\n- [ ] Pre-existing result files counted before watch starts\n- [ ] Accepts session_dir, expected_count, and optional task_ids as arguments\n\n_Edge Cases:_\n- [ ] Handles result files already present at watch start\n- [ ] Ignores non-result files created in session directory\n- [ ] Agent creates temp file then renames → watch triggers on final filename only\n- [ ] Partial completion at timeout → reports found results, exits code 1\n\n_Error Handling:_\n- [ ] Neither fswatch nor inotifywait available → exit code 2\n- [ ] fswatch exits unexpectedly → script exits code 1 (orchestrator falls back to polling)\n- [ ] Timeout reached → exit code 1\n\n_Performance:_\n- [ ] Detection latency < 1 second from file creation\n\n**Testing Requirements:**\n• Shell (bats): All results found → ALL_DONE output, exit 0\n• Shell (bats): Timeout with no files → exit 1\n• Shell (bats): No fswatch available → exit 2\n• Shell (bats): Pre-existing results detected and counted\n• Shell (bats): Partial completion → reports found, exits 1\n\nSource: internal/specs/execute-tasks-hardening-SPEC.md Section 5.4",
+  "activeForm": "Creating filesystem watch script",
+  "status": "completed",
+  "blocks": [
+    "161",
+    "162"
+  ],
+  "blockedBy": [],
+  "metadata": {
+    "priority": "high",
+    "complexity": "M",
+    "source_section": "5.4 Event-Driven Completion Detection",
+    "spec_path": "internal/specs/execute-tasks-hardening-SPEC.md",
+    "feature_name": "Event-Driven Completion Detection",
+    "task_uid": "internal/specs/execute-tasks-hardening-SPEC.md:event-completion:script:001",
+    "task_group": "execute-tasks-hardening"
+  }
+}

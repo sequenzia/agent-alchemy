@@ -1,0 +1,22 @@
+{
+  "id": "163",
+  "subject": "Add file conflict detection to orchestration and SKILL.md",
+  "description": "Add pre-wave file conflict detection to prevent concurrent agents from editing the same files within a wave. Implement in both orchestration.md (detailed procedure) and SKILL.md (workflow step).\n\n**What to implement:**\n\n1. Add conflict detection procedure to `claude/sdd-tools/references/orchestration.md`:\n   - Pre-wave scan: parse all wave tasks' `description` and `acceptance_criteria` for file path references\n   - File path detection patterns:\n     - Paths containing `/` (e.g., `src/api/handler.ts`)\n     - Paths ending in known extensions: `.md`, `.ts`, `.js`, `.json`, `.sh`, `.py`\n     - Glob patterns (e.g., `src/api/*.ts`)\n   - Conflict flagging: two or more tasks reference the same file path\n   - Resolution: lower ID task stays, higher ID tasks deferred to next wave (artificial dependency inserted)\n   - Overlapping glob patterns treated as conflicts\n   - Log results in `execution_plan.md` under \"Conflict Resolution\" section\n\n2. Update `claude/sdd-tools/skills/execute-tasks/SKILL.md` (~271 lines):\n   - Add conflict scan step to wave planning workflow (between dependency sort and wave launch)\n   - Reference orchestration.md procedure for details\n\n**Files to modify:**\n- `claude/sdd-tools/references/orchestration.md` (~611 lines)\n- `claude/sdd-tools/skills/execute-tasks/SKILL.md` (~271 lines)\n\n**Acceptance Criteria:**\n\n_Functional:_\n- [ ] Pre-wave scan detects file path references in task descriptions and acceptance criteria\n- [ ] Paths with `/`, known extensions, and glob patterns are detected\n- [ ] Two tasks referencing same file → conflict flagged\n- [ ] Lower ID task stays in wave, higher ID deferred\n- [ ] Conflict resolution logged in execution_plan.md\n- [ ] SKILL.md includes conflict scan step in workflow\n- [ ] No conflicts → wave proceeds unchanged with no overhead\n\n_Edge Cases:_\n- [ ] No file paths in descriptions → no conflicts detected\n- [ ] All tasks conflict on same file → sequentialized (one per sub-wave)\n- [ ] Glob patterns overlap → treated as conflict\n- [ ] File path only in acceptance criteria (not description) → still detected\n\n_Error Handling:_\n- [ ] Path pattern regex fails → log warning, proceed without detection for this wave\n\n**Testing Requirements:**\n• Manual: Verify conflict detection patterns match spec examples\n• Integration: Validated during end-to-end execution session (Task 15)\n\nSource: internal/specs/execute-tasks-hardening-SPEC.md Section 5.1",
+  "activeForm": "Adding file conflict detection",
+  "status": "completed",
+  "blocks": [
+    "169"
+  ],
+  "blockedBy": [
+    "157"
+  ],
+  "metadata": {
+    "priority": "critical",
+    "complexity": "M",
+    "source_section": "5.1 File Conflict Detection",
+    "spec_path": "internal/specs/execute-tasks-hardening-SPEC.md",
+    "feature_name": "File Conflict Detection",
+    "task_uid": "internal/specs/execute-tasks-hardening-SPEC.md:conflict-detection:orchestration:001",
+    "task_group": "execute-tasks-hardening"
+  }
+}

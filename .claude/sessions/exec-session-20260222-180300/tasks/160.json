@@ -1,0 +1,21 @@
+{
+  "id": "160",
+  "subject": "Implement adaptive polling in poll-for-results.sh",
+  "description": "Modify the existing `poll-for-results.sh` script to use adaptive polling intervals instead of fixed 15-second intervals. This serves as the fallback when `watch-for-results.sh` reports tools unavailable (exit code 2).\n\n**What to implement:**\n\n1. Read current `claude/sdd-tools/scripts/poll-for-results.sh` (~61 lines)\n2. Modify polling logic:\n   - Start at 5-second interval (configurable via `POLL_START_INTERVAL`, default: 5)\n   - Increase by 5 seconds after each poll round with no new results\n   - Cap at 30 seconds (configurable via `POLL_MAX_INTERVAL`, default: 30)\n   - Reset to start interval when a new result is found\n   - Cumulative timeout via `POLL_TIMEOUT` env var (default: 2700 = 45 min)\n   - Interval progression: 5s → 10s → 15s → 20s → 25s → 30s → 30s → ...\n3. Maintain same output format as watch-for-results.sh:\n   - `RESULT_FOUND: result-task-{id}.md (N/M)`\n   - `ALL_DONE`\n4. Maintain same exit codes: 0 (all found), 1 (timeout)\n5. Maintain same argument interface: `<session_dir> <expected_count> [task_ids...]`\n\n**Files to modify:**\n- `claude/sdd-tools/scripts/poll-for-results.sh` (~61 lines)\n\n**Acceptance Criteria:**\n\n_Functional:_\n- [ ] Polling starts at 5-second intervals (or POLL_START_INTERVAL)\n- [ ] Interval increases by 5s after each poll with no new results\n- [ ] Maximum interval caps at 30s (or POLL_MAX_INTERVAL)\n- [ ] Interval resets to start value when new result found\n- [ ] Cumulative timeout at 45 min (or POLL_TIMEOUT)\n- [ ] Output format matches watch-for-results.sh (RESULT_FOUND / ALL_DONE)\n\n_Edge Cases:_\n- [ ] POLL_START_INTERVAL=10 correctly starts at 10s\n- [ ] POLL_MAX_INTERVAL=15 correctly caps at 15s\n- [ ] All results found on first poll → immediate ALL_DONE\n\n_Error Handling:_\n- [ ] Timeout → exit code 1\n- [ ] Invalid environment variable values → use defaults\n\n**Testing Requirements:**\n• Shell (bats): Adaptive interval increase (5s, 10s, 15s, 20s, 25s, 30s)\n• Shell (bats): Interval reset on new result found\n• Shell (bats): Max interval cap at 30s\n• Shell (bats): Environment variable override (POLL_START_INTERVAL=10)\n• Shell (bats): Timeout → exit 1\n\nSource: internal/specs/execute-tasks-hardening-SPEC.md Section 5.8",
+  "activeForm": "Implementing adaptive polling",
+  "status": "completed",
+  "blocks": [
+    "161",
+    "162"
+  ],
+  "blockedBy": [],
+  "metadata": {
+    "priority": "medium",
+    "complexity": "S",
+    "source_section": "5.8 Adaptive Polling (Fallback)",
+    "spec_path": "internal/specs/execute-tasks-hardening-SPEC.md",
+    "feature_name": "Adaptive Polling",
+    "task_uid": "internal/specs/execute-tasks-hardening-SPEC.md:adaptive-polling:script:001",
+    "task_group": "execute-tasks-hardening"
+  }
+}

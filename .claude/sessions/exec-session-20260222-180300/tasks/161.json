@@ -1,0 +1,23 @@
+{
+  "id": "161",
+  "subject": "Update orchestration.md for event-driven completion detection",
+  "description": "Update the orchestration reference to replace fixed polling with event-driven completion detection using `watch-for-results.sh` as primary and `poll-for-results.sh` (adaptive) as fallback.\n\n**What to implement:**\n\n1. Read current `claude/sdd-tools/references/orchestration.md` (~611 lines)\n2. Update completion detection procedures to implement watch → poll fallback:\n   - Primary: Launch `watch-for-results.sh` with session dir, expected count, task IDs\n   - If exit code 0: all results found, proceed to processing\n   - If exit code 2: tools unavailable, fall back to `poll-for-results.sh` (adaptive)\n   - If exit code 1: timeout, handle as wave timeout\n   - If watch process exits unexpectedly: fall back to polling\n3. Update orchestrator instructions for reading watch/poll output:\n   - Parse `RESULT_FOUND:` lines for incremental detection\n   - Wait for `ALL_DONE` or timeout\n4. Ensure compatibility with existing result processing logic\n\n**Files to modify:**\n- `claude/sdd-tools/references/orchestration.md` (~611 lines)\n\n**Acceptance Criteria:**\n\n_Functional:_\n- [ ] Orchestrator launches watch-for-results.sh as primary completion detection\n- [ ] Fallback to poll-for-results.sh when watch exits with code 2\n- [ ] Timeout handling (exit code 1) triggers wave timeout procedures\n- [ ] Incremental result detection via RESULT_FOUND parsing\n- [ ] Completion via ALL_DONE signal\n\n_Edge Cases:_\n- [ ] Watch process killed mid-execution → fallback to polling\n- [ ] All results pre-exist before watch starts → immediate ALL_DONE\n- [ ] Mixed detection: some results found by watch, then watch fails, polling finds rest\n\n_Error Handling:_\n- [ ] Unexpected watch script behavior → log warning, fall back to polling\n- [ ] Polling also times out → wave timeout handling\n\n**Testing Requirements:**\n• Manual: Verify orchestration.md instructions are clear and unambiguous\n• Integration: Validated during end-to-end execution session (Task 15)\n\nSource: internal/specs/execute-tasks-hardening-SPEC.md Section 5.4",
+  "activeForm": "Updating orchestration.md for completion detection",
+  "status": "completed",
+  "blocks": [
+    "167"
+  ],
+  "blockedBy": [
+    "159",
+    "160"
+  ],
+  "metadata": {
+    "priority": "high",
+    "complexity": "S",
+    "source_section": "5.4 Event-Driven Completion Detection",
+    "spec_path": "internal/specs/execute-tasks-hardening-SPEC.md",
+    "feature_name": "Event-Driven Completion Detection",
+    "task_uid": "internal/specs/execute-tasks-hardening-SPEC.md:event-completion:integration:001",
+    "task_group": "execute-tasks-hardening"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "id": "156",
+  "subject": "Embed verification and execution rules in task-executor.md",
+  "description": "Distill essential rules from `execution-workflow.md` and `verification-patterns.md` and embed them directly in the `task-executor.md` agent definition. Remove instructions for agents to explicitly Read reference files at startup.\n\n**What to implement:**\n\n1. Read current `claude/sdd-tools/agents/task-executor.md` (~325 lines)\n2. Read `claude/sdd-tools/references/execution-workflow.md` (~318 lines) to identify essential rules\n3. Read `claude/sdd-tools/references/verification-patterns.md` (~256 lines) to identify essential rules\n4. Distill and embed concise, action-oriented rules covering:\n   - 4-phase execution workflow (Understand → Implement → Verify → Complete)\n   - Verification classification (spec-based vs general tasks)\n   - Result file format (status, task_id, duration, Summary, Files Modified, Context Contribution, Verification)\n   - Context contribution format (structured 6-section schema from Task 1)\n   - `produces_for` handling (reading upstream task output injected in prompt)\n5. Remove explicit Read instructions for `execution-workflow.md`, `verification-patterns.md`, and `orchestration.md`\n6. Keep `skills: [execute-tasks]` frontmatter for SKILL.md auto-loading\n7. Target: ~425 lines (up from ~325, net +100 lines of embedded rules)\n\n**Files to modify:**\n- `claude/sdd-tools/agents/task-executor.md` (~325 lines)\n\n**Reference files remain** in `references/` directory for documentation purposes but are NOT loaded by agents.\n\n**Acceptance Criteria:**\n\n_Functional:_\n- [ ] task-executor.md contains embedded 4-phase execution workflow rules\n- [ ] task-executor.md contains embedded verification classification rules\n- [ ] task-executor.md contains result file format specification\n- [ ] task-executor.md contains structured context contribution format (6 sections)\n- [ ] Agent no longer instructed to Read execution-workflow.md, verification-patterns.md, or orchestration.md\n- [ ] `skills: [execute-tasks]` frontmatter unchanged (SKILL.md still auto-loads)\n\n_Edge Cases:_\n- [ ] Embedded rules are concise and action-oriented (not verbose explanatory prose)\n- [ ] No redundancy between embedded rules and SKILL.md content\n\n_Performance:_\n- [ ] Agent definition ~425 lines (not exceeding ~450)\n- [ ] Net reduction of ~574 lines of startup file reads per agent\n\n**Testing Requirements:**\n• Manual: Verify agent definition is coherent and complete\n• Manual: Verify reference files are NOT referenced in agent Read instructions\n• Integration: Validated during end-to-end execution session (Task 15)\n\nSource: internal/specs/execute-tasks-hardening-SPEC.md Section 5.6",
+  "activeForm": "Embedding agent rules in task-executor.md",
+  "status": "completed",
+  "blocks": [
+    "157"
+  ],
+  "blockedBy": [],
+  "metadata": {
+    "priority": "high",
+    "complexity": "M",
+    "source_section": "5.6 Embedded Agent Rules",
+    "spec_path": "internal/specs/execute-tasks-hardening-SPEC.md",
+    "feature_name": "Embedded Agent Rules",
+    "task_uid": "internal/specs/execute-tasks-hardening-SPEC.md:embedded-rules:agent:001",
+    "task_group": "execute-tasks-hardening"
+  }
+}

@@ -43,16 +43,17 @@ The tasks are planning artifacts themselves — generating them IS the planning 
 
 ## Workflow Overview
 
-This workflow has eight phases:
+This workflow has nine phases:
 
 1. **Validate & Load** — Validate spec file, read content, check settings, load reference files
 2. **Detect Depth & Check Existing** — Detect spec depth level, check for existing tasks
 3. **Analyze Spec** — Extract features, requirements, and structure from spec
 4. **Decompose Tasks** — Break features into atomic tasks with acceptance criteria
 5. **Infer Dependencies** — Map blocking relationships between tasks
-6. **Preview & Confirm** — Show summary, get user approval before creating
-7. **Create Tasks** — Create tasks via TaskCreate/TaskUpdate (fresh or merge mode)
-8. **Error Handling** — Handle spec parsing issues, circular deps, missing info
+6. **Detect Producer-Consumer Relationships** — Identify `produces_for` relationships between tasks
+7. **Preview & Confirm** — Show summary, get user approval before creating
+8. **Create Tasks** — Create tasks via TaskCreate/TaskUpdate (fresh or merge mode)
+9. **Error Handling** — Handle spec parsing issues, circular deps, missing info
 
 ---
 
@@ -281,6 +282,7 @@ description: |
 
   Source: {spec_path} Section {number}
 activeForm: "Creating User data model"         # Present continuous
+produces_for: ["{consumer_task_id}", ...]      # Optional — IDs of tasks that consume this task's output
 metadata:
   priority: critical|high|medium|low           # Mapped from P0-P3
   complexity: XS|S|M|L|XL                      # Estimated size
@@ -290,6 +292,14 @@ metadata:
   task_uid: "{spec_path}:{feature}:{type}:{seq}" # Unique ID
   task_group: "{spec-name}"                    # REQUIRED — Group from spec title
 ```
+
+**`produces_for` Field:**
+
+The `produces_for` field is an **optional** array of task IDs identifying tasks that directly consume this task's output. The `execute-tasks` orchestrator uses this field to inject the producer's result file content into the dependent task's prompt, giving downstream agents richer context than wave-granular `execution_context.md` merging alone provides.
+
+- **Omit** if the task has no direct producer-consumer relationship with other tasks
+- **Include** when the task's deliverable (model, schema, config, etc.) is directly referenced in another task's description
+- Values are task IDs (set during Phase 8 after all tasks are created and IDs are known)
 
 ### Acceptance Criteria Categories
 
@@ -393,7 +403,69 @@ If features share:
 
 ---
 
-## Phase 6: Preview & Confirm
+## Phase 6: Detect Producer-Consumer Relationships
+
+After inferring `blockedBy` dependencies, identify which tasks produce output that is directly consumed by other tasks. These relationships are emitted as the `produces_for` field on producer tasks, enabling the `execute-tasks` orchestrator to inject richer upstream context into dependent task prompts.
+
+### Detection Approach
+
+Analyze the decomposed tasks and their `blockedBy` relationships to find producer-consumer pairs. A producer-consumer relationship exists when:
+
+1. Task B is blocked by Task A (`blockedBy`), AND
+2. Task A's deliverable is **directly referenced** in Task B's description — Task B cannot be implemented without the specific artifact Task A produces
+
+**Conservative principle**: When uncertain whether a relationship is truly producer-consumer, omit `produces_for`. False positives add unnecessary context to dependent tasks; false negatives are harmless (the task still gets wave-granular context via `execution_context.md`).
+
+### Producer-Consumer Patterns
+
+Detect these common patterns:
+
+| Producer Task Type | Consumer Task Type | Signal |
+|---|---|---|
+| **Data Model** | API/Service that uses the model | Consumer description references entity name, fields, or schema defined by producer |
+| **Schema/Type Definition** | Implementation that implements the schema | Consumer implements interfaces, types, or contracts defined by producer |
+| **Configuration/Infrastructure** | Tasks that consume the config | Consumer reads config values, connects to services, or uses infrastructure set up by producer |
+| **Foundation/Framework** | Tasks that build on the foundation | Consumer extends base classes, uses utilities, or follows patterns established by producer |
+| **API Endpoint** | UI/Frontend that calls the endpoint | Consumer calls specific endpoints or uses response formats defined by producer |
+| **Migration/Setup** | Tasks that require the setup | Consumer reads from tables, uses resources, or depends on state created by producer |
+
+### Detection Algorithm
+
+For each pair of tasks where Task B has Task A in its `blockedBy` list:
+
+1. **Check deliverable reference**: Does Task B's description explicitly reference an artifact that Task A creates?
+   - Entity/model names: "using User model", "User schema", "User table"
+   - Endpoint paths: "calls POST /auth/login", "uses /api/users response"
+   - Config keys: "reads database config", "uses JWT secret"
+   - File/module names: "imports from auth-middleware", "extends BaseService"
+
+2. **Check layer relationship**: Is the dependency a direct layer-to-layer producer-consumer?
+   - Data Model → API endpoint for that model (YES — API needs the model definition)
+   - Data Model → Unrelated API endpoint (NO — just a layer ordering)
+   - Config → Service using that config (YES — service consumes the config)
+   - Auth setup → Feature behind auth (NO — auth is a gate, not a consumed output)
+
+3. **Assign produces_for**: If the relationship is a direct producer-consumer, add Task B's ID to Task A's `produces_for` array
+
+### Multi-Consumer Tasks
+
+A single producer may have multiple consumers. For example, a "Create User data model" task may produce for both "Implement registration endpoint" and "Implement login endpoint". In this case, `produces_for` contains all consumer IDs:
+
+```
+produces_for: ["{registration_task_id}", "{login_task_id}"]
+```
+
+### Circular Production Prevention
+
+`produces_for` follows the same acyclicity as `blockedBy`. Since `produces_for` is derived from `blockedBy` relationships (which are already validated for circular dependencies in Phase 5), circular production relationships cannot occur. If a `produces_for` relationship is detected outside of a `blockedBy` pair, skip it — the dependency inference already prevents circular `blockedBy`.
+
+### Output
+
+After detection, annotate each producer task in the internal task list with its `produces_for` array. Tasks with no producer-consumer relationships have no `produces_for` field (the field is omitted, not set to an empty array).
+
+---
+
+## Phase 7: Preview & Confirm
 
 Before creating tasks, present a summary:
 
@@ -416,6 +488,7 @@ FEATURES:
 
 DEPENDENCIES:
 • {n} dependency relationships inferred
+• {m} producer-consumer relationships detected
 • Longest chain: {n} tasks
 
 FIRST TASKS (no blockers):
@@ -448,7 +521,7 @@ If user selects "Show task details":
 
 ---
 
-## Phase 7: Create Tasks
+## Phase 8: Create Tasks
 
 ### Fresh Mode (No Existing Tasks)
 
@@ -502,15 +575,25 @@ TaskCreate:
 
 **Important**: Track the mapping between task_uid and returned task ID for dependency setup.
 
-#### Step 2: Set Dependencies
+#### Step 2: Set Dependencies and produces_for
 
-After all tasks are created, use TaskUpdate to set dependencies:
+After all tasks are created, use TaskUpdate to set `blockedBy` dependencies and `produces_for` relationships using the task_uid-to-ID mapping:
 
 ```
 TaskUpdate:
   taskId: "{api_task_id}"
   addBlockedBy: ["{model_task_id}"]
 ```
+
+For tasks identified as producers in Phase 6, set `produces_for` via TaskUpdate:
+
+```
+TaskUpdate:
+  taskId: "{model_task_id}"
+  produces_for: ["{api_task_id}", "{service_task_id}"]
+```
+
+**Note**: Only set `produces_for` on tasks that were identified as producers in Phase 6. Tasks without producer-consumer relationships should not have `produces_for` set.
 
 #### Step 3: Report Completion
 
@@ -520,6 +603,7 @@ TASK CREATION COMPLETE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Created {n} tasks from {spec_name}
 Set {m} dependency relationships
+Set {p} producer-consumer relationships (produces_for)
 
 Use TaskList to view all tasks.
 
@@ -592,7 +676,7 @@ Total tasks: {total}
 
 ---
 
-## Error Handling
+## Phase 9: Error Handling
 
 ### Spec Parsing Issues
 

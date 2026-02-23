@@ -1,0 +1,22 @@
+{
+  "id": "162",
+  "subject": "Write bats tests for shell scripts",
+  "description": "Write comprehensive bats (Bash Automated Testing System) tests for all three shell scripts: `validate-result.sh`, `watch-for-results.sh`, and `poll-for-results.sh`.\n\n**What to implement:**\n\n1. Ensure bats is available (`brew install bats-core` if needed)\n2. Create test directory structure under `claude/sdd-tools/tests/`\n3. Write test fixtures (valid/invalid result files, context files)\n4. Write test suites:\n\n**validate-result.sh tests (8 scenarios):**\n- Valid PASS result → file preserved\n- Valid FAIL result → file preserved\n- Missing status line → file renamed to .invalid\n- Invalid status value (status: UNKNOWN) → .invalid\n- Missing required section (no ## Summary) → .invalid\n- Missing context file → stub context created, result accepted\n- Non-session file write → hook ignores\n- Hook error (malformed input) → trap catches, exit 0\n\n**watch-for-results.sh tests (5 scenarios):**\n- All results found → ALL_DONE output, exit 0\n- Timeout with no files → exit 1\n- No fswatch available → exit 2\n- Pre-existing results → detected and counted\n- Partial completion → reports found, exits 1\n\n**poll-for-results.sh tests (5 scenarios):**\n- Adaptive interval increase → 5s, 10s, 15s, 20s, 25s, 30s progression\n- Interval reset on new result → resets to 5s\n- Max interval cap → never exceeds 30s\n- Environment variable override → POLL_START_INTERVAL=10 starts at 10s\n- Timeout → exit 1\n\n**Files to create:**\n- `claude/sdd-tools/tests/validate-result.bats` (new)\n- `claude/sdd-tools/tests/watch-for-results.bats` (new)\n- `claude/sdd-tools/tests/poll-for-results.bats` (new)\n- `claude/sdd-tools/tests/fixtures/` — test fixture files (new directory)\n\n**Acceptance Criteria:**\n\n_Functional:_\n- [ ] All 8 validate-result.sh test scenarios pass\n- [ ] All 5 watch-for-results.sh test scenarios pass\n- [ ] All 5 poll-for-results.sh test scenarios pass\n- [ ] Test fixtures include valid and invalid result files\n- [ ] Tests use temp directories for isolation (cleanup in teardown)\n\n_Edge Cases:_\n- [ ] Tests work on macOS (zsh/bash environment)\n- [ ] Tests mock fswatch/inotifywait availability for watch-for-results.sh tests\n- [ ] Tests use short timeouts for fast execution\n\n_Error Handling:_\n- [ ] Each test cleans up temp files in teardown\n- [ ] Failed tests report clear error messages\n\n**Testing Requirements:**\n• Self-validating: `bats claude/sdd-tools/tests/` runs all tests\n• All 18 test scenarios pass\n\nSource: internal/specs/execute-tasks-hardening-SPEC.md Section 10",
+  "activeForm": "Writing bats tests for shell scripts",
+  "status": "completed",
+  "blocks": [],
+  "blockedBy": [
+    "158",
+    "159",
+    "160"
+  ],
+  "metadata": {
+    "priority": "high",
+    "complexity": "L",
+    "source_section": "10 Testing Strategy",
+    "spec_path": "internal/specs/execute-tasks-hardening-SPEC.md",
+    "feature_name": "Shell Script Tests",
+    "task_uid": "internal/specs/execute-tasks-hardening-SPEC.md:testing:bats:001",
+    "task_group": "execute-tasks-hardening"
+  }
+}
