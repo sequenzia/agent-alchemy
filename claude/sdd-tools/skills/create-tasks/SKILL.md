@@ -1,7 +1,7 @@
 ---
 name: create-tasks
 description: Generate Claude Code native Tasks from an existing spec. Use when user says "create tasks", "generate tasks from spec", "spec to tasks", "task generation", or wants to decompose a spec into implementation tasks.
-argument-hint: "[spec-path]"
+argument-hint: "[spec-path] [--phase <phases>]"
 user-invocable: true
 disable-model-invocation: false
 allowed-tools: AskUserQuestion, Read, Glob, Grep, TaskCreate, TaskUpdate, TaskList, TaskGet
@@ -9,6 +9,9 @@ arguments:
   - name: spec-path
     description: Path to the spec file to analyze for task generation
     required: true
+  - name: phase
+    description: Comma-separated phase numbers to generate tasks for (e.g., "1,2"). Omit to select interactively or generate all.
+    required: false
 ---
 
 # Spec to Tasks - Create Tasks Skill
@@ -43,21 +46,30 @@ The tasks are planning artifacts themselves — generating them IS the planning 
 
 ## Workflow Overview
 
-This workflow has nine phases:
+This workflow has ten phases:
 
-1. **Validate & Load** — Validate spec file, read content, check settings, load reference files
-2. **Detect Depth & Check Existing** — Detect spec depth level, check for existing tasks
-3. **Analyze Spec** — Extract features, requirements, and structure from spec
-4. **Decompose Tasks** — Break features into atomic tasks with acceptance criteria
-5. **Infer Dependencies** — Map blocking relationships between tasks
-6. **Detect Producer-Consumer Relationships** — Identify `produces_for` relationships between tasks
-7. **Preview & Confirm** — Show summary, get user approval before creating
-8. **Create Tasks** — Create tasks via TaskCreate/TaskUpdate (fresh or merge mode)
-9. **Error Handling** — Handle spec parsing issues, circular deps, missing info
+1. **Validate & Load** — Validate spec file, parse `--phase` argument, read content, check settings, load reference files
+2. **Detect Depth & Check Existing** — Detect spec depth level, check for existing tasks with phase metadata
+3. **Analyze Spec** — Extract features, requirements, structure, and implementation phases from spec
+4. **Select Phases** — Interactive or CLI-driven phase selection for incremental generation
+5. **Decompose Tasks** — Phase-filtered hybrid decomposition from features and deliverables
+6. **Infer Dependencies** — Phase-aware blocking relationships with cross-phase handling
+7. **Detect Producer-Consumer Relationships** — Identify `produces_for` relationships between tasks
+8. **Preview & Confirm** — Show phase-annotated summary, get user approval before creating
+9. **Create Tasks** — Create tasks via TaskCreate/TaskUpdate with `spec_phase` metadata (fresh or merge mode)
+10. **Error Handling** — Handle spec parsing issues, circular deps, missing info, phase-related errors
 
 ---
 
 ## Phase 1: Validate & Load
+
+### Parse Arguments
+
+Before validating the spec file, parse the provided arguments:
+
+1. **Extract spec path**: The first positional argument is the spec file path
+2. **Check for `--phase` flag**: If `--phase` is present, parse the comma-separated integers that follow (e.g., `--phase 1,2` → `[1, 2]`)
+3. Store as `selected_phases_cli` (empty list if `--phase` not provided)
 
 ### Validate Spec File
 
@@ -142,7 +154,8 @@ Look for tasks with `metadata.spec_path` matching the spec path.
 If existing tasks found:
 - Count them by status (pending, in_progress, completed)
 - Note their task_uids for merge mode
-- Inform user about merge behavior
+- Extract `spec_phase` metadata from existing tasks to build `existing_phases_map`: `{phase_number → {pending, in_progress, completed, total, phase_name}}`
+- Inform user about merge behavior with phase-aware detail
 
 Report to user:
 ```
@@ -150,6 +163,11 @@ Found {n} existing tasks for this spec:
 • {pending} pending
 • {in_progress} in progress
 • {completed} completed
+
+{If existing tasks have spec_phase metadata:}
+Previously generated phases:
+• Phase {N}: {phase_name} — {total} tasks ({completed} completed, {pending} pending)
+• Phase {M}: {phase_name} — {total} tasks ({completed} completed, {pending} pending)
 
 New tasks will be merged. Completed tasks will be preserved.
 ```
@@ -181,7 +199,7 @@ Extract information from each spec section:
 | **7.3 Data Models** (Full-Tech) | Entity definitions → data model tasks |
 | **7.4 API Specifications** (Full-Tech) | Endpoints → API tasks |
 | **8.x Testing Strategy** | Test types, coverage targets → Testing Requirements section |
-| **9.x Implementation Plan** | Phases → task grouping |
+| **9.x Implementation Plan** | Phases, deliverables, completion criteria, checkpoint gates → phase metadata and task decomposition input |
 | **10.x Dependencies** | Explicit dependencies → blockedBy relationships |
 
 ### Feature Extraction
@@ -225,9 +243,118 @@ Adjust task granularity based on depth level:
 - Technical decomposition
 - Example: "Create User model", "Implement POST /auth/login", "Add auth middleware"
 
+### Phase Extraction
+
+Extract implementation phases from Section 9 if present:
+
+1. **Detect Section 9**: Look for `## 9. Implementation Plan` or `## Implementation Phases`
+2. **Extract phase headers**: Pattern `### 9.N Phase N: {Name}` (detailed/full-tech) or `### Phase N: {Name}` (high-level)
+3. **For each phase, extract**:
+   - `number` — Phase number (integer from `9.N` or `Phase N`)
+   - `name` — Phase name (text after `Phase N: `)
+   - `completion_criteria` — Text after `**Completion Criteria**:`
+   - `deliverables` — Parsed table rows from the deliverable table (columns: Deliverable, Description, Dependencies; optionally Technical Tasks)
+   - `checkpoint_gate` — Items after `**Checkpoint Gate**:` (prose or checkbox list `- [ ]`)
+4. **Cross-reference deliverables to Section 5 features**: Scan deliverable descriptions and technical tasks for feature name references. Build mapping: `{phase_number → [feature_names]}`
+5. If no Section 9 found, set `spec_phases = []`
+
+Store the extracted phases as `spec_phases` for use in Phase 4 (Select Phases) and Phase 5 (Decompose Tasks).
+
 ---
 
-## Phase 4: Decompose Tasks
+## Phase 4: Select Phases
+
+Select which implementation phases to generate tasks for. Three paths based on context:
+
+### Path A — `--phase` argument provided
+
+Skip interactive selection. Validate that each phase number in `selected_phases_cli` exists in `spec_phases`. If any phase number is invalid, report the valid range and stop.
+
+### Path B — No `--phase`, spec has phases (2-3 phases)
+
+Use a single AskUserQuestion with multiSelect:
+
+```yaml
+questions:
+  - header: "Phases"
+    question: "Which implementation phases should I generate tasks for?"
+    options:
+      - label: "All phases (Recommended)"
+        description: "Generate tasks for all {N} phases at once"
+      - label: "Phase 1: {name}"
+        description: "{deliverable_count} deliverables — {completion_criteria_brief}"
+      - label: "Phase 2: {name}"
+        description: "{deliverable_count} deliverables — {completion_criteria_brief}"
+      - label: "Phase 3: {name}"
+        description: "{deliverable_count} deliverables — {completion_criteria_brief}"
+    multiSelect: true
+```
+
+If user selects "All phases", generate for all. Otherwise generate only for the selected phase(s).
+
+### Path C — No `--phase`, spec has 4+ phases
+
+Two-step selection:
+
+1. First ask "All phases or select specific?":
+   ```yaml
+   questions:
+     - header: "Phases"
+       question: "This spec has {N} implementation phases. Generate tasks for all or select specific phases?"
+       options:
+         - label: "All phases (Recommended)"
+           description: "Generate tasks for all {N} phases"
+         - label: "Select specific phases"
+           description: "Choose which phases to generate tasks for"
+       multiSelect: false
+   ```
+
+2. If "Select specific phases", show multiSelect with individual phases (up to 4 per AskUserQuestion, paginate if needed).
+
+### Path D — No Section 9 / no phases
+
+Skip selection entirely. Log: "No implementation phases found in spec. Generating tasks from features only."
+
+Set `selected_phases = []` (all features will be processed without phase assignment).
+
+### Path E — Merge mode with existing phases
+
+When existing tasks with `spec_phase` metadata were found in Phase 2, show a specialized prompt:
+
+```yaml
+questions:
+  - header: "Phases"
+    question: "Previously generated phases detected. Which phases should I generate tasks for?"
+    options:
+      - label: "Remaining phases only (Recommended)"
+        description: "Generate tasks for phases not yet created: {list of remaining phase names}"
+      - label: "All phases (merge)"
+        description: "Re-generate all phases, merging with existing tasks"
+      - label: "Select specific phases"
+        description: "Choose which phases to generate tasks for"
+    multiSelect: false
+```
+
+If "Select specific phases", follow Path B/C selection flow.
+
+---
+
+## Phase 5: Decompose Tasks
+
+### Phase-Aware Feature Mapping
+
+When `spec_phases` is non-empty and phases were selected in Phase 4:
+
+1. **Map features to phases** using the cross-reference from Phase Extraction:
+   - Features explicitly referenced in phase deliverables → map to that phase
+   - Features not referenced in any phase deliverable → assign to the earliest plausible phase (based on dependency layer: data models → Phase 1, UI → last phase)
+2. **Filter to selected phases**: Only decompose features mapping to selected phases
+3. **Deliverables as additional input**: For each selected phase, check if deliverables have technical tasks not covered by Section 5 feature decomposition. Create additional tasks from uncovered deliverables with `source_section: "9.{N}"`
+4. **Assign phase metadata**: Every task gets `spec_phase` (integer) and `spec_phase_name` (string)
+
+When `spec_phases = []` (no Section 9 in spec): Current behavior unchanged — decompose all features without phase assignment. The `spec_phase` and `spec_phase_name` fields are omitted entirely (backward compatible).
+
+### Standard Layer Pattern
 
 For each feature, apply the standard layer pattern:
 
@@ -291,6 +418,8 @@ metadata:
   feature_name: "User Authentication"          # Parent feature
   task_uid: "{spec_path}:{feature}:{type}:{seq}" # Unique ID
   task_group: "{spec-name}"                    # REQUIRED — Group from spec title
+  spec_phase: 1                                # Phase number from Section 9 (omit if no phases)
+  spec_phase_name: "Foundation"                # Phase name from Section 9 (omit if no phases)
 ```
 
 **`produces_for` Field:**
@@ -299,7 +428,7 @@ The `produces_for` field is an **optional** array of task IDs identifying tasks 
 
 - **Omit** if the task has no direct producer-consumer relationship with other tasks
 - **Include** when the task's deliverable (model, schema, config, etc.) is directly referenced in another task's description
-- Values are task IDs (set during Phase 8 after all tasks are created and IDs are known)
+- Values are task IDs (set during Phase 9 after all tasks are created and IDs are known)
 
 ### Acceptance Criteria Categories
 
@@ -368,7 +497,7 @@ Examples:
 
 ---
 
-## Phase 5: Infer Dependencies
+## Phase 6: Infer Dependencies
 
 Apply automatic dependency rules:
 
@@ -382,11 +511,17 @@ Data Model → API → UI → Tests
 - UI tasks depend on their APIs
 - Tests depend on their implementations
 
+Within-phase layer dependencies work unchanged regardless of phase selection.
+
 ### Phase Dependencies
 
-If spec has implementation phases:
-- Phase 2 tasks blocked by Phase 1 completion
-- Phase 3 tasks blocked by Phase 2 completion
+When tasks have `spec_phase` metadata, apply cross-phase blocking based on three scenarios:
+
+1. **Phase N-1 tasks exist in current generation**: Normal `blockedBy` — tasks in Phase N are blocked by Phase N-1 tasks
+2. **Phase N-1 tasks exist from prior generation (merge mode)**: Create `blockedBy` relationships to existing Phase N-1 task IDs (found via `existing_phases_map` from Phase 2)
+3. **Phase N-1 was NOT selected and no existing tasks found**: Do NOT add `blockedBy` to non-existent tasks. Instead:
+   - Add a "Prerequisites" note to task descriptions listing assumed-complete deliverables from the missing phase
+   - Emit a one-time warning: "Phase {N} tasks generated without Phase {N-1} predecessor tasks. Phase {N-1} deliverables are assumed complete."
 
 ### Explicit Spec Dependencies
 
@@ -403,7 +538,7 @@ If features share:
 
 ---
 
-## Phase 6: Detect Producer-Consumer Relationships
+## Phase 7: Detect Producer-Consumer Relationships
 
 After inferring `blockedBy` dependencies, identify which tasks produce output that is directly consumed by other tasks. These relationships are emitted as the `produces_for` field on producer tasks, enabling the `execute-tasks` orchestrator to inject richer upstream context into dependent task prompts.
 
@@ -465,7 +600,7 @@ After detection, annotate each producer task in the internal task list with its 
 
 ---
 
-## Phase 7: Preview & Confirm
+## Phase 8: Preview & Confirm
 
 Before creating tasks, present a summary:
 
@@ -475,15 +610,26 @@ TASK GENERATION PREVIEW
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Spec: {spec_name}
 Depth: {depth_level}
+{If phases selected:}
+Phases: {selected_count} of {total_count}
 
 SUMMARY:
 • Total tasks: {count}
 • By priority: {critical} critical, {high} high, {medium} medium, {low} low
 • By complexity: {XS} XS, {S} S, {M} M, {L} L, {XL} XL
 
+{If phases selected:}
+PHASES:
+• Phase {N}: {phase_name} — {n} tasks
+• Phase {M}: {phase_name} — {n} tasks
+
+{If partial phases and predecessor phases not generated:}
+PREREQUISITES:
+• Phase {N-1}: {phase_name} — assumed complete (not in this generation)
+
 FEATURES:
-• {Feature 1} → {n} tasks
-• {Feature 2} → {n} tasks
+• {Feature 1} (Phase {N}) → {n} tasks
+• {Feature 2} (Phase {M}) → {n} tasks
 ...
 
 DEPENDENCIES:
@@ -492,10 +638,12 @@ DEPENDENCIES:
 • Longest chain: {n} tasks
 
 FIRST TASKS (no blockers):
-• {Task 1 subject} ({priority})
-• {Task 2 subject} ({priority})
+• {Task 1 subject} ({priority}, Phase {N})
+• {Task 2 subject} ({priority}, Phase {M})
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
+
+When no phases are present, the `Phases:`, `PHASES:`, `PREREQUISITES:` sections and phase annotations on feature/task lines are omitted.
 
 Then use AskUserQuestion to confirm:
 
@@ -521,7 +669,7 @@ If user selects "Show task details":
 
 ---
 
-## Phase 8: Create Tasks
+## Phase 9: Create Tasks
 
 ### Fresh Mode (No Existing Tasks)
 
@@ -571,9 +719,13 @@ TaskCreate:
     feature_name: "User Authentication"
     task_uid: "specs/SPEC-Auth.md:user-auth:model:001"
     task_group: "user-authentication"
+    spec_phase: 1
+    spec_phase_name: "Foundation"
 ```
 
 **Important**: Track the mapping between task_uid and returned task ID for dependency setup.
+
+**Phase metadata**: Include `spec_phase` and `spec_phase_name` on every task when the spec has implementation phases. Omit both fields entirely when no phases exist (backward compatible with phase-unaware tasks).
 
 #### Step 2: Set Dependencies and produces_for
 
@@ -585,7 +737,7 @@ TaskUpdate:
   addBlockedBy: ["{model_task_id}"]
 ```
 
-For tasks identified as producers in Phase 6, set `produces_for` via TaskUpdate:
+For tasks identified as producers in Phase 7, set `produces_for` via TaskUpdate:
 
 ```
 TaskUpdate:
@@ -593,7 +745,7 @@ TaskUpdate:
   produces_for: ["{api_task_id}", "{service_task_id}"]
 ```
 
-**Note**: Only set `produces_for` on tasks that were identified as producers in Phase 6. Tasks without producer-consumer relationships should not have `produces_for` set.
+**Note**: Only set `produces_for` on tasks that were identified as producers in Phase 7. Tasks without producer-consumer relationships should not have `produces_for` set.
 
 #### Step 3: Report Completion
 
@@ -676,7 +828,7 @@ Total tasks: {total}
 
 ---
 
-## Phase 9: Error Handling
+## Phase 10: Error Handling
 
 ### Spec Parsing Issues
 
@@ -699,6 +851,17 @@ If required information missing from spec:
 2. Add `incomplete: true` to metadata
 3. Note what's missing in description
 
+### Phase-Related Errors
+
+**`--phase` provided but spec has no Section 9:**
+Inform user: "The `--phase` argument was provided but this spec has no Implementation Plan (Section 9). Generating tasks from all features without phase filtering." Proceed without phase selection.
+
+**`--phase` references non-existent phase numbers:**
+Report valid phase numbers and stop: "Invalid phase number(s): {invalid}. This spec has phases: {list of valid phase numbers with names}."
+
+**Section 9 format doesn't match expected patterns:**
+Degrade gracefully — if phase headers can't be parsed, log a warning: "Section 9 found but phase structure could not be parsed. Generating tasks from features only." Set `spec_phases = []` and continue.
+
 ---
 
 ## Example Usage
@@ -711,6 +874,16 @@ If required information missing from spec:
 ### With Relative Path
 ```
 /agent-alchemy-sdd:create-tasks SPEC-Payments.md
+```
+
+### Generate tasks for a specific phase
+```
+/agent-alchemy-sdd:create-tasks specs/SPEC-Auth.md --phase 1
+```
+
+### Generate tasks for multiple phases
+```
+/agent-alchemy-sdd:create-tasks specs/SPEC-Auth.md --phase 1,2
 ```
 
 ### Re-running (Merge Mode)

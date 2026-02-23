@@ -183,6 +183,12 @@ Use `TaskList` to get all tasks and their current state.
 
 If a `--task-group` argument was provided, filter the task list to only tasks where `metadata.task_group` matches the specified group. If no tasks match the group, inform the user and stop.
 
+If a `--phase` argument was provided, further filter the task list to only tasks where `metadata.spec_phase` matches one of the specified phase numbers (parsed as comma-separated integers). This filter is applied after `--task-group` filtering (if both are present).
+
+If no tasks match the phase filter after all filters are applied, inform the user: "No tasks found for phase(s) {N}. Available phases in current task set: {sorted list of distinct `metadata.spec_phase` values}." and stop.
+
+Tasks without `metadata.spec_phase` (created before phase-aware `create-tasks`) are excluded when `--phase` filtering is active.
+
 If a specific `task-id` argument was provided, validate it exists. If it doesn't exist, inform the user and stop.
 
 ## Step 2: Validate State
@@ -293,10 +299,15 @@ If the user selects **"Cancel"**, report "Execution cancelled. No tasks were mod
 
 ## Step 5.5: Initialize Execution Directory
 
-Generate a unique `task_execution_id` using three-tier resolution:
-1. IF `--task-group` was provided → `{task_group}-{YYYYMMDD}-{HHMMSS}` (e.g., `user-auth-20260131-143022`)
-2. ELSE IF all open tasks (pending + in_progress) share the same non-empty `metadata.task_group` → `{task_group}-{YYYYMMDD}-{HHMMSS}`
-3. ELSE → `exec-session-{YYYYMMDD}-{HHMMSS}` (e.g., `exec-session-20260131-143022`)
+Generate a unique `task_execution_id` using a multi-tier resolution that incorporates phase when specified:
+1. IF `--task-group` was provided AND `--phase` was provided → `{task_group}-phase{N}-{YYYYMMDD}-{HHMMSS}` (e.g., `user-auth-phase1-20260131-143022`)
+2. IF `--task-group` was provided (no phase) → `{task_group}-{YYYYMMDD}-{HHMMSS}` (e.g., `user-auth-20260131-143022`)
+3. IF `--phase` was provided (no group) AND all filtered tasks share same `metadata.task_group` → `{task_group}-phase{N}-{YYYYMMDD}-{HHMMSS}`
+4. IF `--phase` was provided (no group) → `phase{N}-{YYYYMMDD}-{HHMMSS}` (e.g., `phase1-20260131-143022`)
+5. ELSE IF all open tasks (pending + in_progress) share the same non-empty `metadata.task_group` → `{task_group}-{YYYYMMDD}-{HHMMSS}`
+6. ELSE → `exec-session-{YYYYMMDD}-{HHMMSS}` (e.g., `exec-session-20260131-143022`)
+
+Where `{N}` is the phase number (or `{N}-{M}` for multiple phases, e.g., `phase1-2`).
 
 ### Clean Stale Live Session
 

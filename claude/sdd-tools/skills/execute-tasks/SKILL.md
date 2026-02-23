@@ -1,7 +1,7 @@
 ---
 name: execute-tasks
 description: Execute pending Claude Code Tasks in dependency order with wave-based concurrent execution and adaptive verification. Supports task group filtering and configurable parallelism. Use when user says "execute tasks", "run tasks", "start execution", "work on tasks", or wants to execute generated tasks autonomously.
-argument-hint: "[task-id] [--task-group <group>] [--retries <n>] [--max-parallel <n>]"
+argument-hint: "[task-id] [--task-group <group>] [--phase <phases>] [--retries <n>] [--max-parallel <n>]"
 user-invocable: true
 disable-model-invocation: false
 allowed-tools:
@@ -23,6 +23,9 @@ arguments:
     required: false
   - name: task-group
     description: Optional task group name to filter tasks. Only tasks with matching metadata.task_group will be executed.
+    required: false
+  - name: phase
+    description: Comma-separated phase numbers to filter tasks by spec_phase metadata (e.g., "1,2"). Only tasks with matching metadata.spec_phase will be executed.
     required: false
   - name: retries
     description: Number of retry attempts for failed/partial tasks before moving on. Default is 3.
@@ -75,7 +78,7 @@ Produce accurate verification results:
 This skill orchestrates task execution through a 10-step loop. See `references/orchestration.md` for the full detailed procedure.
 
 ### Step 1: Load Task List
-Retrieve all tasks via `TaskList`. If a `--task-group` argument was provided, filter tasks to only those with matching `metadata.task_group`. If a specific `task-id` argument was provided, validate it exists.
+Retrieve all tasks via `TaskList`. If a `--task-group` argument was provided, filter tasks to only those with matching `metadata.task_group`. If a `--phase` argument was provided, further filter the task list to only tasks where `metadata.spec_phase` matches one of the specified phase numbers. If no tasks match the phase filter, inform the user: "No tasks found for phase(s) {N}. Available phases in current task set: {sorted list of distinct `metadata.spec_phase` values}." and stop. When both `--task-group` and `--phase` are provided, both filters apply (intersection). Tasks without `spec_phase` metadata are excluded when `--phase` is active. If a specific `task-id` argument was provided, validate it exists.
 
 ### Step 2: Validate State
 Handle edge cases: empty list, all completed, specific task blocked, no unblocked tasks, circular dependencies.
@@ -87,7 +90,7 @@ Resolve `max_parallel` setting using precedence: `--max-parallel` CLI arg > `.cl
 Read `.claude/agent-alchemy.local.md` if it exists for execution preferences, including `max_parallel` setting. CLI `--max-parallel` argument takes precedence over the settings file value.
 
 ### Step 5: Initialize Execution Directory
-Generate a `task_execution_id` using three-tier resolution: (1) if `--task-group` provided → `{task_group}-{YYYYMMDD}-{HHMMSS}`, (2) else if all open tasks share the same `metadata.task_group` → `{task_group}-{YYYYMMDD}-{HHMMSS}`, (3) else → `exec-session-{YYYYMMDD}-{HHMMSS}`. Clean any stale `__live_session__/` files by archiving them to `.claude/sessions/interrupted-{YYYYMMDD}-{HHMMSS}/`, resetting any `in_progress` tasks from the interrupted session back to `pending`. Check for and enforce the concurrency guard via `.lock` file. Create `.claude/sessions/__live_session__/` directory containing:
+Generate a `task_execution_id` using multi-tier resolution: (1) if `--task-group` AND `--phase` provided → `{task_group}-phase{N}-{YYYYMMDD}-{HHMMSS}`, (2) if `--task-group` provided (no phase) → `{task_group}-{YYYYMMDD}-{HHMMSS}`, (3) if `--phase` provided (no group) AND all filtered tasks share same group → `{task_group}-phase{N}-{YYYYMMDD}-{HHMMSS}`, else `phase{N}-{YYYYMMDD}-{HHMMSS}`, (4) else if all open tasks share the same `metadata.task_group` → `{task_group}-{YYYYMMDD}-{HHMMSS}`, (5) else → `exec-session-{YYYYMMDD}-{HHMMSS}`. Where `{N}` is the phase number (or `{N}-{M}` for multiple phases, e.g., `phase1-2`). Clean any stale `__live_session__/` files by archiving them to `.claude/sessions/interrupted-{YYYYMMDD}-{HHMMSS}/`, resetting any `in_progress` tasks from the interrupted session back to `pending`. Check for and enforce the concurrency guard via `.lock` file. Create `.claude/sessions/__live_session__/` directory containing:
 - `execution_plan.md` — saved execution plan from Step 5
 - `execution_context.md` — initialized with standard template
 - `task_log.md` — initialized with table headers (Task ID, Subject, Status, Attempts, Duration, Token Usage)
@@ -209,6 +212,7 @@ This enables later tasks to benefit from earlier discoveries and retry attempts 
 - **One agent per task, multiple per wave**: Each task gets a fresh agent invocation with isolated context, but multiple agents run concurrently within a wave.
 - **Per-task context isolation**: Each agent writes to `context-task-{id}.md` regardless of `max_parallel` setting. The orchestrator merges these after each wave. This eliminates write contention and fragile Edit operations on shared files.
 - **3-tier retry escalation**: Failed tasks progress through escalating retry strategies: Tier 1 (Standard) re-launches with failure context, Tier 2 (Context Enrichment) injects full `execution_context.md` + related task results, and Tier 3 (User Escalation) pauses to ask the user via AskUserQuestion with 4 options: "Fix manually and continue", "Skip this task", "Provide guidance", or "Abort session". If the user provides guidance, a guided retry is launched; if that also fails, the user is re-prompted. Each task has an independent escalation path; Tier 1/2 retries are batched per wave, Tier 3 is sequential. Escalation level is tracked in `task_log.md` per task. See `references/orchestration.md` Step 7e for the full procedure.
+- **Phase-based filtering**: When `--phase N` is provided, only tasks with `metadata.spec_phase` matching the specified phase number(s) are included. This combines with `--task-group` filtering (both are ANDed). Tasks without `spec_phase` metadata are excluded when `--phase` is active.
 - **Configurable parallelism**: Default 5 concurrent tasks, configurable via `--max-parallel` argument or `.claude/agent-alchemy.local.md` settings. Set to 1 for sequential execution.
 - **Configurable retries**: Default 3 attempts per task, configurable via `retries` argument. Each retry tier maps to one attempt.
 - **Dynamic unblocking**: After each wave completes, the dependency graph is refreshed and newly unblocked tasks are added to the next wave.
@@ -249,6 +253,21 @@ This enables later tasks to benefit from earlier discoveries and retry attempts 
 ### Execute specific group with custom retries
 ```
 /agent-alchemy-sdd:execute-tasks --task-group payments --retries 1
+```
+
+### Execute tasks for a specific phase
+```
+/agent-alchemy-sdd:execute-tasks --phase 1
+```
+
+### Execute specific phase within a task group
+```
+/agent-alchemy-sdd:execute-tasks --task-group user-authentication --phase 2
+```
+
+### Execute multiple phases
+```
+/agent-alchemy-sdd:execute-tasks --phase 1,2
 ```
 
 ### Execute with limited parallelism
