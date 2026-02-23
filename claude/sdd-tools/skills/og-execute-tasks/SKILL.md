@@ -1,5 +1,5 @@
 ---
-name: execute-tasks
+name: og-execute-tasks
 description: Execute pending Claude Code Tasks in dependency order with wave-based concurrent execution and adaptive verification. Supports task group filtering and configurable parallelism. Use when user says "execute tasks", "run tasks", "start execution", "work on tasks", or wants to execute generated tasks autonomously.
 argument-hint: "[task-id] [--task-group <group>] [--retries <n>] [--max-parallel <n>]"
 user-invocable: true
