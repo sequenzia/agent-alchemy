@@ -6,6 +6,7 @@ Interactive toolkit for creating and maintaining OpenCode-compatible skills, age
 
 | Skill | Description |
 |-------|-------------|
+| `oc-tool-dev` | Unified tool creation/update with dependency orchestration |
 | `oc-create-skill` | Interactive skill creation with interview, generation, and validation |
 | `oc-update-skill` | Skill update/migration with research, analysis, and best-practice fixes |
 | `oc-create-agent` | Interactive agent creation with permission configuration and validation |
@@ -39,6 +40,12 @@ Interactive toolkit for creating and maintaining OpenCode-compatible skills, age
 | `references/templates/command-template.md` | Annotated starter command .md |
 
 ## Usage
+
+### Unified Workflow
+
+```
+/oc-tool-dev  → Triage → dependency detection → plan → delegates to type-specific skills
+```
 
 ### Creating Extensions
 
