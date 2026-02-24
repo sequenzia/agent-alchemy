@@ -203,9 +203,9 @@ For Claude Code's auto-approve PreToolUse hooks, the recommended OpenCode equiva
 | config_format | jsonc |
 | agent_config_path | agent.{name}.model |
 | mcp_config_key | mcp |
-| instruction_key | instruction |
+| instruction_key | instructions |
 | permission_key | permission |
-| notes | `opencode.json` supports JSONC (comments allowed). Located at project root or `.opencode/opencode.json`. Template variables `{file:./path}` and `{env:VAR_NAME}` are supported in values. The `agent` key maps agent names to config objects; `instruction` is an array of file paths or globs. |
+| notes | `opencode.json` supports JSONC (comments allowed). Located at project root or `.opencode/opencode.json`. Template variables `{file:./path}` and `{env:VAR_NAME}` are supported in values. The `agent` key maps agent names to config objects; `instructions` is an array of file paths or globs. |
 
 Example `opencode.json` with all relevant sections:
 
@@ -233,7 +233,7 @@ Example `opencode.json` with all relevant sections:
   },
 
   // Global instruction files (reference content injection)
-  "instruction": [
+  "instructions": [
     ".opencode/references/*.md",
     ".opencode/references/adapters/*.md"
   ],
@@ -264,8 +264,8 @@ Example `opencode.json` with all relevant sections:
 
 | Field | Value |
 |-------|-------|
-| adapter_version | 2.1.0 |
+| adapter_version | 2.1.1 |
 | target_platform_version | 1.2.10 |
 | last_updated | 2026-02-24 |
 | author | research-agent |
-| changelog | v2.1.0: Updated for OpenCode v1.2.10. Added `skill_file_pattern` for subdirectory-based skill layout (`{name}/SKILL.md`). Added Config File Format section defining `opencode.json` structure for agent models, MCP, instructions, and permissions. Updated model tier mappings to use claude-opus-4-6 and claude-sonnet-4-6 as primary IDs. Added `mode: subagent` agent frontmatter field. Added `permission` field documentation with boolean shorthand syntax. Added `tool.definition` (v1.1.65+) and `shell.env` (v1.2.7+) lifecycle events. Added ESM-only requirement note for plugins. Added v1.2.9 MCP tool attachment metadata and v1.2.10 localhost sidecar skip notes. Added `command` parameter mapping for custom agent spawning via Task tool. v2.0.0: Complete adapter rewrite targeting anomalyco/opencode (TypeScript, active project at opencode.ai) instead of opencode-ai/opencode (Go, archived). |
+| changelog | v2.1.1: Fixed `instruction_key` from `instruction` (singular) to `instructions` (plural) per OpenCode config.ts source confirmation. v2.1.0: Updated for OpenCode v1.2.10. Added `skill_file_pattern` for subdirectory-based skill layout (`{name}/SKILL.md`). Added Config File Format section defining `opencode.json` structure for agent models, MCP, instructions, and permissions. Updated model tier mappings to use claude-opus-4-6 and claude-sonnet-4-6 as primary IDs. Added `mode: subagent` agent frontmatter field. Added `permission` field documentation with boolean shorthand syntax. Added `tool.definition` (v1.1.65+) and `shell.env` (v1.2.7+) lifecycle events. Added ESM-only requirement note for plugins. Added v1.2.9 MCP tool attachment metadata and v1.2.10 localhost sidecar skip notes. Added `command` parameter mapping for custom agent spawning via Task tool. v2.0.0: Complete adapter rewrite targeting anomalyco/opencode (TypeScript, active project at opencode.ai) instead of opencode-ai/opencode (Go, archived). |
