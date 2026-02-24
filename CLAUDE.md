@@ -16,7 +16,8 @@ agent-alchemy/
 │   ├── sdd-tools/             # Spec-Driven Development pipeline
 │   ├── tdd-tools/             # TDD workflows: test generation, RED-GREEN-REFACTOR, coverage
 │   ├── git-tools/             # Git commit automation
-│   └── plugin-tools/          # Plugin porting, adapter validation, ported plugin maintenance, ecosystem health
+│   ├── plugin-tools/          # Plugin porting, adapter validation, ported plugin maintenance, ecosystem health
+│   └── opencode-tools/        # OpenCode extension creation, update, and validation toolkit
 ├── apps/
 │   └── task-manager/          # Next.js 16 real-time Kanban dashboard
 ├── extensions/
@@ -135,6 +136,9 @@ bug-killer (deep) -> code-explorer (core-tools, sonnet) x 2-3 + bug-investigator
 
 codebase-analysis -> technical-diagrams (loaded in Phase 2 for report diagrams)
 docs-manager -> docs-writer -> technical-diagrams (auto-loaded via skills: frontmatter)
+
+create-skill/create-agent/create-command (opencode-tools) -> generator x 1 -> validator x 1
+update-skill/update-agent/update-command (opencode-tools) -> researcher x 1 -> validator x 1
 ```
 
 ### Task Manager (apps/task-manager/)
@@ -169,6 +173,7 @@ docs-manager -> docs-writer -> technical-diagrams (auto-loaded via skills: front
 | tdd-tools | generate-tests, tdd-cycle, analyze-coverage, create-tdd-tasks, execute-tdd-tasks | test-writer, tdd-executor, test-reviewer | 0.2.0 |
 | git-tools | git-commit | — | 0.1.0 |
 | plugin-tools | port-plugin, validate-adapter, update-ported-plugin, dependency-checker, bump-plugin-version | researcher, port-converter | 0.1.1 |
+| opencode-tools | create-skill, update-skill, create-agent, update-agent, create-command, update-command | researcher, validator, generator | 0.1.0 |
 
 ## Critical Plugin Files
 

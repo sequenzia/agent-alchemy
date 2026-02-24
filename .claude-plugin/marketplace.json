@@ -70,6 +70,15 @@
       "homepage": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/plugin-tools",
       "repository": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/plugin-tools",
       "license": "MIT"
+    },
+    {
+      "name": "agent-alchemy-opencode-tools",
+      "version": "0.1.0",
+      "description": "Interactive toolkit for creating and maintaining OpenCode-compatible skills, agents, and commands",
+      "source": "./claude/opencode-tools",
+      "homepage": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/opencode-tools",
+      "repository": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/opencode-tools",
+      "license": "MIT"
     }
   ]
 }
