@@ -86,15 +86,15 @@ project-root/
 
 ### Skill Discovery Paths (6 locations)
 
-OpenCode discovers skills from these directories, merged into a flat registry:
+OpenCode discovers skills from these directories (grouped by convention type, interleaving project/global), merged into a flat registry:
 
 | Priority | Path | Scope |
 |----------|------|-------|
 | 1 | `.opencode/skills/` | Project |
-| 2 | `.claude/skills/` | Project (Claude Code compat) |
-| 3 | `.agents/skills/` | Project |
-| 4 | `~/.config/opencode/skills/` | Global |
-| 5 | `~/.claude/skills/` | Global (Claude Code compat) |
+| 2 | `~/.config/opencode/skills/` | Global |
+| 3 | `.claude/skills/` | Project (Claude Code compat) |
+| 4 | `~/.claude/skills/` | Global (Claude Code compat) |
+| 5 | `.agents/skills/` | Project |
 | 6 | `~/.agents/skills/` | Global |
 
 All skills from all paths are merged into a single registry and accessed by name.
@@ -357,13 +357,13 @@ Files and globs are resolved relative to the project root and injected into the 
 | Feature | Claude Code | OpenCode |
 |---------|------------|----------|
 | Team orchestration | Full (TeamCreate, SendMessage, etc.) | None — use sequential/parallel `task` calls |
-| Per-skill tool restrictions | `allowed-tools` frontmatter | Not supported — tool restrictions only at agent level |
+| Per-skill tool restrictions | `allowed-tools` frontmatter | `allowed-tools` **(Experimental)** — space-delimited tool list via Agent Skills spec |
 | Per-skill model override | Not supported | Not supported (commands support `model` frontmatter) |
 | Skill composition | File-path loading (`Read ${CLAUDE_PLUGIN_ROOT}/...`) | Name-based registry (`skill({ name: "..." })`) |
 | Question tool in subagents | Available | Not available — primary agent only |
 | Plugin SDK | None (hooks are JSON config) | `@opencode-ai/plugin` (ESM JS/TS) |
 | Free-text input via question | Supported (via "Other" option) | Not supported |
-| Reference files | Dedicated directory | No dedicated dir — inline in body or use `instructions` config |
+| Reference files | Dedicated directory | Agent Skills spec supports `references/`, `scripts/`, `assets/` dirs; also `instructions` config |
 | Config format | JSON (settings.json, .mcp.json) | JSONC (`opencode.json` — single file) |
 | Hook format | JSON config in `hooks.json` | JS/TS plugin files with event handlers |
 | Rules file | `CLAUDE.md` | `AGENTS.md` (primary), `CLAUDE.md` (fallback) |

@@ -27,6 +27,12 @@ For structured commands with multiple variables and model override.
 
 # OPTIONAL: Shown in command list.
 description: [What this command does]
+
+# OPTIONAL: Which agent executes this command (by name).
+# agent: my-agent-name
+
+# OPTIONAL: Force execution as a subagent task.
+# subtask: true
 ---
 
 # [Command Name]

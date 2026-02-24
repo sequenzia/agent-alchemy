@@ -87,6 +87,14 @@ If "Yes":
   - "Haiku" — Use anthropic/claude-haiku-4-5 for speed
 - multiSelect: false
 
+**Question 4 — Agent Routing:**
+- Header: "Agent"
+- Question: "Should this command be routed to a specific agent?"
+- Options:
+  - "No (Recommended)" — Use the current agent context
+  - "Yes" — Route to a specific named agent
+- multiSelect: false
+
 ### Round 3: Location
 
 **Question 1 — Location:**
@@ -109,6 +117,7 @@ Present a summary:
 - **Description**: {description}
 - **Variables**: {list of $VARIABLE names or "none"}
 - **Model override**: {model or "none"}
+- **Agent**: {agent name or "none"}
 - **Location**: {path}
 ```
 
@@ -136,8 +145,12 @@ Task:
     Description: {description}
     Variables: {list of $VARIABLE names}
     Model override: {model or "none"}
+    Agent: {agent name or "none"}
+    Subtask: {true/false}
     Purpose: {detailed purpose from interview}
     Target path: {target directory}/commands/{name}.md
+
+    NOTE: Commands support `agent` (which agent executes) and `subtask` (force subagent execution) frontmatter fields in addition to `model` and `description`.
 
     Reference guide: ${CLAUDE_PLUGIN_ROOT}/references/command-guide.md
     Template: ${CLAUDE_PLUGIN_ROOT}/references/templates/command-template.md

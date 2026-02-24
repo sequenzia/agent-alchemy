@@ -42,7 +42,7 @@ permission:
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
 | `description` | string | **Yes** | — | Agent description. Shown in agent selection UI and `@`-mention list. |
-| `mode` | string | No | `primary` | `primary` (interactive), `subagent` (spawned via `task`), or `all` (both). |
+| `mode` | string | **Yes** | `all` | `primary` (interactive), `subagent` (spawned via `task`), or `all` (both). |
 | `model` | string | No | Inherited | Model in `provider/model-id` format (e.g., `anthropic/claude-sonnet-4-6`). |
 | `temperature` | number | No | Provider default | 0.0-1.0. Lower = more deterministic. |
 | `steps` | number | No | — | Maximum agentic iterations before stopping. |
@@ -50,6 +50,8 @@ permission:
 | `hidden` | boolean | No | `false` | Hide from `@`-mention list. Agent is still accessible by name. |
 | `disable` | boolean | No | `false` | Completely disable the agent. |
 | `tools` | boolean/object | No | `true` | Boolean shorthand to enable/disable all tools, or use `permission` for granular control. |
+| `top_p` | number | No | Provider default | 0.0-1.0. Nucleus sampling parameter — controls token diversity. |
+| `prompt` | string | No | — | File path to an external system prompt file. Alternative to using the markdown body. |
 | `permission` | object | No | — | Per-tool permission rules (see Permission System below). |
 
 ### Fields That DO NOT Exist

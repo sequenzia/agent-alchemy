@@ -48,8 +48,9 @@ Apply the interview results to the template, following these rules:
 #### Skill Generation Rules
 
 - Place in `{target_dir}/skills/{name}/SKILL.md`
-- **Frontmatter**: Only include valid OpenCode skill fields (`description`, `user-invocable`, `license`, `compatibility`, `metadata`)
-- **Do NOT include**: `name`, `allowed-tools`, `model`, `disable-model-invocation`, `argument-hint`, `arguments`
+- **Frontmatter**: Only include valid OpenCode skill fields (`name`, `description`, `user-invocable`, `license`, `compatibility`, `metadata`, and optionally `allowed-tools` if experimental tool restrictions are needed)
+- **`name` is REQUIRED**: Must match the parent directory name, 1-64 chars, lowercase alphanumeric + hyphens
+- **Do NOT include**: `model`, `disable-model-invocation`, `argument-hint`, `arguments`
 - **Body**: Write clear, concise instructions in imperative form
 - **$VARIABLES**: Add uppercase `$NAME` placeholders for user-configurable inputs
 - **Phases**: Structure multi-step workflows with numbered phases
@@ -58,7 +59,7 @@ Apply the interview results to the template, following these rules:
 #### Agent Generation Rules
 
 - Place in `{target_dir}/agents/{name}.md`
-- **Frontmatter**: Include valid fields (`description`, `mode`, `model`, `temperature`, `steps`, `color`, `hidden`, `disable`, `tools`, `permission`)
+- **Frontmatter**: Include valid fields (`description`, `mode`, `model`, `temperature`, `top_p`, `prompt`, `steps`, `color`, `hidden`, `disable`, `tools`, `permission`)
 - **Do NOT include**: `name`, `skills`
 - **Model format**: Use `provider/model-id` (e.g., `anthropic/claude-sonnet-4-6`)
 - **Permissions**: Structure as per-tool allow/ask/deny with glob patterns where specified
@@ -68,7 +69,7 @@ Apply the interview results to the template, following these rules:
 #### Command Generation Rules
 
 - Place in `{target_dir}/commands/{name}.md`
-- **Frontmatter**: Only include `model` and/or `description` if specified
+- **Frontmatter**: Include `model`, `description`, `agent`, and/or `subtask` as specified
 - **Model format**: Use `provider/model-id` if a model override was requested
 - **$VARIABLES**: Use uppercase patterns for user-input placeholders
 - **Body**: Write clear, actionable instructions

@@ -22,6 +22,12 @@ model: anthropic/claude-sonnet-4-6
 # OPTIONAL: Response randomness (0.0 = deterministic, 1.0 = creative)
 # temperature: 0.7
 
+# OPTIONAL: Nucleus sampling (0.0-1.0). Controls token diversity.
+# top_p: 0.9
+
+# OPTIONAL: File path to external system prompt (alternative to markdown body)
+# prompt: ./prompts/my-agent-prompt.md
+
 # OPTIONAL: Max agentic iterations
 # steps: 50
 
@@ -87,6 +93,12 @@ For agents spawned via `task({ command: "agent-name" })`.
 description: [What this subagent does when spawned]
 mode: subagent
 model: anthropic/claude-sonnet-4-6
+
+# OPTIONAL: Nucleus sampling (0.0-1.0)
+# top_p: 0.9
+
+# OPTIONAL: File path to external system prompt
+# prompt: ./prompts/my-subagent-prompt.md
 
 # Read-only subagent example:
 permission:

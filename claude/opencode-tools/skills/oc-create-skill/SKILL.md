@@ -183,6 +183,8 @@ Task:
     Tool guidance: {which tools to use/avoid}
     Target path: {target directory}/skills/{name}/SKILL.md
 
+    IMPORTANT: The `name` field is REQUIRED in frontmatter. Set it to "{name}" (must match the directory name).
+
     Reference guide: ${CLAUDE_PLUGIN_ROOT}/references/skill-guide.md
     Template: ${CLAUDE_PLUGIN_ROOT}/references/templates/skill-template.md
 

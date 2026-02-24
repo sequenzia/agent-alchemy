@@ -48,8 +48,9 @@ Read the appropriate reference guide:
 
 | Check | Rule | Severity |
 |-------|------|----------|
-| No `name` field | Name comes from directory, not frontmatter | Error |
-| No `allowed-tools` | Per-skill tool restrictions not supported | Error |
+| `name` field present | Required. Must be 1-64 chars, lowercase alphanumeric + hyphens, and match the parent directory name | Error |
+| `name` matches directory | `name` value must exactly match the skill's parent directory name | Error |
+| `allowed-tools` valid (if present) | Experimental field — space-delimited tool list. Not an error, but note as Info (experimental) | Info |
 | No `model` field | Per-skill model not supported | Error |
 | No `disable-model-invocation` | Not supported in OpenCode | Error |
 | No `argument-hint` | Not a valid field; use description instead | Warning |
@@ -68,6 +69,8 @@ Read the appropriate reference guide:
 | Mode valid | `mode` must be `primary`, `subagent`, or `all` | Error |
 | Model format | Must be `provider/model-id` if present | Warning |
 | Temperature range | 0.0-1.0 if present | Error |
+| `top_p` range | 0.0-1.0 if present | Error |
+| `prompt` path | If present, must be a valid file path string | Warning |
 | Permission syntax | Values must be `allow`, `ask`, `deny`, `true`, or `false` | Error |
 | Glob pattern syntax | Permission glob patterns must be valid | Warning |
 | Subagent no question | If mode is `subagent`, body should not instruct using `question` tool | Warning |
@@ -78,8 +81,10 @@ Read the appropriate reference guide:
 | Check | Rule | Severity |
 |-------|------|----------|
 | Model format | If `model` present, must be `provider/model-id` | Warning |
+| `agent` valid | If `agent` present, must be a valid agent name string | Warning |
+| `subtask` type | If `subtask` present, must be boolean | Warning |
 | $VARIABLE consistency | Variables used in body should all be valid uppercase patterns | Warning |
-| No skill-style frontmatter | Should not have `user-invocable`, `allowed-tools`, etc. | Warning |
+| No skill-style frontmatter | Should not have `user-invocable`, `name`, `allowed-tools`, etc. | Warning |
 | Body not empty | Command must have content | Error |
 
 ### Step 4: Check for Common Anti-Patterns

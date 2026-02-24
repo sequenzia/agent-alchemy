@@ -88,8 +88,9 @@ Compare the existing skill against current best practices. Check for:
 
 | Issue | Detection | Fix |
 |-------|-----------|-----|
-| `name` field present | Should not exist — name from directory | Remove the field |
-| `allowed-tools` present | Not supported in OpenCode | Remove; add tool guidance in body |
+| `name` field missing | Required — must match directory name | Add `name:` matching the parent directory |
+| `name` doesn't match directory | Name and directory must be identical | Fix to match |
+| `allowed-tools` present | Experimental field (Agent Skills spec) | Keep if intentional; note as experimental |
 | `model` field present | Not supported for skills | Remove; configure in opencode.json |
 | `disable-model-invocation` | Not supported | Remove |
 | `argument-hint` present | Not a valid OpenCode field | Remove; improve description |

@@ -29,6 +29,8 @@ description: Brief description of what this command does
 |-------|------|----------|---------|-------------|
 | `model` | string | No | Session model | Per-command model override in `provider/model-id` format. Unique to commands — not available for skills. |
 | `description` | string | No | — | Brief description shown in the command list. |
+| `agent` | string | No | — | Which agent executes this command (by name). Routes the command to a specific agent persona. |
+| `subtask` | boolean | No | `false` | Force execution as a subagent task instead of in the primary conversation. |
 
 > **Note**: Commands are the only extension type that supports per-invocation `model` overrides. Skills and agents configure models at the agent level.
 
@@ -55,6 +57,22 @@ $VARIABLE_NAME
 | `$ARGUMENTS` | Full argument string passed after the command name |
 | `$1`, `$2`, `$3`... | Positional arguments (space-separated) |
 
+### Shell Injection
+
+Use backtick-wrapped commands to inject shell output into the command body:
+
+```markdown
+Current branch: !`git branch --show-current`
+```
+
+### File References
+
+Use `@filepath` to reference and inline file contents:
+
+```markdown
+Review the code in @src/main.ts for potential issues.
+```
+
 ### Custom Variables
 
 Any `$UPPERCASE_NAME` pattern is treated as a variable:
@@ -77,8 +95,11 @@ When invoked, the user is prompted for:
 |------|-------|
 | `.opencode/commands/` | Project — available only in that project |
 | `~/.config/opencode/commands/` | Global — available in all projects |
+| `opencode.json` `command` object | Project — JSON config alternative |
 
 Commands are invoked as `/{filename}` (without `.md`). For example, `.opencode/commands/review.md` is invoked as `/review`.
+
+Commands can also be defined in `opencode.json` under the `command` key as an alternative to markdown files.
 
 ---
 

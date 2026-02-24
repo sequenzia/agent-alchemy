@@ -89,9 +89,10 @@ Compare the existing agent against current best practices:
 |-------|-----------|-----|
 | `name` field present | Should not exist — name from filename | Remove |
 | `skills` field present | Skills not assignable to agents | Remove |
-| Invalid `mode` value | Must be `primary`, `subagent`, or `all` | Fix or remove |
+| Invalid `mode` value | Must be `primary`, `subagent`, or `all` (default: `all`) | Fix or default to `all` |
 | Wrong model format | Must be `provider/model-id` | Convert |
 | Temperature out of range | Must be 0.0-1.0 | Clamp to valid range |
+| `top_p` out of range | Must be 0.0-1.0 if present | Clamp to valid range |
 | Invalid permission syntax | Values must be allow/ask/deny/true/false | Fix syntax |
 | Missing `description` | Required field | Add based on agent content |
 

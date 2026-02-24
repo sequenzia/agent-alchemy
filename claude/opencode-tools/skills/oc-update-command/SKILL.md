@@ -88,8 +88,10 @@ Compare the existing command against current best practices:
 | Issue | Detection | Fix |
 |-------|-----------|-----|
 | Wrong model format | Must be `provider/model-id` if present | Convert format |
-| Skill-only frontmatter | Fields like `user-invocable`, `allowed-tools` | Remove |
+| Skill-only frontmatter | Fields like `user-invocable`, `name`, `allowed-tools` | Remove |
 | Missing `description` | Should have for command listing | Add |
+| Unknown `agent` value | If `agent` field present, agent must exist | Verify or remove |
+| `subtask` type | Must be boolean if present | Fix type |
 
 ### Body Issues
 
@@ -98,8 +100,9 @@ Compare the existing command against current best practices:
 | Inconsistent $VARIABLEs | Mixed case or invalid patterns | Standardize to uppercase |
 | Claude Code tool names | `AskUserQuestion` instead of `question` | Convert |
 | `mcp__` format | Double-underscore MCP naming | Convert to single-underscore |
-| Hardcoded paths | System-specific absolute paths | Convert to relative or $VARIABLE |
+| Hardcoded paths | System-specific absolute paths | Convert to relative, $VARIABLE, or `@filepath` reference |
 | Very long body | Commands should be concise workflow shortcuts | Suggest splitting into a skill |
+| Missing shell injection | Could use `` !`command` `` for dynamic context | Suggest where appropriate |
 
 ### Structure Issues
 

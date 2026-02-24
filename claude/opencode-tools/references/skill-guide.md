@@ -12,12 +12,13 @@ Skills are `SKILL.md` files inside a named directory:
 .opencode/skills/{skill-name}/SKILL.md
 ```
 
-The skill name is derived from the directory name (not from frontmatter).
+The skill name is specified in the `name` frontmatter field and must match the directory name.
 
 ### YAML Frontmatter
 
 ```yaml
 ---
+name: my-skill-name
 description: >-
   Clear, concise description of what the skill does and when to use it.
   This is shown when listing available skills.
@@ -34,11 +35,13 @@ metadata:
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
+| `name` | string | **Yes** | — | 1-64 chars. Lowercase alphanumeric + hyphens (`^[a-z0-9]+(-[a-z0-9]+)*$`). Must match the parent directory name. |
 | `description` | string | **Yes** | — | 1-1024 chars. Shown in skill listing and used for discovery. |
 | `user-invocable` | boolean | No | `true` | Controls whether the skill appears in the command dialog. Set `false` for helper skills loaded only by other skills. |
 | `license` | string | No | — | License identifier (e.g., `MIT`, `Apache-2.0`). |
 | `compatibility` | string | No | — | Semver range for OpenCode version compatibility. |
 | `metadata` | map | No | — | String-to-string key-value pairs for custom metadata. |
+| `allowed-tools` | string | No | — | **(Experimental)** Space-delimited list of allowed tools. Per-skill tool restrictions via the Agent Skills spec. |
 
 ### Fields That DO NOT Exist
 
@@ -46,8 +49,6 @@ These Claude Code frontmatter fields are **not supported** in OpenCode:
 
 | Field | Why Not | Alternative |
 |-------|---------|-------------|
-| `name` | Derived from directory name | Name your directory correctly |
-| `allowed-tools` | No per-skill tool restrictions | Use agent-level `permission` field |
 | `model` | No per-skill model override | Configure in `opencode.json` agent settings |
 | `disable-model-invocation` | No concept of preventing auto-invocation | The `skill` tool is always available |
 | `argument-hint` | No dedicated hint field | Use descriptive `description` instead |
@@ -57,7 +58,7 @@ These Claude Code frontmatter fields are **not supported** in OpenCode:
 
 ## Skill Name Format
 
-Names are derived from the directory name and must match:
+The `name` frontmatter field must match the parent directory name and conform to:
 
 ```
 ^[a-z0-9]+(-[a-z0-9]+)*$
@@ -78,6 +79,7 @@ Use uppercase `$NAME` patterns as placeholders in the body. OpenCode auto-detect
 
 ```markdown
 ---
+name: code-quality-check
 description: Analyze a specific file for code quality issues
 ---
 
@@ -104,15 +106,15 @@ Focus on: $FOCUS_AREA
 
 ## Skill Discovery
 
-Skills are discovered from 6 directory paths and merged into a flat registry:
+Skills are discovered from 6 directory paths (grouped by convention type, interleaving project/global) and merged into a flat registry:
 
 | Priority | Path | Scope |
 |----------|------|-------|
 | 1 | `.opencode/skills/` | Project |
-| 2 | `.claude/skills/` | Project (Claude Code compat) |
-| 3 | `.agents/skills/` | Project |
-| 4 | `~/.config/opencode/skills/` | Global |
-| 5 | `~/.claude/skills/` | Global (Claude Code compat) |
+| 2 | `~/.config/opencode/skills/` | Global |
+| 3 | `.claude/skills/` | Project (Claude Code compat) |
+| 4 | `~/.claude/skills/` | Global (Claude Code compat) |
+| 5 | `.agents/skills/` | Project |
 | 6 | `~/.agents/skills/` | Global |
 
 All discovered skills are accessible by name regardless of which directory they live in. If two skills have the same name, the first-discovered one wins (priority order above).
@@ -144,11 +146,15 @@ The agent calls `skill({ name: "code-review-checklist" })` which loads that skil
 
 ### Reference Content
 
-OpenCode has no dedicated `references/` directory mechanism. For reference materials:
+The Agent Skills spec supports optional subdirectories within each skill directory for supplementary content:
 
-1. **Inline in the skill body** — For short reference content
-2. **Separate helper skill** — Create a non-user-invocable skill with `user-invocable: false`
-3. **Instructions config** — Add to `opencode.json` `instructions` array for global injection
+- **`references/`** — Supporting documentation, data files, or lookup tables
+- **`scripts/`** — Executable scripts the skill can reference
+- **`assets/`** — Images, diagrams, or other binary assets
+
+These directories enable progressive disclosure — the skill body references them as needed rather than inlining everything.
+
+For project-wide reference materials (not tied to a specific skill), use the `instructions` config:
 
 ```jsonc
 {
@@ -157,6 +163,8 @@ OpenCode has no dedicated `references/` directory mechanism. For reference mater
   ]
 }
 ```
+
+Alternatively, create a non-user-invocable helper skill (`user-invocable: false`) to encapsulate reusable reference content.
 
 ---
 
@@ -181,7 +189,7 @@ The `description` field is critical for skill discovery and model invocation:
 
 ### Tool Usage Guidance
 
-Since skills can't restrict tools, guide the model's tool usage in the body:
+While `allowed-tools` is available as an experimental field, you can also guide tool usage directly in the body:
 
 ```markdown
 ## Tools to Use
@@ -217,8 +225,8 @@ For multi-phase skills, use explicit phase markers:
 
 | Mistake | Why It Fails | Fix |
 |---------|-------------|-----|
-| Adding `name:` to frontmatter | Not a valid field; name comes from directory | Remove it; rename directory instead |
-| Adding `allowed-tools:` | Not supported in OpenCode | Use agent-level permissions or body guidance |
+| Omitting `name:` from frontmatter | Required field; must match directory name | Add `name:` matching the directory |
+| `name` doesn't match directory | Validation will fail — names must be identical | Ensure `name:` value equals the parent directory name |
 | Adding `model:` to skill frontmatter | Not supported for skills | Configure per-agent in `opencode.json` |
 | Using file-path references | `Read path/to/skill.md` won't work reliably | Use `skill({ name: "..." })` |
 | Assuming `question` works in subagents | `question` tool is primary-agent-only | Structure questions into the initial `task` prompt |
@@ -235,6 +243,7 @@ For multi-phase skills, use explicit phase markers:
 
 ```yaml
 ---
+name: greet-user
 description: Greet the user with a friendly message and ask how to help
 user-invocable: true
 ---
@@ -257,6 +266,7 @@ Be friendly and concise.
 
 ```yaml
 ---
+name: review-pr
 description: >-
   Review a pull request for code quality, security issues, and best practices.
   Use when asked to "review PR", "check PR", or "review pull request".

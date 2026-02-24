@@ -8,6 +8,9 @@ Annotated starter template for OpenCode skills. Copy this file to `.opencode/ski
 
 ````markdown
 ---
+# REQUIRED: Must match the parent directory name. Lowercase alphanumeric + hyphens, 1-64 chars.
+name: your-skill-name
+
 # REQUIRED: Description shown in skill listing and used for discovery.
 # Be specific about what the skill does and when to use it.
 # Include trigger phrases: "use when asked to X, Y, or Z"
@@ -71,8 +74,8 @@ user-invocable: true
 
 ## Notes
 
-- **Name**: Derived from the directory name, not frontmatter. Use kebab-case.
+- **Name**: Required in frontmatter (`name:` field). Must match the parent directory name. Use kebab-case.
 - **$VARIABLES**: Add `$VARIABLE_NAME` placeholders in the body for user input.
-- **Tool guidance**: Since skills can't restrict tools, guide usage in the body text.
+- **Tool guidance**: Use the experimental `allowed-tools` field or guide tool usage in the body text.
 - **Composition**: Invoke other skills with `skill({ name: "skill-name" })` — no file paths.
 - **Keep it lean**: The body is injected into the conversation context; avoid unnecessary verbosity.
