@@ -73,7 +73,7 @@
     },
     {
       "name": "agent-alchemy-opencode-tools",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "description": "Interactive toolkit for creating and maintaining OpenCode-compatible skills, agents, and commands",
       "source": "./claude/opencode-tools",
       "homepage": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/opencode-tools",
