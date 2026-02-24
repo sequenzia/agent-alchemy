@@ -1071,9 +1071,9 @@ Generate the preview by analyzing `CONVERSION_KNOWLEDGE` mappings against each c
 For each component in `SELECTED_COMPONENTS`, predict the output file path using `CONVERSION_KNOWLEDGE`:
 
 1. **Skills**: Map source path `claude/{group}/skills/{name}/SKILL.md` to target path using directory structure mappings:
-   - Apply `naming_convention` to determine the output filename
-   - Apply `file_extension` for the target format
-   - Build path: `{plugin_root}/{skill_dir}/{converted_filename}`
+   - Check `CONVERSION_KNOWLEDGE` for `skill_file_pattern` in directory structure mappings
+   - If `skill_file_pattern` is defined (e.g., `{name}/SKILL.md`): expand the pattern by replacing `{name}` with the skill name (applying `naming_convention`), then build path: `{plugin_root}/{skill_dir}/{expanded_pattern}` (e.g., `.opencode/skills/deep-analysis/SKILL.md`)
+   - If no `skill_file_pattern`: apply `naming_convention` and `file_extension` for a flat filename, then build path: `{plugin_root}/{skill_dir}/{converted_filename}`
 
 2. **Agents**: Map source path `claude/{group}/agents/{name}.md` to target path:
    - If the target platform has an agent concept: `{plugin_root}/{agent_dir}/{converted_filename}`
@@ -1695,9 +1695,17 @@ Build the directory tree following the adapter's directory conventions. The stru
    - `{OUTPUT_DIR}/{reference_dir}` -- for standalone reference files (if `reference_dir` is non-null)
    - `{OUTPUT_DIR}/{config_dir}` -- for configuration files like MCP configs (if `config_dir` is non-null)
 
-   For adapter fields that are `null` (e.g., OpenCode has no `agent_dir`, `hook_dir`, `reference_dir`):
-   - Components of that type either map to a different directory (e.g., agents flatten into `skill_dir`) or are omitted entirely (gap report only)
-   - Do not create directories for null adapter fields
+   **Per-skill subdirectories:** If `MAPPINGS.directory_structure.skill_file_pattern` contains a subdirectory separator (e.g., `{name}/SKILL.md`), create a subdirectory per skill:
+   - For each skill component, expand the pattern with the skill name
+   - Add `{OUTPUT_DIR}/{skill_dir}/{skill-name}/` to `REQUIRED_DIRS`
+   - Example: pattern `{name}/SKILL.md` with skill `deep-analysis` adds `.opencode/skills/deep-analysis/`
+
+   **Instruction-array references:** If the adapter defines `reference_dir: null` and a Config File Format with `instruction_key`, create a references directory:
+   - Add `{OUTPUT_DIR}/references/` to `REQUIRED_DIRS`
+
+   For adapter fields that are `null` (e.g., OpenCode has `reference_dir: null`):
+   - Components of that type either map to a different directory (e.g., references use instruction-array), are omitted entirely (gap report only), or use an alternative strategy
+   - Do not create directories for null adapter fields unless an alternative strategy requires a directory
 
 2. **Create directories** using `Bash: mkdir -p` for each entry in `REQUIRED_DIRS`:
 
@@ -1824,6 +1832,45 @@ After attempting all file writes:
    - **"Choose a different directory"**: Return to Step 1 and re-run Steps 2-5.
    - **"Continue without writing files"**: Proceed to Step 6. Migration guide will note that files were not written.
    - **"Cancel"**: End the workflow gracefully.
+
+### Step 5.5: Generate Config File
+
+If the adapter defines a Config File Format section (check `CONVERSION_KNOWLEDGE` for `config_file`, `config_format`, and related fields), generate the unified config file by aggregating fragments from all converted components.
+
+1. **Check for Config File Format**: Look for `config_file` in `CONVERSION_KNOWLEDGE`. If not defined, skip this step entirely.
+
+2. **Collect config fragments** from all result files in `{SESSION_DIR}/results/`:
+   - Read each `result-*.md` file's "Config Fragments" section
+   - Parse the JSON fragments from each result
+   - Categorize fragments by type: agent model configs, MCP configs, reference instruction entries, permission entries
+
+3. **Merge into single config object**: Deep-merge all fragments, with later entries winning on conflict:
+
+   ```
+   CONFIG = {}
+   For each fragment in collected_fragments (ordered by CONVERSION_ORDER):
+     Deep-merge fragment into CONFIG
+   ```
+
+   Merge rules:
+   - **Agent configs**: Merge under `agent` key — each agent name is a separate sub-key, no conflicts expected
+   - **MCP configs**: Merge under `mcp` key — each server name is a separate sub-key
+   - **Instruction entries**: Concatenate all instruction paths into a single array, deduplicate
+   - **Permission entries**: Merge under `permission` key — last write wins for each tool name
+
+4. **Handle existing config file**: If the config file already exists at the target path (e.g., project already has an `opencode.json`):
+   - Read the existing file
+   - Deep-merge new config into existing (preserve existing values, add new entries)
+   - Record in `CONVERSION_DECISIONS`: "Merged config into existing {config_file}"
+
+5. **Write the config file** using the `Write` tool:
+   - Path: `{config_file}` (relative to project root, as defined in the adapter)
+   - Format: Use the adapter's `config_format` (json, jsonc, yaml, toml)
+   - For JSONC: add brief comments above each section identifying its purpose
+
+6. **Track in WRITE_RESULTS**:
+   - On success: append `{ component: "config", target_path: config_file_path, size_bytes: content_length }` to `WRITE_RESULTS.files_written`
+   - On failure: append to `WRITE_RESULTS.files_failed`
 
 ### Step 6: Generate Migration Guide
 

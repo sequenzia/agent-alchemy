@@ -33,6 +33,7 @@ OpenCode (anomalyco/opencode) is a TypeScript/Bun-based AI coding agent with a c
 | config_dir | ./ |
 | file_extension | .md |
 | naming_convention | kebab-case |
+| skill_file_pattern | {name}/SKILL.md |
 | notes | Skills are SKILL.md files in `.opencode/skills/{name}/SKILL.md` (project-level) or `~/.config/opencode/skills/` (user-level). OpenCode also discovers skills from `.claude/skills/`, `.agents/skills/`, `~/.claude/skills/`, and `~/.agents/skills/`. Agents are markdown files in `.opencode/agents/{name}.md`. Commands are markdown files in `.opencode/commands/{name}.md`. Plugins (JS/TS hooks) go in `.opencode/plugins/`. Custom tools go in `.opencode/tools/`. Config file is `opencode.json` (NOT `.opencode.json`) at project root or `.opencode/opencode.json`. Reference files have no dedicated directory — content should be inlined into skill bodies or loaded via the `instructions` config array in `opencode.json`. |
 
 ## Tool Name Mappings
@@ -53,7 +54,7 @@ OpenCode (anomalyco/opencode) is a TypeScript/Bun-based AI coding agent with a c
 | Claude Code Tool | Target Equivalent | Notes |
 |-----------------|-------------------|-------|
 | Bash | bash | OpenCode's `bash` tool executes shell commands using PTY sessions. Accepts `command` (required), `cwd` (optional), `env` (optional), and `timeout` (optional) parameters. Requires user permission approval. Shell is configurable in `opencode.json`. |
-| Task | task | OpenCode's `task` tool spawns a subagent in an isolated session context. Accepts `prompt` (required), `description` (optional), `subagent_type` (optional: `build` or `plan`), and `command` (optional: name of a custom agent to use). Each invocation starts a fresh isolated context — no persistent cross-call state. Subagents cannot use the `question` tool. Model is determined by the agent's static config, not per-task. |
+| Task | task | OpenCode's `task` tool spawns a subagent in an isolated session context. Accepts `prompt` (required), `description` (optional), `subagent_type` (optional: `build` or `plan`), and `command` (optional: name of a custom agent to use). Each invocation starts a fresh isolated context — no persistent cross-call state. Subagents cannot use the `question` tool. Model is determined by the agent's static config, not per-task. For custom agent spawning, Claude Code's `subagent_type: '{plugin}:{agent}'` maps to `command: '{agent-name}'` (strip the plugin prefix). |
 
 ### Agent Coordination
 
@@ -92,10 +93,10 @@ OpenCode (anomalyco/opencode) is a TypeScript/Bun-based AI coding agent with a c
 
 | Claude Code Model | Target Equivalent | Notes |
 |------------------|-------------------|-------|
-| opus | anthropic/claude-opus-4-5 | OpenCode uses `provider/model-id` format. Full ID with date: `anthropic/claude-opus-4-5-20251101`. Also available: `anthropic/claude-opus-4-6`. Models are configured per agent type in `opencode.json` under `agents.{agentName}.model`. OpenCode supports Anthropic, OpenAI, Google, Groq, AWS Bedrock, Azure, OpenRouter, GitHub Copilot, and self-hosted providers. |
-| sonnet | anthropic/claude-sonnet-4-5 | Full ID with date: `anthropic/claude-sonnet-4-5-20250929`. Also available: `anthropic/claude-sonnet-4-20250514`. The `task` subagent type maps naturally to Sonnet-tier usage. |
+| opus | anthropic/claude-opus-4-6 | OpenCode uses `provider/model-id` format. Also available: `anthropic/claude-opus-4-5`, `anthropic/claude-opus-4-5-20251101`. Models are configured per agent type in `opencode.json` under `agent.{agentName}.model`. OpenCode supports Anthropic, OpenAI, Google, Groq, AWS Bedrock, Azure, OpenRouter, GitHub Copilot, and self-hosted providers. |
+| sonnet | anthropic/claude-sonnet-4-6 | Also available: `anthropic/claude-sonnet-4-5`, `anthropic/claude-sonnet-4-5-20250929`. The `task` subagent type maps naturally to Sonnet-tier usage. |
 | haiku | anthropic/claude-haiku-4-5 | Full ID: `anthropic/claude-haiku-4-5-20251001`. Also available: `anthropic/claude-3-5-haiku`. Suitable for lightweight tasks. |
-| default | anthropic/claude-sonnet-4-5 | Default to Sonnet-tier for general use. OpenCode has built-in agent types: `coder` (main), `task` (sub-agent), `title` (session naming), `summarizer` (context compaction). Use `/models` command at runtime to list available model IDs. |
+| default | anthropic/claude-sonnet-4-6 | Default to Sonnet-tier for general use. OpenCode has built-in agent types: `coder` (main), `task` (sub-agent), `title` (session naming), `summarizer` (context compaction). Use `/models` command at runtime to list available model IDs. |
 
 ## Frontmatter Translations
 
@@ -117,8 +118,9 @@ OpenCode (anomalyco/opencode) is a TypeScript/Bun-based AI coding agent with a c
 |------------------|-------------|-------|
 | name | embedded:filename | Agent name derived from `.md` filename in `.opencode/agents/`. |
 | description | description | Required field in agent frontmatter. Shown in agent selection UI. |
-| model | model | Supported. Format: `anthropic/claude-sonnet-4-5` (provider/model-id). |
-| tools | permission | Tool access controlled via `permission` field with per-tool allow/ask/deny values and glob patterns for file restrictions. Boolean shorthand supported (e.g., `write: false` to deny write access). |
+| model | model | Supported. Format: `anthropic/claude-sonnet-4-6` (provider/model-id). |
+| tools | permission | Tool access controlled via `permission` field with per-tool allow/ask/deny values and glob patterns for file restrictions. Boolean shorthand supported (e.g., `write: false` to deny write, `bash: true` to allow). Full syntax: `permission: { "tool_name": "allow"\|"ask"\|"deny", "glob_pattern": "allow"\|"deny" }`. |
+| (subagent indicator) | mode | Agents spawned via the task tool use `mode: subagent` in frontmatter. This marks the agent as a sub-agent rather than a primary agent. Default agents without `mode` are primary agents. |
 | skills | null | Skills are not assigned to agents in frontmatter. Agents invoke skills dynamically at runtime via the native `skill` tool. All skills in the merged registry are accessible to any agent. |
 
 ## Hook/Lifecycle Event Mappings
@@ -159,7 +161,16 @@ export const MyPlugin: Plugin = async ({ project, client, $, directory, worktree
 }
 ```
 
-Full event list: `command.executed`, `file.edited`, `file.watcher.updated`, `installation.updated`, `lsp.client.diagnostics`, `lsp.updated`, `message.part.removed`, `message.part.updated`, `message.removed`, `message.updated`, `permission.asked`, `permission.replied`, `server.connected`, `session.created`, `session.compacted`, `session.deleted`, `session.diff`, `session.error`, `session.idle`, `session.status`, `session.updated`, `shell.env`, `todo.updated`, `tool.execute.before`, `tool.execute.after`, `tui.prompt.append`, `tui.command.execute`, `tui.toast.show`.
+Full event list: `command.executed`, `file.edited`, `file.watcher.updated`, `installation.updated`, `lsp.client.diagnostics`, `lsp.updated`, `message.part.removed`, `message.part.updated`, `message.removed`, `message.updated`, `permission.asked`, `permission.replied`, `server.connected`, `session.created`, `session.compacted`, `session.deleted`, `session.diff`, `session.error`, `session.idle`, `session.status`, `session.updated`, `shell.env`, `todo.updated`, `tool.definition` (v1.1.65+), `tool.execute.before`, `tool.execute.after`, `tui.prompt.append`, `tui.command.execute`, `tui.toast.show`.
+
+**Additional events (v1.1.65+):**
+- `tool.definition`: Fires when tools are registered at startup. Can be used to modify tool definitions, add custom tools, or filter available tools.
+- `shell.env` (v1.2.7+): Fires when shell environment variables are being set up. Can inject or modify environment variables for shell sessions.
+
+**Plugin requirements:**
+- **ESM only**: Plugin files must use ESM imports (`import type { Plugin }`). CommonJS `require()` is not supported.
+- **v1.2.9+**: MCP tool attachment metadata is available in `tool.execute.before` and `tool.execute.after` events, enabling MCP-aware hook logic.
+- **v1.2.10+**: Localhost sidecar processes are automatically skipped during plugin discovery to avoid circular loading.
 
 For Claude Code's auto-approve PreToolUse hooks, the recommended OpenCode equivalent is setting the `permission` config in `opencode.json` rather than implementing a plugin:
 
@@ -184,6 +195,61 @@ For Claude Code's auto-approve PreToolUse hooks, the recommended OpenCode equiva
 | max_depth | unlimited |
 | notes | OpenCode agents use the native `skill` tool to load SKILL.md content by name from a merged registry of 6 directory paths (`.opencode/skills/`, `.claude/skills/`, `.agents/skills/`, and their `~/.config/` or `~/` global equivalents). Skills are resolved by name — no file path references needed. Loaded skill content is injected into the conversation and protected from context compaction pruning. Claude Code's `Read ${CLAUDE_PLUGIN_ROOT}/skills/{name}/SKILL.md` pattern should be converted to skill tool invocations by name. Cross-plugin composition is natively supported since all skills from all discovery paths are merged into a single registry. For reference files that cannot be separate skills, use the `instructions` config array in `opencode.json` to inject files as global context, or inline content into the skill body. |
 
+## Config File Format
+
+| Field | Value |
+|-------|-------|
+| config_file | opencode.json |
+| config_format | jsonc |
+| agent_config_path | agent.{name}.model |
+| mcp_config_key | mcp |
+| instruction_key | instruction |
+| permission_key | permission |
+| notes | `opencode.json` supports JSONC (comments allowed). Located at project root or `.opencode/opencode.json`. Template variables `{file:./path}` and `{env:VAR_NAME}` are supported in values. The `agent` key maps agent names to config objects; `instruction` is an array of file paths or globs. |
+
+Example `opencode.json` with all relevant sections:
+
+```jsonc
+{
+  // Agent model configuration
+  "agent": {
+    "code-explorer": {
+      "model": "anthropic/claude-sonnet-4-6"
+    },
+    "code-synthesizer": {
+      "model": "anthropic/claude-opus-4-6"
+    },
+    "code-architect": {
+      "model": "anthropic/claude-opus-4-6"
+    }
+  },
+
+  // MCP server configuration
+  "mcp": {
+    "context7": {
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp"
+    }
+  },
+
+  // Global instruction files (reference content injection)
+  "instruction": [
+    ".opencode/references/*.md",
+    ".opencode/references/adapters/*.md"
+  ],
+
+  // Permission settings (auto-approve workarounds)
+  "permission": {
+    "bash": "allow",
+    "write": "allow",
+    "edit": "allow",
+    "read": "allow",
+    "glob": "allow",
+    "grep": "allow"
+  }
+}
+```
+
 ## Path Resolution
 
 | Field | Value |
@@ -198,8 +264,8 @@ For Claude Code's auto-approve PreToolUse hooks, the recommended OpenCode equiva
 
 | Field | Value |
 |-------|-------|
-| adapter_version | 2.0.0 |
-| target_platform_version | 1.2.6 |
-| last_updated | 2026-02-17 |
+| adapter_version | 2.1.0 |
+| target_platform_version | 1.2.10 |
+| last_updated | 2026-02-24 |
 | author | research-agent |
-| changelog | v2.0.0: Complete adapter rewrite targeting anomalyco/opencode (TypeScript, active project at opencode.ai) instead of opencode-ai/opencode (Go, archived). The previous adapter v1.0.0 targeted the wrong project entirely. Major changes: Read→read (was view), Task→task (was agent), WebFetch→webfetch (was fetch), AskUserQuestion→question (was null), WebSearch→websearch (was null), all hooks now supported via JS/TS plugin SDK (were null), composition mechanism changed from none to reference (skill tool), agents now supported via .opencode/agents/ (was null), model IDs require anthropic/ prefix, config file is opencode.json (was .opencode.json), MCP config key is mcp (was mcpServers), task management via todoread/todowrite (was null). 43+ stale mappings corrected, 15+ new features added. |
+| changelog | v2.1.0: Updated for OpenCode v1.2.10. Added `skill_file_pattern` for subdirectory-based skill layout (`{name}/SKILL.md`). Added Config File Format section defining `opencode.json` structure for agent models, MCP, instructions, and permissions. Updated model tier mappings to use claude-opus-4-6 and claude-sonnet-4-6 as primary IDs. Added `mode: subagent` agent frontmatter field. Added `permission` field documentation with boolean shorthand syntax. Added `tool.definition` (v1.1.65+) and `shell.env` (v1.2.7+) lifecycle events. Added ESM-only requirement note for plugins. Added v1.2.9 MCP tool attachment metadata and v1.2.10 localhost sidecar skip notes. Added `command` parameter mapping for custom agent spawning via Task tool. v2.0.0: Complete adapter rewrite targeting anomalyco/opencode (TypeScript, active project at opencode.ai) instead of opencode-ai/opencode (Go, archived). |

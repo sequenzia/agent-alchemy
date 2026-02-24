@@ -19,6 +19,7 @@ An adapter file is a markdown document with a fixed set of sections, each using 
 | Frontmatter Translations | Yes | N/A (adapter is invalid without this) |
 | Hook/Lifecycle Event Mappings | No | All hooks treated as unsupported (`null`) |
 | Composition Mechanism | Yes | N/A (conversion cannot proceed without this) |
+| Config File Format | No | No unified config file; agent/MCP/permission settings handled per-component |
 | Path Resolution | Yes | N/A (conversion cannot proceed without this) |
 | Adapter Version | Yes | N/A (staleness check requires this) |
 
@@ -74,6 +75,7 @@ If an optional section is omitted, the conversion engine applies the listed defa
 | `config_dir` | path | No | Subdirectory for configuration files (MCP, etc.). Default: plugin root |
 | `file_extension` | string | Yes | File extension for skill/agent files (e.g., `.md`, `.yaml`, `.json`) |
 | `naming_convention` | string | Yes | File naming pattern: `kebab-case`, `snake_case`, `camelCase`, or `PascalCase` |
+| `skill_file_pattern` | string | No | File layout pattern within `skill_dir`. Use `{name}` as placeholder for the skill name. Default: `{name}{file_extension}` (flat file in skill_dir). Example: `{name}/SKILL.md` (subdirectory per skill) |
 | `notes` | text | No | Platform-specific directory layout caveats |
 
 ### Format
@@ -91,6 +93,7 @@ If an optional section is omitted, the conversion engine applies the listed defa
 | config_dir | config/ |
 | file_extension | .md |
 | naming_convention | kebab-case |
+| skill_file_pattern | {name}/SKILL.md |
 | notes | OpenCode uses a flat prompt directory; nested subdirectories are not supported for prompts. |
 ```
 
@@ -378,7 +381,48 @@ If this section is omitted from an adapter file, the conversion engine treats al
 
 ---
 
-## Section 8: Path Resolution
+## Section 8: Config File Format
+
+**Optional.** Defines the target platform's unified config file, if one exists. Some platforms (e.g., OpenCode with `opencode.json`) use a single config file for agent model assignments, MCP server definitions, instruction file paths, and permission settings. If the target platform does not use a unified config file, omit this section.
+
+### Fields
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `config_file` | string | Yes | Path to config file relative to project root (e.g., `opencode.json`) |
+| `config_format` | string | Yes | File format: `json`, `jsonc`, `yaml`, or `toml` |
+| `agent_config_path` | string | No | JSON/YAML path template for agent model settings. Use `{name}` as placeholder for agent name (e.g., `agent.{name}.model`) |
+| `mcp_config_key` | string | No | Top-level key for MCP server configurations (e.g., `mcp`) |
+| `instruction_key` | string | No | Top-level key for global instruction file paths (e.g., `instruction`). Value is typically an array of file paths or globs. |
+| `permission_key` | string | No | Top-level key for permission settings (e.g., `permission`) |
+| `notes` | text | No | Platform-specific config file caveats |
+
+### Format
+
+```markdown
+## Config File Format
+
+| Field | Value |
+|-------|-------|
+| config_file | opencode.json |
+| config_format | jsonc |
+| agent_config_path | agent.{name}.model |
+| mcp_config_key | mcp |
+| instruction_key | instruction |
+| permission_key | permission |
+| notes | Supports JSONC (comments allowed). Template variables `{file:./path}` and `{env:VAR_NAME}` supported in values. |
+```
+
+### Conversion Implications
+
+- **Agent model config**: When the adapter defines `agent_config_path`, the conversion engine produces config fragments for each agent's model setting instead of (or in addition to) frontmatter `model` fields.
+- **MCP config**: When `mcp_config_key` is defined, MCP server configurations are written as entries under this key.
+- **Instruction injection**: When `instruction_key` is defined and the adapter has `reference_dir: null`, reference files can be registered in the instruction array instead of being inlined into skill bodies.
+- **Permissions**: When `permission_key` is defined, auto-approve hook workarounds can be expressed as permission config entries.
+
+---
+
+## Section 9: Path Resolution
 
 **Required.** Defines how the target platform resolves paths to plugin files, equivalent to Claude Code's `${CLAUDE_PLUGIN_ROOT}` variable.
 
@@ -417,7 +461,7 @@ If this section is omitted from an adapter file, the conversion engine treats al
 
 ---
 
-## Section 9: Adapter Version
+## Section 10: Adapter Version
 
 **Required.** Tracks which version of the target platform's plugin system this adapter was written for. Used by the research phase to detect staleness.
 
@@ -485,6 +529,7 @@ Platform adapter for converting Claude Code plugins to {Platform Name} format.
 | config_dir | {path/ or empty} |
 | file_extension | {.md} |
 | naming_convention | {kebab-case} |
+| skill_file_pattern | {name}/{name}.md |
 | notes | {empty} |
 
 ## Tool Name Mappings
@@ -598,6 +643,18 @@ Platform adapter for converting Claude Code plugins to {Platform Name} format.
 | supports_cross_plugin | {true|false} |
 | supports_recursive | {true|false} |
 | max_depth | {number or unlimited} |
+| notes | {empty} |
+
+## Config File Format
+
+| Field | Value |
+|-------|-------|
+| config_file | {path or empty} |
+| config_format | {json|jsonc|yaml|toml} |
+| agent_config_path | {path template or empty} |
+| mcp_config_key | {key or empty} |
+| instruction_key | {key or empty} |
+| permission_key | {key or empty} |
 | notes | {empty} |
 
 ## Path Resolution

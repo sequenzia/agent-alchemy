@@ -284,6 +284,40 @@ When the target platform has no composition mechanism and reference content must
    - Add a comment noting the duplication: `<!-- NOTE: This content is also inlined in {other-skill-files}. Changes should be applied to all copies. -->`
    - Record the duplication in the migration guide with a recommendation to use the target platform's project context mechanism (if available) for shared content
 
+### Instruction-Array Strategy (mechanism: reference, with config instruction_key)
+
+When the adapter's composition mechanism is `reference` AND `reference_dir` is `null` AND the adapter's Config File Format section defines a non-null `instruction_key`, reference files can be registered via the config file's instruction array instead of being inlined. This is the preferred strategy for platforms like OpenCode where reference content is injected as global context.
+
+1. **Create a references directory** under the plugin root:
+   ```
+   {output_dir}/{plugin_root}/references/
+   ```
+
+2. **Preserve relative hierarchy**: Mirror the source reference directory structure:
+   ```
+   .opencode/references/tdd-workflow.md
+   .opencode/references/adapters/opencode.md
+   ```
+
+3. **Write transformed reference files** to the references directory, applying all Stage 3 transformations (path, tool name, model name replacements).
+
+4. **Register in config file's instruction array**: Produce a config fragment that adds the reference file paths to the instruction array. Use individual paths or glob patterns depending on the number of files:
+   - Few files (< 5): List individual paths
+     ```json
+     { "instruction": [".opencode/references/tdd-workflow.md", ".opencode/references/adapters/opencode.md"] }
+     ```
+   - Many files (>= 5): Use a glob pattern
+     ```json
+     { "instruction": [".opencode/references/**/*.md"] }
+     ```
+
+5. **Update loading patterns in parent skills**: Remove `Read` directives for reference files from skill bodies. Add a comment noting the content is injected via the instruction mechanism:
+   ```markdown
+   <!-- Reference content from {original-path} is loaded via opencode.json instruction array -->
+   ```
+
+6. **Handle shared references**: Since instruction-array files are globally injected, shared references are automatically deduplicated — no need to inline into multiple skills. Record this as a benefit in the migration guide.
+
 ### Reference Files Not Loaded by Any Selected Skill
 
 If a reference file is discovered in a selected skill's `references/` directory but is not loaded by any `Read` pattern in the selected components:

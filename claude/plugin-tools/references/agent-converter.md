@@ -137,6 +137,16 @@ For each frontmatter field, look up the mapping in the adapter's **Frontmatter T
    - Record the gap: "Agent tool restrictions cannot be configured; target platform uses fixed tool sets per agent type"
    - If the body text references specific tools, those references still need transformation in Stage 3
 
+#### Agent Mode (derived)
+
+Some target platforms distinguish between primary agents and sub-agents via a `mode` field (e.g., OpenCode uses `mode: subagent`). This is not a direct mapping from a Claude Code frontmatter field — it is derived from context:
+
+1. Check the adapter's Agent Frontmatter table for a `(subagent indicator)` row with a target field (e.g., `mode`)
+2. If the adapter defines a mode target field:
+   - Set `mode: subagent` for all custom agents (all Agent Alchemy agents are spawned via the Task tool as sub-agents)
+   - Record the decision: "Agent '{name}' set to mode: subagent (all Agent Alchemy custom agents are sub-agents)"
+3. If the adapter has no mode field: skip this step (no action needed)
+
 #### `skills`
 
 1. Read the adapter mapping for `skills`
@@ -508,34 +518,78 @@ The decision record for each agent feeds into two sections of the migration guid
 
 ## OpenCode-Specific Conversion Notes
 
-Since OpenCode is the MVP target platform, the following notes document expected conversion behavior for common agent patterns when using the OpenCode adapter:
-
-### Agent Type Mapping
-
-Claude Code agents map to OpenCode agent types based on their tool profile:
-
-| Claude Code Agent Pattern | OpenCode Agent Type | Rationale |
-|--------------------------|---------------------|-----------|
-| Write + Edit + Bash tools | `coder` | Full-capability agent with file modification |
-| Read + Glob + Grep only | `task` | Read-only sub-agent for exploration |
-| WebSearch + WebFetch tools | `coder` | No dedicated research agent type; use coder with fetch |
-| Any agent with SendMessage/TeamCreate | `coder` | No team coordination; map to most capable type |
-
-### Expected Gaps
-
-| Agent Feature | Gap | Default Resolution |
-|---------------|-----|-------------------|
-| `skills` field | OpenCode has no skill assignment | Record as gap; suggest inlining skill content into the system prompt or placing in OpenCode.md |
-| `tools` field (configurable list) | OpenCode tool sets are fixed per agent type | Record as gap; note which tools are available for the mapped agent type |
-| `description` field | OpenCode auto-generates descriptions | Preserve as comment in body |
-| Inter-agent communication (SendMessage) | No equivalent | Remove from body with TODO; note in gap report |
-| Task management (TaskCreate, TaskUpdate, etc.) | No equivalent | Remove from body with TODO; note in gap report |
-| Team coordination (TeamCreate, TeamDelete) | No equivalent | Remove from body with TODO; note in gap report |
+Since OpenCode is the MVP target platform, the following notes document expected conversion behavior for common agent patterns when using the OpenCode adapter (v2.1.0, targeting OpenCode v1.2.10).
 
 ### Output Structure
 
 For OpenCode, converted agents produce:
 
-1. **A custom command file** at `.opencode/commands/{agent-name}.md` -- contains the transformed system prompt
-2. **A config fragment** for `.opencode.json` -- contains model configuration (e.g., `"agents": {"coder": {"model": "claude-4-sonnet"}}`)
-3. **Migration notes** -- which built-in agent type to use and what was lost in conversion
+1. **An agent file** at `.opencode/agents/{agent-name}.md` — contains YAML frontmatter + transformed system prompt body
+2. **A config fragment** for `opencode.json` — contains model configuration under `agent.{agent-name}.model`
+3. **Migration notes** — what was lost in conversion and manual steps needed
+
+### Agent Frontmatter Format
+
+OpenCode agent files use YAML frontmatter with these fields:
+
+```yaml
+---
+description: Explores codebases to find relevant files and map architecture
+mode: subagent
+model: anthropic/claude-sonnet-4-6
+permission:
+  write: false
+  bash: false
+  read: true
+  glob: true
+  grep: true
+---
+
+# Code Explorer Agent
+
+You are a code exploration specialist...
+```
+
+Key fields:
+- `description` (required): Shown in agent selection UI
+- `mode: subagent`: Required for all Agent Alchemy agents (they are spawned via Task tool)
+- `model`: Format is `provider/model-id` (e.g., `anthropic/claude-opus-4-6`)
+- `permission`: Per-tool access control. Boolean shorthand (`write: false`) or full syntax (`write: "deny"`)
+
+### Config Fragment Format
+
+Each agent produces a config fragment for `opencode.json`:
+
+```json
+{
+  "agent": {
+    "code-explorer": {
+      "model": "anthropic/claude-sonnet-4-6"
+    }
+  }
+}
+```
+
+The orchestrator (Phase 6) merges all agent config fragments into a single `opencode.json` file.
+
+### Expected Gaps
+
+| Agent Feature | Gap | Default Resolution |
+|---------------|-----|-------------------|
+| `skills` field | OpenCode has no skill assignment in agent frontmatter | Record as gap; agents invoke skills at runtime via the native `skill` tool — no conversion needed |
+| Inter-agent communication (SendMessage) | No equivalent | Remove from body with TODO; note in gap report |
+| Task management (TaskCreate, TaskUpdate, etc.) | Partial via todoread/todowrite | Replace with `todowrite`/`todoread` references; note reduced capabilities |
+| Team coordination (TeamCreate, TeamDelete) | No equivalent | Remove from body with TODO; note in gap report |
+
+### Tool Permission Mapping
+
+When the source agent has a `tools` list, convert to OpenCode's `permission` field:
+
+| Claude Code tool in `tools` list | OpenCode `permission` entry |
+|----------------------------------|---------------------------|
+| Read, Glob, Grep (read tools) | `read: true`, `glob: true`, `grep: true` |
+| Write, Edit (write tools) | `write: true`, `edit: true` |
+| Bash | `bash: true` |
+| Tools NOT in the list | Set to `false` to restrict access |
+
+If the source agent has no `tools` list (unrestricted), omit the `permission` field entirely (OpenCode defaults to asking for each tool).

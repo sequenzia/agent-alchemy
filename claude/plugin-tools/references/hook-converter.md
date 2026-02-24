@@ -295,6 +295,51 @@ For each hook configuration, produce:
    - Manual steps the user needs to take
    - Behavioral differences between source and target
 
+### Plugin File Template for JS/TS Platforms
+
+When the target platform uses JS/TS plugins for lifecycle hooks (e.g., OpenCode's `@opencode-ai/plugin` SDK), converted hooks should use ESM module format. **CommonJS `require()` is not supported** — all imports must use ESM `import` syntax.
+
+#### Canonical Plugin Template
+
+```typescript
+import type { Plugin } from "@opencode-ai/plugin"
+
+export const PluginName: Plugin = async ({ project, client, $, directory, worktree }) => {
+  return {
+    "tool.execute.before": async (input, output) => {
+      // input: { tool_name, tool_input, session_id, ... }
+      // Return modified input to alter tool execution, or void to pass through
+    },
+    "tool.execute.after": async (input, output) => {
+      // input: { tool_name, tool_result, session_id, ... }
+      // Post-processing after tool execution
+    },
+    "session.created": async (input, output) => {
+      // Session initialization logic
+    }
+  }
+}
+```
+
+#### Plugin Context Parameters
+
+The plugin function receives a context object with:
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `project` | object | Current project configuration and paths |
+| `client` | object | API client for interacting with the OpenCode server |
+| `$` | function | Shell command executor (Bun shell) |
+| `directory` | string | Current working directory |
+| `worktree` | object | Git worktree information (if applicable) |
+
+#### Conversion Notes
+
+- Place plugin files in `.opencode/plugins/` with a `.ts` extension
+- Each plugin group's hooks should produce one plugin file (e.g., `sdd-tools-hooks.ts`)
+- Auto-approve hooks should be converted to `permission` config entries in `opencode.json` rather than plugin hooks, as this is more idiomatic for OpenCode
+- The `tool.definition` event (v1.1.65+) can be used to register custom tools or modify tool definitions at startup
+
 ---
 
 ## Gap Report Severity Classification

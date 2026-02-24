@@ -122,6 +122,23 @@ For each tool reference:
 - Null: insert TODO comment: `<!-- TODO: {tool_name} has no equivalent on {TARGET_PLATFORM}. {notes} -->`
 - `partial:{name}`: replace and add inline note about limitation
 
+#### 4b-2: Transform Task Tool Invocation Patterns
+
+Scan the body for Task tool invocation patterns that reference custom agents:
+
+**Detection patterns:**
+- `subagent_type: "{plugin}:{agent-name}"` (e.g., `subagent_type: "agent-alchemy-core-tools:code-explorer"`)
+- `subagent_type: "{agent-name}"` (e.g., `subagent_type: "code-explorer"`)
+- `subagent_type` references in YAML code blocks and prose
+
+**Transformation rules:**
+1. Check the adapter's Tool Name Mappings for the Task tool entry. If the notes mention a `command` parameter for custom agent spawning:
+   - Replace `subagent_type: "{plugin}:{agent-name}"` with `command: "{agent-name}"` (strip the plugin prefix)
+   - Replace `subagent_type: "{agent-name}"` with `command: "{agent-name}"` (keep as-is if already just the agent name)
+   - Keep built-in subagent types (`build`, `plan`) as `subagent_type` — do NOT convert these to `command`
+2. If the adapter's Task notes do NOT mention a `command` parameter, leave `subagent_type` patterns unchanged
+3. Record each transformation in Decisions: "Converted subagent_type '{original}' to command '{agent-name}' for custom agent spawning"
+
 #### 4c: Transform Composition Patterns
 
 Scan for skill composition references:
@@ -167,7 +184,12 @@ Scan for `AskUserQuestion` usage (YAML code blocks and prose):
 3. Append transformed body
 4. Apply target file extension from `MAPPINGS.directory_structure.file_extension`
 5. Apply naming convention for output filename
-6. Build output path: `{skill_dir}/{converted_filename}`
+6. Build output path using `skill_file_pattern` if defined:
+   - If `MAPPINGS.directory_structure.skill_file_pattern` exists (e.g., `{name}/SKILL.md`):
+     - Replace `{name}` with the skill name (applying naming convention)
+     - Build output path: `{skill_dir}/{expanded_pattern}` (e.g., `skills/deep-analysis/SKILL.md`)
+   - If no `skill_file_pattern` is defined:
+     - Build output path: `{skill_dir}/{converted_filename}` (flat file, e.g., `skills/deep-analysis.md`)
 
 ### Agents (type: "agent")
 
@@ -280,6 +302,11 @@ Build suggested workarounds using source priority:
 - If `group_key` found with `apply_globally = true`: apply the cached decision, record with `resolution_mode: "cached"`
 - If found with `apply_globally = false` OR not found: insert inline marker and add to Unresolved Incompatibilities
 
+**Clean output rule:** Auto-resolved and cached-resolved items must NOT leave `resolution_mode`, `group_key`, or internal metadata in the converted content. These fields are internal tracking data:
+- Workaround text is applied directly to the converted content without wrapping metadata
+- TODO comments use clean format: `<!-- TODO: {description} -->` (no `resolution_mode` or `group_key` annotations)
+- All detailed metadata (resolution_mode, group_key, severity, workaround details) belongs exclusively in the result file's Decisions and Gaps tables, NOT in the converted output
+
 **Inline marker format:**
 ```
 <!-- UNRESOLVED: {group_key} | {severity} | {feature_name} | {workaround_description_or_none} -->
@@ -350,6 +377,32 @@ The result file must contain all sections:
 6. **Unresolved Incompatibilities** — items for orchestrator to resolve with user
 
 **Component ID format:** `{type}-{group}-{name}` (e.g., `skill-core-tools-deep-analysis`)
+
+### Config Fragments
+
+If the adapter defines a Config File Format section (with `config_file`), collect JSON fragments produced during conversion and include them in the result file. These fragments are aggregated by the orchestrator in Phase 6 to generate the unified config file.
+
+Config fragments may include:
+- **Agent model configs**: `{ "agent": { "{agent-name}": { "model": "{target-model-id}" } } }` — produced when converting agents with `model` field
+- **MCP server configs**: `{ "mcp": { "{server-name}": { ... } } }` — produced when converting MCP configs
+- **Reference instruction entries**: `{ "instruction": ["{path-to-reference}"] }` — produced when using the instruction-array strategy for references
+- **Permission entries**: `{ "permission": { "{tool}": "allow" } }` — produced when converting auto-approve hooks to permission config
+
+Include the fragments in the result file under a `## Config Fragments` section:
+
+```markdown
+## Config Fragments
+
+```json
+{
+  "agent": {
+    "code-explorer": {
+      "model": "anthropic/claude-sonnet-4-6"
+    }
+  }
+}
+```
+```
 
 After writing the result file, your work is complete. The orchestrator will read the result, resolve any unresolved incompatibilities with the user, and proceed to the next wave.
 
