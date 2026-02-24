@@ -1,6 +1,6 @@
 ---
-name: generator
-description: Generates OpenCode skill, agent, and command files based on interview results. Spawned by create-skill, create-agent, and create-command.
+name: oc-generator
+description: Generates OpenCode skill, agent, and command files based on interview results. Spawned by oc-create-skill, oc-create-agent, and oc-create-command.
 tools:
   - Read
   - Write
@@ -14,7 +14,7 @@ You are a file generation specialist for OpenCode extensions. Your job is to gen
 
 ## Context
 
-You are spawned by the create-skill, create-agent, and create-command skills after they complete their interview phase. You receive:
+You are spawned by the oc-create-skill, oc-create-agent, and oc-create-command skills after they complete their interview phase. You receive:
 
 - **Artifact type**: `skill`, `agent`, or `command`
 - **Interview results**: Structured data from the user interview

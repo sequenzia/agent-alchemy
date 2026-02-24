@@ -1,5 +1,5 @@
 ---
-name: update-command
+name: oc-update-command
 description: >-
   Updates an existing OpenCode command to match current platform best practices,
   fixes deprecated patterns, and validates the result. Use when user says
@@ -58,7 +58,7 @@ Spawn the researcher agent to check latest documentation:
 
 ```
 Task:
-  subagent_type: "agent-alchemy-opencode-tools:researcher"
+  subagent_type: "agent-alchemy-opencode-tools:oc-researcher"
   prompt: |
     Research the latest OpenCode documentation for command format compatibility.
 
@@ -159,7 +159,7 @@ Spawn the validator agent:
 
 ```
 Task:
-  subagent_type: "agent-alchemy-opencode-tools:validator"
+  subagent_type: "agent-alchemy-opencode-tools:oc-validator"
   prompt: |
     Validate the following OpenCode artifact:
 

@@ -1,5 +1,5 @@
 ---
-name: create-command
+name: oc-create-command
 description: >-
   Guides through creating a new OpenCode command with interactive interview,
   $VARIABLE configuration, and validation. Use when user says "create opencode
@@ -127,7 +127,7 @@ Spawn the generator agent:
 
 ```
 Task:
-  subagent_type: "agent-alchemy-opencode-tools:generator"
+  subagent_type: "agent-alchemy-opencode-tools:oc-generator"
   prompt: |
     Generate an OpenCode command with these specifications:
 
@@ -154,7 +154,7 @@ Spawn the validator agent:
 
 ```
 Task:
-  subagent_type: "agent-alchemy-opencode-tools:validator"
+  subagent_type: "agent-alchemy-opencode-tools:oc-validator"
   prompt: |
     Validate the following OpenCode artifact:
 

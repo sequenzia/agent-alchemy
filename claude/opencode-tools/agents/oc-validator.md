@@ -1,6 +1,6 @@
 ---
-name: validator
-description: Validates generated or updated OpenCode skills, agents, and commands against the platform specification. Spawned by all 6 skills post-generation or update.
+name: oc-validator
+description: Validates generated or updated OpenCode skills, agents, and commands against the platform specification. Spawned by all 6 oc-* skills post-generation or update.
 tools:
   - Read
   - Glob

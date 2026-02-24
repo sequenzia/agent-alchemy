@@ -1,5 +1,5 @@
 ---
-name: create-agent
+name: oc-create-agent
 description: >-
   Guides through creating a new OpenCode-compatible agent with interactive
   interview, permission configuration, and validation. Use when user says
@@ -209,7 +209,7 @@ Spawn the generator agent:
 
 ```
 Task:
-  subagent_type: "agent-alchemy-opencode-tools:generator"
+  subagent_type: "agent-alchemy-opencode-tools:oc-generator"
   prompt: |
     Generate an OpenCode agent with these specifications:
 
@@ -242,7 +242,7 @@ Spawn the validator agent:
 
 ```
 Task:
-  subagent_type: "agent-alchemy-opencode-tools:validator"
+  subagent_type: "agent-alchemy-opencode-tools:oc-validator"
   prompt: |
     Validate the following OpenCode artifact:
 

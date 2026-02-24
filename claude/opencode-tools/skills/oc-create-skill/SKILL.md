@@ -1,5 +1,5 @@
 ---
-name: create-skill
+name: oc-create-skill
 description: >-
   Guides through creating a new OpenCode-compatible skill with interactive
   interview, best-practice enforcement, and validation. Use when user says
@@ -170,7 +170,7 @@ Spawn the generator agent to create the skill file:
 
 ```
 Task:
-  subagent_type: "agent-alchemy-opencode-tools:generator"
+  subagent_type: "agent-alchemy-opencode-tools:oc-generator"
   prompt: |
     Generate an OpenCode skill with these specifications:
 
@@ -198,7 +198,7 @@ Spawn the validator agent to check the generated file:
 
 ```
 Task:
-  subagent_type: "agent-alchemy-opencode-tools:validator"
+  subagent_type: "agent-alchemy-opencode-tools:oc-validator"
   prompt: |
     Validate the following OpenCode artifact:
 

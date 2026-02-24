@@ -137,8 +137,8 @@ bug-killer (deep) -> code-explorer (core-tools, sonnet) x 2-3 + bug-investigator
 codebase-analysis -> technical-diagrams (loaded in Phase 2 for report diagrams)
 docs-manager -> docs-writer -> technical-diagrams (auto-loaded via skills: frontmatter)
 
-create-skill/create-agent/create-command (opencode-tools) -> generator x 1 -> validator x 1
-update-skill/update-agent/update-command (opencode-tools) -> researcher x 1 -> validator x 1
+oc-create-skill/oc-create-agent/oc-create-command (opencode-tools) -> oc-generator x 1 -> oc-validator x 1
+oc-update-skill/oc-update-agent/oc-update-command (opencode-tools) -> oc-researcher x 1 -> oc-validator x 1
 ```
 
 ### Task Manager (apps/task-manager/)
@@ -173,7 +173,7 @@ update-skill/update-agent/update-command (opencode-tools) -> researcher x 1 -> v
 | tdd-tools | generate-tests, tdd-cycle, analyze-coverage, create-tdd-tasks, execute-tdd-tasks | test-writer, tdd-executor, test-reviewer | 0.2.0 |
 | git-tools | git-commit | — | 0.1.0 |
 | plugin-tools | port-plugin, validate-adapter, update-ported-plugin, dependency-checker, bump-plugin-version | researcher, port-converter | 0.1.1 |
-| opencode-tools | create-skill, update-skill, create-agent, update-agent, create-command, update-command | researcher, validator, generator | 0.1.0 |
+| opencode-tools | oc-create-skill, oc-update-skill, oc-create-agent, oc-update-agent, oc-create-command, oc-update-command | oc-researcher, oc-validator, oc-generator | 0.1.0 |
 
 ## Critical Plugin Files
 
