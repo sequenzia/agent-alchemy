@@ -173,7 +173,7 @@ oc-update-skill/oc-update-agent/oc-update-command (opencode-tools) -> oc-researc
 | tdd-tools | generate-tests, tdd-cycle, analyze-coverage, create-tdd-tasks, execute-tdd-tasks | test-writer, tdd-executor, test-reviewer | 0.2.0 |
 | git-tools | git-commit | — | 0.1.0 |
 | plugin-tools | port-plugin, validate-adapter, update-ported-plugin, dependency-checker, bump-plugin-version | researcher, port-converter | 0.1.1 |
-| opencode-tools | oc-create-skill, oc-update-skill, oc-create-agent, oc-update-agent, oc-create-command, oc-update-command | oc-researcher, oc-validator, oc-generator | 0.1.0 |
+| opencode-tools | oc-create-skill, oc-update-skill, oc-create-agent, oc-update-agent, oc-create-command, oc-update-command | oc-researcher, oc-validator, oc-generator | 0.1.1 |
 
 ## Critical Plugin Files
 

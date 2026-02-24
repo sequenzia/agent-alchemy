@@ -78,6 +78,6 @@ oc-update-* skills:
 
 ## Version
 
-- **Plugin version**: 0.1.0
+- **Plugin version**: 0.1.1
 - **Target platform**: OpenCode v1.2.10 (anomalyco/opencode)
 - **License**: MIT
