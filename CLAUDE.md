@@ -169,7 +169,7 @@ oc-update-skill/oc-update-agent/oc-update-command (opencode-tools) -> oc-researc
 
 | Group | Skills | Agents | Version |
 |-------|--------|--------|---------|
-| claude-tools | cc-tasks, cc-teams, create-team | — | 0.1.0 |
+| claude-tools | cc-tasks, cc-teams, create-team | — | 0.1.1 |
 | core-tools | deep-analysis, codebase-analysis, language-patterns, project-conventions, technical-diagrams | code-explorer, code-synthesizer, code-architect | 0.2.1 |
 | dev-tools | feature-dev, bug-killer, architecture-patterns, code-quality, project-learnings, changelog-format, docs-manager, release-python-package, document-changes | code-reviewer, bug-investigator, changelog-manager, docs-writer | 0.3.1 |
 | sdd-tools | create-spec, analyze-spec, create-tasks, execute-tasks | codebase-explorer, researcher, spec-analyzer, task-executor | 0.2.2 |

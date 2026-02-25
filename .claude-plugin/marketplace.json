@@ -10,7 +10,7 @@
   "plugins": [
     {
       "name": "agent-alchemy-claude-tools",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "description": "Reference skills for Claude Code Tasks and Agent Teams features",
       "source": "./claude/claude-tools",
       "homepage": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/claude-tools",
