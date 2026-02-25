@@ -6,7 +6,7 @@ Shared reference skills for Claude Code Tasks and Agent Teams features, enabling
 
 ## Purpose
 
-The `claude-tools` plugin provides two non-user-invocable reference skills that document Claude Code's Tasks and Agent Teams features. Other skills and agents load these references at runtime to ensure correct, consistent usage of task management and multi-agent coordination APIs. This follows the same composition pattern established by `language-patterns` and `technical-diagrams` in `core-tools`.
+The `claude-tools` plugin provides reference skills for Claude Code's Tasks and Agent Teams features, plus a user-invocable `create-team` skill that demonstrates team coordination with dual independent explorers. Other skills and agents load the reference skills at runtime to ensure correct, consistent usage of task management and multi-agent coordination APIs. This follows the same composition pattern established by `language-patterns` and `technical-diagrams` in `core-tools`.
 
 ## Skills
 
@@ -14,6 +14,7 @@ The `claude-tools` plugin provides two non-user-invocable reference skills that 
 |-------|-------------|------|
 | `cc-tasks` | Claude Code Tasks tool reference | Reference (non-user-invocable) |
 | `cc-teams` | Claude Code Agent Teams reference | Reference (non-user-invocable) |
+| `create-team` | Dual explorer team that independently explores a directory and compares findings | User-invocable |
 
 ## cc-tasks
 
@@ -82,6 +83,28 @@ Read ${CLAUDE_PLUGIN_ROOT}/../claude-tools/skills/cc-teams/references/orchestrat
 Read ${CLAUDE_PLUGIN_ROOT}/../claude-tools/skills/cc-teams/references/hooks-integration.md
 ```
 
+## create-team
+
+Spawns an Agent Team with two `code-explorer` agents (from `core-tools`) that independently explore a user-specified directory, then compares their findings into a structured report highlighting differences, coverage gaps, and combined insights.
+
+### Workflow
+
+1. **Phase 1: Setup & Spawning** — Validates target directory, creates team with `TeamCreate`, spawns 2 explorer agents (Sonnet) via `Task` tool, creates and assigns exploration tasks with status-guarded assignment
+2. **Phase 2: Monitor & Compare** — Monitors exploration progress via `TaskGet`, collects findings from both explorers, produces comparison report with key differences table, unique discoveries, different interpretations, and coverage gaps
+3. **Phase 3: Cleanup** — Sends `shutdown_request` to both explorers, calls `TeamDelete`
+
+### Usage
+
+```
+/create-team claude/core-tools
+/create-team apps/task-manager/src
+```
+
+### Cross-Plugin Dependencies
+
+- **`code-explorer`** from `core-tools` — Used as the explorer agent type. Has `SendMessage`, `TaskUpdate`, and `TaskGet` tools required for team coordination.
+- **`cc-teams`** and **`cc-tasks`** — Loaded at skill start for correct tool parameter documentation.
+
 ## Usage
 
 ### Same-Plugin Agents
@@ -122,11 +145,13 @@ claude-tools/
 │   │   └── references/
 │   │       ├── task-patterns.md        # Dependency graphs, right-sizing, coordination
 │   │       └── anti-patterns.md        # Common mistakes and correct alternatives
-│   └── cc-teams/
-│       ├── SKILL.md                    # Agent Teams reference (main)
-│       └── references/
-│           ├── messaging-protocol.md   # SendMessage types and fields
-│           ├── orchestration-patterns.md # Team orchestration templates
-│           └── hooks-integration.md    # TeammateIdle, TaskCompleted hooks
+│   ├── cc-teams/
+│   │   ├── SKILL.md                    # Agent Teams reference (main)
+│   │   └── references/
+│   │       ├── messaging-protocol.md   # SendMessage types and fields
+│   │       ├── orchestration-patterns.md # Team orchestration templates
+│   │       └── hooks-integration.md    # TeammateIdle, TaskCompleted hooks
+│   └── create-team/
+│       └── SKILL.md                    # Dual explorer comparison skill
 └── README.md
 ```
