@@ -195,9 +195,41 @@ Any Test FAIL -> FAIL
 
 ---
 
-## Failure Escalation Format
+## Result Reporting
 
-When verification results in PARTIAL or FAIL, structure the report:
+After verification, send a structured result message to the wave-lead via `SendMessage`:
+
+```
+TASK RESULT
+Task: #{id}
+Status: PASS | PARTIAL | FAIL
+Summary: {what was accomplished}
+Files Modified:
+- {path} (created|modified|deleted)
+Verification:
+- [PASS|FAIL] {criterion}
+Issues:
+- {issue description, if any}
+```
+
+Send context contributions (decisions, patterns, insights) to the context manager via a separate `SendMessage`:
+
+```
+CONTEXT CONTRIBUTION
+Task: #{id}
+Decisions:
+- {key decision made during implementation}
+Patterns:
+- {pattern discovered or followed}
+Insights:
+- {useful information for other tasks}
+Issues:
+- {problems encountered, workarounds applied}
+```
+
+### Failure Escalation Format
+
+When verification results in PARTIAL or FAIL, structure the verification section of the result message with detailed information:
 
 ```
 VERIFICATION REPORT: {PASS|PARTIAL|FAIL}
@@ -245,11 +277,11 @@ Use consistent symbols in verification reports:
 
 ## Retry Context
 
-When a task is being retried after a previous failure, the orchestrating skill will provide failure context from the previous attempt. Use this information to:
+When a task is being retried after a previous failure, the wave-lead provides failure context from the previous attempt via the executor's prompt. Use this information to:
 
-1. **Understand what failed**: Review the previous verification report
+1. **Understand what failed**: Review the previous verification report included in the retry prompt
 2. **Avoid repeating mistakes**: Check if the same approach was already tried
 3. **Try a different approach**: If the previous fix didn't work, consider alternatives
 4. **Focus on failures**: Only address the specific criteria that failed; don't redo passing work unless regressions occurred
-5. **Check execution context**: Read `.claude/sessions/__live_session__/execution_context.md` for any learnings from the previous attempt
+5. **Use enriched context**: On Tier 2 retries, the context manager provides additional project context and related task results via the wave-lead
 6. **Clean up before fixing**: Check for partial changes from the previous attempt. Run linter and tests to assess codebase state before adding new changes. Revert incomplete artifacts if they would interfere with the fix.
