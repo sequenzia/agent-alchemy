@@ -97,7 +97,14 @@ pnpm lint                      # Lint all packages
 - `codebase-analysis` (core-tools) — loads in Phase 2 for Mermaid diagrams in reports
 - `docs-writer` agent (dev-tools) — auto-loaded via `skills:` frontmatter for consistent diagram quality
 
-`claude-code-tasks` and `claude-code-teams` (claude-tools) are reference skills available for cross-plugin loading by any skill that interacts with Claude Code Tasks or Agent Teams:
+`claude-code-tasks` and `claude-code-teams` (claude-tools) are reference skills loaded by sdd-tools and available for cross-plugin loading by any skill that interacts with Claude Code Tasks or Agent Teams:
+- `create-tasks` (sdd-tools) — loads claude-code-tasks for task conventions, metadata patterns, and anti-pattern validation
+- `run-tasks` (sdd-tools) — loads both claude-code-tasks and claude-code-teams for team orchestration, messaging, and hooks
+- `create-spec` (sdd-tools) — loads claude-code-teams for team-based codebase exploration (Parallel Specialists pattern)
+- `analyze-spec` (sdd-tools) — loads claude-code-tasks for creating fix tasks from analysis findings
+- `wave-lead` agent (sdd-tools) — loads both for task management and team coordination
+- `task-executor-v2` agent (sdd-tools) — loads claude-code-tasks for task status conventions
+- `spec-analyzer` agent (sdd-tools) — loads claude-code-tasks for fix task creation
 - Loaded via `${CLAUDE_PLUGIN_ROOT}/../claude-tools/skills/claude-code-tasks/SKILL.md` or `${CLAUDE_PLUGIN_ROOT}/../claude-tools/skills/claude-code-teams/SKILL.md`
 
 **Cross-plugin reference convention:** Always use `${CLAUDE_PLUGIN_ROOT}/../{source-dir-name}/` for cross-plugin references, where `{source-dir-name}` is the directory name under `claude/` (e.g., `core-tools`, `tdd-tools`). Same-plugin references use `${CLAUDE_PLUGIN_ROOT}/` directly. Never use full marketplace names (e.g., `agent-alchemy-core-tools`) in path references — use the short source directory name.
@@ -114,11 +121,12 @@ pnpm lint                      # Lint all packages
 feature-dev -> deep-analysis -> code-explorer (sonnet) x N + code-synthesizer (opus) x 1
 feature-dev -> code-architect (core-tools, opus) x 2-3 -> code-reviewer (opus) x 3
 
-create-spec -> codebase-explorer (sonnet) x 2-3 (optional, for "new feature" type)
+create-spec -> claude-code-teams (reference) -> TeamCreate explorer team -> codebase-explorer (sonnet) x 2-3 (Parallel Specialists pattern)
 create-spec -> researcher agent (for technical research)
 
-create-tasks -> reads spec -> generates task JSON
-execute-tasks -> task-executor agent x N per wave -> writes execution context
+create-tasks -> claude-code-tasks (reference) -> reads spec -> generates tasks with anti-pattern validation
+analyze-spec -> spec-analyzer (opus) -> optional fix task creation via claude-code-tasks
+run-tasks -> claude-code-tasks + claude-code-teams (references) -> wave-lead (opus) x 1 per wave -> context-manager (sonnet) + task-executor-v2 (opus) x N
 
 tdd-cycle -> tdd-executor (opus) x 1 per feature (6-phase RED-GREEN-REFACTOR)
 generate-tests -> test-writer (sonnet) x N parallel (criteria-driven or code-analysis)
@@ -167,10 +175,10 @@ oc-update-skill/oc-update-agent/oc-update-command (opencode-tools) -> oc-researc
 
 | Group | Skills | Agents | Version |
 |-------|--------|--------|---------|
-| claude-tools | claude-code-tasks, claude-code-teams | — | 0.2.1 |
+| claude-tools | claude-code-tasks, claude-code-teams | — | 0.2.2 |
 | core-tools | deep-analysis, codebase-analysis, language-patterns, project-conventions, technical-diagrams | code-explorer, code-synthesizer, code-architect | 0.2.1 |
 | dev-tools | feature-dev, bug-killer, architecture-patterns, code-quality, project-learnings, changelog-format, docs-manager, release-python-package, document-changes | code-reviewer, bug-investigator, changelog-manager, docs-writer | 0.3.1 |
-| sdd-tools | create-spec, analyze-spec, create-tasks, execute-tasks | codebase-explorer, researcher, spec-analyzer, task-executor | 0.2.2 |
+| sdd-tools | create-spec, analyze-spec, create-tasks, run-tasks | codebase-explorer, researcher, spec-analyzer, wave-lead, context-manager, task-executor-v2 | 0.2.3 |
 | tdd-tools | generate-tests, tdd-cycle, analyze-coverage, create-tdd-tasks, execute-tdd-tasks | test-writer, tdd-executor, test-reviewer | 0.2.0 |
 | git-tools | git-commit | — | 0.1.0 |
 | plugin-tools | port-plugin, validate-adapter, update-ported-plugin, dependency-checker, bump-plugin-version | researcher, port-converter | 0.1.1 |
@@ -186,7 +194,7 @@ oc-update-skill/oc-update-agent/oc-update-command (opencode-tools) -> oc-researc
 | `claude/plugin-tools/skills/update-ported-plugin/SKILL.md` | 793 | Incremental ported plugin updates with dual-track change detection (5 phases) |
 | `claude/sdd-tools/skills/create-spec/SKILL.md` | ~722 | Adaptive interview with context input, complexity detection, and depth-aware questioning |
 | `claude/sdd-tools/skills/create-tasks/SKILL.md` | 653 | Spec-to-task decomposition with `task_uid` merge mode |
-| `claude/sdd-tools/skills/execute-tasks/SKILL.md` | 262 | Wave-based parallel execution with session management |
+| `claude/sdd-tools/skills/run-tasks/SKILL.md` | ~230 | Wave-based parallel execution with claude-tools integration and quality gate hooks |
 | `claude/dev-tools/skills/feature-dev/SKILL.md` | 273 | 7-phase lifecycle spawning architect + reviewer agent teams |
 | `claude/dev-tools/skills/bug-killer/SKILL.md` | ~480 | Hypothesis-driven debugging — triage-based quick/deep track with agent investigation |
 | `claude/tdd-tools/skills/tdd-cycle/SKILL.md` | 727 | 7-phase RED-GREEN-REFACTOR TDD workflow |
