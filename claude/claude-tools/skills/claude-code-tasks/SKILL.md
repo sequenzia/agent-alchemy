@@ -1,5 +1,5 @@
 ---
-name: cc-tasks
+name: claude-code-tasks
 description: Reference for Claude Code Tasks — tool parameters, status lifecycle, dependency management, and conventions
 user-invocable: false
 disable-model-invocation: false
@@ -281,7 +281,7 @@ For deeper content on task design patterns and common mistakes, load these refer
 Covers dependency graph design patterns (linear, fan-out, fan-in, diamond), task right-sizing guidance, multi-agent coordination via tasks, and metadata strategies.
 
 ```
-Read ${CLAUDE_PLUGIN_ROOT}/skills/cc-tasks/references/task-patterns.md
+Read ${CLAUDE_PLUGIN_ROOT}/skills/claude-code-tasks/references/task-patterns.md
 ```
 
 ### Anti-Patterns
@@ -289,5 +289,5 @@ Read ${CLAUDE_PLUGIN_ROOT}/skills/cc-tasks/references/task-patterns.md
 Documents common mistakes when using Tasks: circular dependencies, over-granular tasks, missing activeForm, batch status update pitfalls, duplicate task creation, and more. Each anti-pattern includes the problem, why it matters, and the correct alternative.
 
 ```
-Read ${CLAUDE_PLUGIN_ROOT}/skills/cc-tasks/references/anti-patterns.md
+Read ${CLAUDE_PLUGIN_ROOT}/skills/claude-code-tasks/references/anti-patterns.md
 ```

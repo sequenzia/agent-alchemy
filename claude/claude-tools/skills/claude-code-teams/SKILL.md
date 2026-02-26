@@ -1,5 +1,5 @@
 ---
-name: cc-teams
+name: claude-code-teams
 description: Reference for Claude Code Agent Teams — lifecycle, messaging, spawning, orchestration, and hooks
 user-invocable: false
 disable-model-invocation: false
@@ -12,7 +12,7 @@ A shared reference for Claude Code's Agent Teams features. Load this skill when 
 
 This skill covers team lifecycle, tool parameters, spawning mechanics, and file structure. For deeper topics, load the reference files listed in [Loading Reference Files](#loading-reference-files).
 
-> **Cross-reference**: For Claude Code Tasks (TaskCreate, TaskGet, TaskUpdate, TaskList), see the companion skill: `Read ${CLAUDE_PLUGIN_ROOT}/../claude-tools/skills/cc-tasks/SKILL.md`
+> **Cross-reference**: For Claude Code Tasks (TaskCreate, TaskGet, TaskUpdate, TaskList), see the companion skill: `Read ${CLAUDE_PLUGIN_ROOT}/../claude-tools/skills/claude-code-tasks/SKILL.md`
 
 ---
 
@@ -249,7 +249,7 @@ Each teammate's assigned work is tracked as task files under `~/.claude/tasks/{t
 For complete field tables, usage guidance, and examples for each message type, load the messaging protocol reference:
 
 ```
-Read ${CLAUDE_PLUGIN_ROOT}/skills/cc-teams/references/messaging-protocol.md
+Read ${CLAUDE_PLUGIN_ROOT}/skills/claude-code-teams/references/messaging-protocol.md
 ```
 
 ---
@@ -263,7 +263,7 @@ This skill provides an overview of Agent Teams. For detailed coverage of specifi
 Complete documentation of all 5 SendMessage types with field tables, delivery mechanics, and usage patterns.
 
 ```
-Read ${CLAUDE_PLUGIN_ROOT}/skills/cc-teams/references/messaging-protocol.md
+Read ${CLAUDE_PLUGIN_ROOT}/skills/claude-code-teams/references/messaging-protocol.md
 ```
 
 ### Orchestration Patterns
@@ -271,7 +271,7 @@ Read ${CLAUDE_PLUGIN_ROOT}/skills/cc-teams/references/messaging-protocol.md
 Proven multi-agent workflow patterns including Parallel Specialists, Pipeline, Swarm, Research-then-Implement, and Plan Approval Gate. Each pattern includes structure, task design, and communication flow.
 
 ```
-Read ${CLAUDE_PLUGIN_ROOT}/skills/cc-teams/references/orchestration-patterns.md
+Read ${CLAUDE_PLUGIN_ROOT}/skills/claude-code-teams/references/orchestration-patterns.md
 ```
 
 ### Hooks Integration
@@ -279,5 +279,5 @@ Read ${CLAUDE_PLUGIN_ROOT}/skills/cc-teams/references/orchestration-patterns.md
 TeammateIdle and TaskCompleted hook events for quality gates and automation. Includes hook schemas, exit code behavior, and practical examples.
 
 ```
-Read ${CLAUDE_PLUGIN_ROOT}/skills/cc-teams/references/hooks-integration.md
+Read ${CLAUDE_PLUGIN_ROOT}/skills/claude-code-teams/references/hooks-integration.md
 ```

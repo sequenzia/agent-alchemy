@@ -2,7 +2,7 @@
 
 Proven multi-agent workflow patterns for Claude Code Agent Teams. Each pattern defines a team structure, task design, and communication flow for a specific class of problems. Use the [Pattern Selection Guide](#pattern-selection-guide) at the end to choose the right pattern for your use case.
 
-> **Cross-reference**: For SendMessage field tables and delivery mechanics, see `messaging-protocol.md`. For task creation and dependency management, see the `cc-tasks` reference skill.
+> **Cross-reference**: For SendMessage field tables and delivery mechanics, see `messaging-protocol.md`. For task creation and dependency management, see the `claude-code-tasks` reference skill.
 
 ---
 

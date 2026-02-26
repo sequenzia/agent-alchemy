@@ -1,3 +1,5 @@
+> **Deprecation Notice (v0.2.0)**: This spec describes the original v0.1.0 design. As of v0.2.0, `cc-tasks` was renamed to `claude-code-tasks`, `cc-teams` was renamed to `claude-code-teams`, and the `create-team` skill was removed. All path references and skill names in this document reflect the original design and are preserved for historical context.
+
 # claude-tools-plugin PRD
 
 **Version**: 1.0
