@@ -97,8 +97,8 @@ pnpm lint                      # Lint all packages
 - `codebase-analysis` (core-tools) — loads in Phase 2 for Mermaid diagrams in reports
 - `docs-writer` agent (dev-tools) — auto-loaded via `skills:` frontmatter for consistent diagram quality
 
-`cc-tasks` and `cc-teams` (claude-tools) are reference skills available for cross-plugin loading by any skill that interacts with Claude Code Tasks or Agent Teams:
-- Loaded via `${CLAUDE_PLUGIN_ROOT}/../claude-tools/skills/cc-tasks/SKILL.md` or `${CLAUDE_PLUGIN_ROOT}/../claude-tools/skills/cc-teams/SKILL.md`
+`claude-code-tasks` and `claude-code-teams` (claude-tools) are reference skills available for cross-plugin loading by any skill that interacts with Claude Code Tasks or Agent Teams:
+- Loaded via `${CLAUDE_PLUGIN_ROOT}/../claude-tools/skills/claude-code-tasks/SKILL.md` or `${CLAUDE_PLUGIN_ROOT}/../claude-tools/skills/claude-code-teams/SKILL.md`
 
 **Cross-plugin reference convention:** Always use `${CLAUDE_PLUGIN_ROOT}/../{source-dir-name}/` for cross-plugin references, where `{source-dir-name}` is the directory name under `claude/` (e.g., `core-tools`, `tdd-tools`). Same-plugin references use `${CLAUDE_PLUGIN_ROOT}/` directly. Never use full marketplace names (e.g., `agent-alchemy-core-tools`) in path references — use the short source directory name.
 
@@ -134,8 +134,6 @@ dependency-checker -> reads all plugin groups -> builds dependency graph -> 7 an
 bug-killer (quick) -> reads error location, targeted investigation, fix + regression test -> project-learnings
 bug-killer (deep) -> code-explorer (core-tools, sonnet) x 2-3 + bug-investigator (sonnet) x 1-3 -> code-quality (same plugin) for fix validation -> project-learnings
 
-create-team -> code-explorer (core-tools, sonnet) x 2 -> lead compares findings
-
 codebase-analysis -> technical-diagrams (loaded in Phase 2 for report diagrams)
 docs-manager -> docs-writer -> technical-diagrams (auto-loaded via skills: frontmatter)
 
@@ -169,7 +167,7 @@ oc-update-skill/oc-update-agent/oc-update-command (opencode-tools) -> oc-researc
 
 | Group | Skills | Agents | Version |
 |-------|--------|--------|---------|
-| claude-tools | cc-tasks, cc-teams, create-team | — | 0.1.1 |
+| claude-tools | claude-code-tasks, claude-code-teams | — | 0.2.1 |
 | core-tools | deep-analysis, codebase-analysis, language-patterns, project-conventions, technical-diagrams | code-explorer, code-synthesizer, code-architect | 0.2.1 |
 | dev-tools | feature-dev, bug-killer, architecture-patterns, code-quality, project-learnings, changelog-format, docs-manager, release-python-package, document-changes | code-reviewer, bug-investigator, changelog-manager, docs-writer | 0.3.1 |
 | sdd-tools | create-spec, analyze-spec, create-tasks, execute-tasks | codebase-explorer, researcher, spec-analyzer, task-executor | 0.2.2 |
