@@ -138,10 +138,7 @@ Read `.claude/agent-alchemy.local.md` if it exists. Parse YAML frontmatter betwe
 - **Malformed YAML**: Use all defaults, log warning, continue execution.
 - **Empty frontmatter** (just `---\n---`): Treated as no settings — all defaults used.
 
-**Model settings are applied in Step 5** when spawning agents:
-- `wave_lead_model` is used in Step 5c/5d when creating the wave team and spawning the wave-lead agent.
-- `context_manager_model` is passed to the wave-lead in the WAVE ASSIGNMENT prompt for spawning the context manager.
-- `executor_model` is passed to the wave-lead in the WAVE ASSIGNMENT prompt for spawning task executors.
+**Model settings are applied in Step 5** when spawning agents. See the claude-code-teams reference for model tier semantics (Opus for complex reasoning, Sonnet for parallel work).
 
 **Example `.claude/agent-alchemy.local.md`**:
 ```yaml
@@ -457,12 +454,9 @@ Starting Wave {N}/{total_waves}: {count} tasks...
 
 ### 5c: Create Wave Team
 
-Create a wave team via `TeamCreate`. The team composition for Phase 1 is:
+Create a wave team via `TeamCreate` following the claude-code-teams lifecycle (Creation → Member Spawning → Coordination → Shutdown → Cleanup). Team name: `wave-{N}-{session_id}`.
 
-- **1 wave-lead** (foreground agent, model from `wave_lead_model` setting)
-- **N task executors** (managed by the wave-lead, model from `executor_model` setting)
-
-The wave-lead is responsible for spawning and managing executors within the team. The orchestrator does not directly interact with executors.
+Team composition: 1 wave-lead (foreground, `wave_lead_model` tier) + N task executors (managed by wave-lead, `executor_model` tier). The orchestrator does not directly interact with executors.
 
 **TeamCreate failure handling**:
 
@@ -492,7 +486,7 @@ Handle the user's choice accordingly:
 
 ### 5d: Launch Wave Lead
 
-Spawn the wave-lead agent as a **foreground Task** (not background). The wave-lead runs to completion within the team, managing all executors and collecting results before reporting back.
+Spawn the wave-lead as a foreground Task with the `team_name` parameter (see claude-code-teams spawning conventions). The wave-lead runs to completion, managing all executors and collecting results before reporting back.
 
 Construct the wave-lead prompt using the **Protocol 1: Orchestrator to Wave Lead** format from `communication-protocols.md`:
 
@@ -801,15 +795,12 @@ questions:
 
 ### 5g: Shutdown Wave Team
 
-After processing the wave summary and handling any escalations, shut down the wave team before proceeding to the next wave:
+After processing the wave summary, follow the claude-code-teams shutdown lifecycle to clean up the wave team:
 
-1. **Send `shutdown_request` to the wave-lead** via `SendMessage` with `type: "shutdown_request"`. The wave-lead has already shut down its sub-agents (executors and context manager) in its Step 6b, so only the wave-lead itself remains active.
-2. **Wait for the wave-lead's shutdown response.** Allow up to 15 seconds. The wave-lead should approve immediately since it has already sent its wave summary.
-3. **Delete the wave team** via `TeamDelete`. All team members should be terminated at this point.
-4. **Handle `TeamDelete` failure**: If `TeamDelete` fails (team still has active members):
-   a. Wait 5 seconds and retry `TeamDelete`.
-   b. If the retry also fails, wait 10 seconds and make a final attempt.
-   c. If all 3 attempts fail, escalate to the user via `AskUserQuestion`:
+1. **Send `shutdown_request` to the wave-lead** (the wave-lead has already shut down its sub-agents in its Step 6b).
+2. **Wait for the wave-lead's shutdown response** (up to 15 seconds — it should approve immediately after sending its wave summary).
+3. **Delete the wave team** via `TeamDelete`.
+4. **Handle `TeamDelete` failure**: Retry with escalating delays (5s, then 10s). If all 3 attempts fail, escalate to the user:
       ```yaml
       questions:
         - header: "Team Cleanup Failed"
@@ -821,8 +812,6 @@ After processing the wave summary and handling any escalations, shut down the wa
               description: "Stop execution entirely and archive partial results"
           multiSelect: false
       ```
-      - **Retry cleanup**: Go back to step 3 (TeamDelete) with one more attempt.
-      - **Abort session**: Proceed directly to Step 6 (Summarize & Archive) with partial results.
 
 ### 5h: Loop
 

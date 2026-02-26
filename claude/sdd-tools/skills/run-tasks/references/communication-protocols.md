@@ -1,8 +1,12 @@
 # Communication Protocols Reference
 
-This file defines the structured message formats used in all `SendMessage` calls between agents in the run-tasks execution engine. Each agent definition references this file to ensure protocol consistency across the 3-tier hierarchy (Orchestrator, Wave Lead, Context Manager, Task Executors).
+For generic SendMessage types (message, broadcast, shutdown_request, shutdown_response, plan_approval_response), delivery mechanics, and best practices, see the claude-code-teams messaging protocol reference:
 
-All messages use plain-text structured formats with labeled sections. Agents parse messages by looking for section headers (all-caps labels followed by a colon or newline) and extracting the content beneath them.
+```
+Read ${CLAUDE_PLUGIN_ROOT}/../claude-tools/skills/claude-code-teams/references/messaging-protocol.md
+```
+
+This file documents the **SDD-specific message schemas** used within the run-tasks 3-tier hierarchy (Orchestrator, Wave Lead, Context Manager, Task Executors). All messages use plain-text structured formats with labeled section headers.
 
 ---
 
@@ -403,25 +407,12 @@ If an agent receives a message that does not match the expected schema:
 
 ---
 
-## Protocol Summary
-
-| # | Direction | Header | Transport | Phase |
-|---|-----------|--------|-----------|-------|
-| 1 | Orchestrator -> Wave Lead | `WAVE ASSIGNMENT` | Task prompt | 1 |
-| 2 | Wave Lead -> Orchestrator | `WAVE SUMMARY` | SendMessage | 1 |
-| 3 | Task Executor -> Wave Lead | `TASK RESULT` | SendMessage | 1 |
-| 4 | Task Executor -> Context Manager | `CONTEXT CONTRIBUTION` | SendMessage | 2 |
-| 5 | Context Manager -> Task Executors | `SESSION CONTEXT` | SendMessage | 2 |
-| 6 | Context Manager -> Wave Lead | `ENRICHED CONTEXT` | SendMessage | 2 |
-
----
-
 ## Shutdown Lifecycle
 
-Agent shutdown uses the platform's built-in `shutdown_request` / `shutdown_response` message types via `SendMessage` (not custom protocols). The shutdown sequence for each wave follows a hierarchical pattern:
+Agent shutdown follows the claude-code-teams shutdown protocol (`shutdown_request` / `shutdown_response` via SendMessage). See the claude-code-teams messaging protocol reference for the generic shutdown mechanics.
 
-1. **Wave-lead shuts down sub-agents** (wave-lead Step 6b): After Context Manager finalization, the wave-lead sends `shutdown_request` to all executors and the Context Manager. Agents approve immediately. Unresponsive agents are force-stopped via `TaskStop`.
-2. **Orchestrator shuts down wave-lead** (orchestration Step 5g): After receiving and processing the WAVE SUMMARY, the orchestrator sends `shutdown_request` to the wave-lead. The wave-lead approves immediately.
-3. **Orchestrator deletes team** (orchestration Step 5g): After all agents are terminated, `TeamDelete` removes the team and frees resources for the next wave.
+The SDD-specific shutdown sequence for each wave is hierarchical:
 
-**All agents must approve shutdown requests immediately** when they have completed their work. This is documented in each agent's Shutdown Handling section.
+1. **Wave-lead shuts down sub-agents** (wave-lead Step 6b): After Context Manager finalization
+2. **Orchestrator shuts down wave-lead** (orchestration Step 5g): After processing the WAVE SUMMARY
+3. **Orchestrator deletes team** (orchestration Step 5g): After all agents are terminated

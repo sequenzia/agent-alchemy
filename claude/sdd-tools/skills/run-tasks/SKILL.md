@@ -28,15 +28,28 @@ This skill orchestrates autonomous task execution using Claude Code's native Age
 
 All inter-agent coordination uses message-based primitives (`TeamCreate`, `SendMessage`, `TaskOutput`) rather than file-based signaling.
 
-## Load Orchestration Reference
+## Load Reference Skills
 
-Before executing any step, load the detailed orchestration procedures:
+Before executing any step, load the foundational references for task management and team orchestration:
 
+### Tasks Reference
+```
+Read ${CLAUDE_PLUGIN_ROOT}/../claude-tools/skills/claude-code-tasks/SKILL.md
+```
+
+### Teams Reference
+```
+Read ${CLAUDE_PLUGIN_ROOT}/../claude-tools/skills/claude-code-teams/SKILL.md
+```
+
+These references provide tool parameters, lifecycle rules, messaging protocols, and orchestration patterns. The SDD-specific execution procedures are in the orchestration reference below.
+
+### Orchestration Reference
 ```
 Read ${CLAUDE_PLUGIN_ROOT}/skills/run-tasks/references/orchestration.md
 ```
 
-If the file cannot be read, stop and report: "ERROR: Cannot load orchestration reference at ${CLAUDE_PLUGIN_ROOT}/skills/run-tasks/references/orchestration.md. This file is required for execution. Verify the plugin installation is complete."
+If any reference file cannot be read, stop and report: "ERROR: Cannot load required reference. Verify the plugin installation is complete."
 
 ## Argument Parsing
 
@@ -144,8 +157,9 @@ See `references/orchestration.md` Step 7 for the CLAUDE.md update criteria.
 
 ## Key Behaviors
 
-- **Agent Team coordination**: All inter-agent communication uses `TeamCreate`, `SendMessage`, and `TaskOutput`. No file-based signaling, no shell scripts, no filesystem watchers.
+- **Orchestration pattern**: Based on the Swarm pattern from claude-code-teams (wave-based parallel execution with dependency ordering), extended with a 3-tier agent hierarchy for context management and retry intelligence. See `claude-code-teams/references/orchestration-patterns.md` for the base pattern.
 - **3-tier agent hierarchy**: Orchestrator (this skill) handles planning and user interaction. Wave Leads coordinate executors within a wave. Context Managers distribute and collect execution context.
+- **Agent Team coordination**: All inter-agent communication uses `TeamCreate`, `SendMessage`, and `TaskOutput` following the claude-code-teams lifecycle. No file-based signaling.
 - **Wave-based parallelism**: Tasks at the same dependency level run simultaneously via the wave-lead's executor team. Tasks in later waves wait until their dependencies complete.
 - **3-tier retry model**: Tier 1 (Immediate) — wave-lead retries failed executor with failure context. Tier 2 (Context-Enriched) — wave-lead requests additional context from Context Manager and retries. Tier 3 (User Escalation) — persistent failures reported to orchestrator for user decision.
 - **Wave-lead crash recovery**: If a wave-lead crashes or times out, the orchestrator resets in-progress tasks to pending and spawns a new wave team. If the retry also fails, the user is escalated.
@@ -154,6 +168,15 @@ See `references/orchestration.md` Step 7 for the CLAUDE.md update criteria.
 - **Autonomous after confirmation**: After the user confirms at Step 3, no further prompts occur unless a Tier 3 escalation is triggered by persistent failures.
 - **Single-session invariant**: Only one execution session at a time per project. Existing sessions must be resolved before starting a new one.
 - **Phase and group filtering**: `--phase` and `--task-group` can be combined (AND logic). Filters narrow the task set before planning.
+
+## Quality Gate Hooks
+
+This skill uses Claude Code hooks for automated quality gates during execution:
+
+- **TaskCompleted**: When a task executor marks a task completed, the `verify-task-completion.sh` hook runs the project's test suite. If tests fail, the completion is blocked and the task reverts to in_progress with feedback to the executor.
+- **TeammateIdle**: When a task executor goes idle, a prompt-based hook verifies it has sent both required messages (TASK RESULT to wave-lead, CONTEXT CONTRIBUTION to context manager) before resting.
+
+Hook definitions are in `${CLAUDE_PLUGIN_ROOT}/hooks/hooks.json`. For hook event documentation, see `claude-code-teams/references/hooks-integration.md`.
 
 ## Example Usage
 
@@ -190,3 +213,8 @@ See `references/orchestration.md` Step 7 for the CLAUDE.md update criteria.
 ## Reference Files
 
 - `references/orchestration.md` — Detailed 7-step orchestration procedures, wave execution, retry escalation, session management, and CLAUDE.md update criteria
+- `references/communication-protocols.md` — SDD-specific message schemas for the 3-tier hierarchy (6 protocols)
+- `references/verification-patterns.md` — Verification logic for spec-generated vs general tasks
+- `${CLAUDE_PLUGIN_ROOT}/../claude-tools/skills/claude-code-tasks/SKILL.md` — Task tool parameters and conventions (loaded at init)
+- `${CLAUDE_PLUGIN_ROOT}/../claude-tools/skills/claude-code-teams/SKILL.md` — Team lifecycle, messaging, and orchestration patterns (loaded at init)
+- `${CLAUDE_PLUGIN_ROOT}/../claude-tools/skills/claude-code-teams/references/orchestration-patterns.md` — 6 orchestration patterns (optional, for reference)

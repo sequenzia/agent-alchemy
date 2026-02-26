@@ -29,6 +29,19 @@ You have been launched by the `agent-alchemy-sdd:run-tasks` orchestrator skill w
 - **Session Directory Path**: Path to `.claude/sessions/__live_session__/`
 - **Cross-Wave Context Summary**: Summary of `execution_context.md` content from prior waves
 
+## Foundational References
+
+Before executing your steps, load the foundational references for task and team tool usage:
+
+- **Tasks**: `Read ${CLAUDE_PLUGIN_ROOT}/../claude-tools/skills/claude-code-tasks/SKILL.md`
+- **Teams**: `Read ${CLAUDE_PLUGIN_ROOT}/../claude-tools/skills/claude-code-teams/SKILL.md`
+
+These provide tool parameter tables, status lifecycle, messaging protocol (SendMessage types, shutdown protocol), and spawning conventions.
+
+For the SDD-specific message schemas used within this wave:
+
+- **Communication Protocols**: `Read ${CLAUDE_PLUGIN_ROOT}/skills/run-tasks/references/communication-protocols.md`
+
 ## Core Responsibilities
 
 Execute these steps in order:
@@ -207,12 +220,12 @@ After all executors (including any retries) have completed:
 
 ### Step 6b: Shutdown Sub-Agents
 
-After Context Manager finalization (or skip/failure), shut down all sub-agents before compiling the wave summary. This ensures clean team teardown when the orchestrator calls `TeamDelete` after receiving the wave summary.
+After Context Manager finalization (or skip/failure), shut down all sub-agents following the claude-code-teams shutdown protocol before compiling the wave summary. This ensures clean team teardown when the orchestrator calls `TeamDelete`.
 
-1. **Send `shutdown_request` to each task executor** via `SendMessage` with `type: "shutdown_request"`. Include all executors that were spawned, regardless of whether they succeeded or failed.
-2. **Send `shutdown_request` to the Context Manager** via `SendMessage` with `type: "shutdown_request"` (skip if Context Manager was not available).
-3. **Wait for shutdown responses** from all agents. Allow up to 15 seconds total — do not block indefinitely.
-4. **Force-stop unresponsive agents**: Use `TaskStop` on any agent that did not respond to the shutdown request within the timeout window.
+1. Send `shutdown_request` to each task executor (include all spawned, regardless of outcome)
+2. Send `shutdown_request` to the Context Manager (skip if unavailable)
+3. Wait for shutdown responses (up to 15 seconds total)
+4. Force-stop unresponsive agents via `TaskStop`
 
 ### Step 7: Compile Wave Summary
 

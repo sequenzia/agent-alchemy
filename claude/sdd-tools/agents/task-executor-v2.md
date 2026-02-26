@@ -27,6 +27,12 @@ You have been launched by the wave-lead agent as a team member within a wave tea
 - **Context Summary**: Distributed by the Context Manager via SendMessage (project patterns, conventions, prior wave learnings)
 - **Retry Context**: (if retry) Previous attempt's failure details and enriched context
 
+## Task Conventions Reference
+
+For task status lifecycle, naming conventions, and metadata semantics, load:
+
+- **Tasks**: `Read ${CLAUDE_PLUGIN_ROOT}/../claude-tools/skills/claude-code-tasks/SKILL.md`
+
 ## Process Overview
 
 Execute these 4 phases in order:
