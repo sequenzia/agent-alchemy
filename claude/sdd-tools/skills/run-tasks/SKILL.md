@@ -127,7 +127,7 @@ For each wave in the execution plan:
 3. **Launch wave-lead** with the wave assignment (task list, max_parallel, max_retries, wave number) and cross-wave context from `execution_context.md`.
 4. **Wait for wave-lead summary** — the wave-lead manages all executor coordination, retries (Tier 1 immediate, Tier 2 context-enriched), and reports results via `SendMessage`.
 5. **Process wave summary**: Update `task_log.md`, write `wave_complete` event to `progress.jsonl`, handle Tier 3 escalations (present failures to user via `AskUserQuestion` with options: Fix manually, Skip, Provide guidance, Abort).
-6. **Delete wave team** via `TeamDelete`.
+6. **Cleanup and delete wave team**: Verify all agents are terminated (defense in depth — orchestrator independently verifies beyond wave-lead cleanup), force-stop any survivors via `TaskStop`, then delete the team via `TeamDelete`. Includes inter-wave verification and cooldown before starting the next wave.
 7. **Repeat** until no more unblocked tasks remain.
 
 See `references/orchestration.md` Step 5 for the full wave execution procedure, retry escalation flow, and wave-lead crash recovery.
@@ -162,7 +162,8 @@ See `references/orchestration.md` Step 7 for the CLAUDE.md update criteria.
 - **Agent Team coordination**: All inter-agent communication uses `TeamCreate`, `SendMessage`, and `TaskOutput` following the claude-code-teams lifecycle. No file-based signaling.
 - **Wave-based parallelism**: Tasks at the same dependency level run simultaneously via the wave-lead's executor team. Tasks in later waves wait until their dependencies complete.
 - **3-tier retry model**: Tier 1 (Immediate) — wave-lead retries failed executor with failure context. Tier 2 (Context-Enriched) — wave-lead requests additional context from Context Manager and retries. Tier 3 (User Escalation) — persistent failures reported to orchestrator for user decision.
-- **Wave-lead crash recovery**: If a wave-lead crashes or times out, the orchestrator resets in-progress tasks to pending and spawns a new wave team. If the retry also fails, the user is escalated.
+- **Wave-lead crash recovery**: If a wave-lead crashes or times out, the orchestrator force-stops all team members, resets in-progress tasks to pending, and spawns a new wave team. If the retry also fails, the user is escalated.
+- **Defense-in-depth cleanup**: Agent shutdown is enforced at two levels. The wave-lead shuts down its sub-agents (Step 6b) and reports cleanup results in the wave summary CLEANUP section. The orchestrator independently verifies all agents are stopped by reading the team config, force-stopping any survivors via `TaskStop`, and confirming `TeamDelete` succeeds before starting the next wave. This prevents zombie agents across wave boundaries.
 - **Per-task timeouts**: Complexity-based (XS/S: 5 min, M: 10 min, L/XL: 20 min). Override via `metadata.timeout_minutes`.
 - **Dry-run mode**: `--dry-run` completes Steps 1-3 only. Displays the full execution plan without spawning agents or creating a session.
 - **Autonomous after confirmation**: After the user confirms at Step 3, no further prompts occur unless a Tier 3 escalation is triggered by persistent failures.

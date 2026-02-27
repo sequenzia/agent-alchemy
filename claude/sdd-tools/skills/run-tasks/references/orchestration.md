@@ -572,7 +572,17 @@ The orchestrator receives the wave summary containing:
    - **Pending**: Tasks with status `pending` that were assigned to this wave but never started — these are included in the retry.
 2. **Reset in-progress tasks**: For each `in_progress` task, call `TaskUpdate` to set status back to `pending`.
 3. **Build retry task list**: Collect all tasks that are now `pending` (reset tasks + tasks that were never started). If all wave tasks were already completed before the crash, skip retry — there is nothing to retry.
-4. **Clean up failed team**: Delete the crashed wave team via `TeamDelete`. If `TeamDelete` fails, wait 5 seconds and retry once. In crash scenarios, agents may not have terminated cleanly.
+4. **Clean up failed team** (aggressive — skip cooperative shutdown in crash scenarios):
+   a. Read `~/.claude/teams/{wave-team-name}/config.json` to enumerate all team members.
+   b. Force-stop ALL members via `TaskStop` immediately (in crash scenarios, agents are likely unresponsive — go directly to force-stop without attempting cooperative shutdown).
+   c. Wait 3 seconds for terminations to propagate.
+   d. Call `TeamDelete`.
+   e. If `TeamDelete` fails: force-stop ALL members via `TaskStop` again, wait 5 seconds, retry `TeamDelete`.
+   f. If `TeamDelete` still fails after 2 attempts: log a warning and proceed. The new wave team (Step 6) will use a different team name, so lingering agents from the crashed team should not interfere. Log the failure in `progress.jsonl`:
+      ```jsonl
+      {"ts":"{ISO 8601}","event":"crash_cleanup_failed","wave":{N},"team":"{wave-team-name}"}
+      ```
+   g. If config.json cannot be read (team directory already gone): skip member enumeration, attempt `TeamDelete` directly, proceed if it fails (team may already be cleaned up).
 5. **Log the crash**: Append a note to `task_log.md`:
    ```
    | -- | Wave {N} lead crashed | {N} | CRASH | -- | -- |
@@ -588,7 +598,7 @@ The orchestrator receives the wave summary containing:
 If the retry wave-lead also crashes (same detection criteria), the orchestrator does NOT retry again automatically. Instead:
 
 1. Reset any `in_progress` tasks to `pending` (same as first crash).
-2. Delete the failed retry team via `TeamDelete`. If `TeamDelete` fails, wait 5 seconds and retry once.
+2. Clean up the failed retry team using the same aggressive procedure as the first crash (item 4 above): read config.json, force-stop ALL members via `TaskStop`, wait 3 seconds, `TeamDelete`, retry once if needed.
 3. Escalate to the user via `AskUserQuestion`:
 
 ```yaml
@@ -793,36 +803,95 @@ questions:
 
 **Abort during crash recovery**: If the user selects "Abort session" during a crash recovery escalation (from Step 5e), the same abort procedure applies: mark remaining tasks as failed, proceed to Step 6.
 
-### 5g: Shutdown Wave Team
+### 5g: Cleanup and Delete Wave Team
 
-After processing the wave summary, follow the claude-code-teams shutdown lifecycle to clean up the wave team:
+After processing the wave summary (Step 5f), execute the full team cleanup lifecycle. This step ensures ALL agents from the wave are terminated before proceeding, regardless of whether the wave-lead's internal cleanup (Step 6b) succeeded. Do NOT trust the wave-lead's self-reported cleanup — verify independently.
 
-1. **Send `shutdown_request` to the wave-lead** (the wave-lead has already shut down its sub-agents in its Step 6b).
-2. **Wait for the wave-lead's shutdown response** (up to 15 seconds — it should approve immediately after sending its wave summary).
-3. **Delete the wave team** via `TeamDelete`.
-4. **Handle `TeamDelete` failure**: Retry with escalating delays (5s, then 10s). If all 3 attempts fail, escalate to the user:
-      ```yaml
-      questions:
-        - header: "Team Cleanup Failed"
-          question: "Failed to delete the Wave {N} team after 3 attempts. This may block subsequent waves."
-          options:
-            - label: "Retry cleanup"
-              description: "Wait and attempt team deletion again"
-            - label: "Abort session"
-              description: "Stop execution entirely and archive partial results"
-          multiSelect: false
-      ```
+#### 5g-1: Shutdown the Wave-Lead
 
-### 5h: Loop
+1. Send `shutdown_request` to the wave-lead via `SendMessage`.
+2. Wait up to 10 seconds for a `shutdown_response` with `approve: true`.
+3. If the wave-lead does not respond within 10 seconds, force-stop it via `TaskStop`.
 
-Check for remaining unblocked tasks:
+The wave-lead should respond quickly since it has already sent its WAVE SUMMARY and is in Step 9 (awaiting shutdown). The 10-second timeout accounts for message delivery latency and any final processing.
 
-1. Refresh the task list via `TaskList`.
-2. Identify newly unblocked tasks (tasks that were blocked by wave tasks that just completed).
-3. If unblocked tasks exist: return to Step 5a for the next wave.
-4. If no unblocked tasks remain:
-   - If all non-completed tasks are blocked (dependencies not met): log that execution is stalled due to failed dependencies and exit the loop.
-   - If all tasks are completed: exit the loop normally.
+#### 5g-2: Verify All Sub-Agents Are Stopped (Defense in Depth)
+
+After the wave-lead is terminated, verify that ALL sub-agents are also stopped. The wave-lead's Step 6b may have partially or fully succeeded — this step catches any survivors.
+
+1. Read the team config file at `~/.claude/teams/{wave-team-name}/config.json`.
+2. Extract the `members` array to get all registered team members (names and agent IDs).
+3. For each member that is NOT the wave-lead (i.e., task executors, retry executors, and the context manager):
+   a. Send a `shutdown_request` via `SendMessage`.
+   b. Wait 5 seconds total for all responses (batch wait, not 5 seconds per agent).
+   c. For any agent that did not respond with `approve: true` within 5 seconds, force-stop it via `TaskStop`.
+4. Log the cleanup results:
+   - How many agents responded cooperatively (wave-lead already handled them or they responded to orchestrator's request)
+   - How many agents required force-stop by the orchestrator
+   - How many agents could not be contacted (SendMessage failed — likely already terminated)
+
+**Handling SendMessage failures during cleanup:**
+- If `SendMessage` fails for an agent (inbox already cleaned up, agent already terminated), this is expected — the agent is likely already gone. Proceed to `TaskStop` for safety. If `TaskStop` also fails (agent not found), count that agent as already terminated.
+- Do not treat SendMessage/TaskStop errors on already-terminated agents as failures.
+
+**Handling config.json read failure:**
+- If the team config file cannot be read (deleted, corrupted, or team directory already cleaned up), skip the member enumeration and proceed directly to Step 5g-3 (TeamDelete). If TeamDelete also fails, fall through to the retry logic.
+
+#### 5g-3: Delete the Wave Team
+
+After all agents are verified stopped:
+
+1. Call `TeamDelete`.
+2. If `TeamDelete` succeeds: proceed to Step 5g-4.
+3. If `TeamDelete` fails (active members still detected):
+   a. **Round 2**: Force-stop ALL members via `TaskStop` (re-read config.json if needed, or use the member list from 5g-2). Wait 3 seconds for terminations to propagate. Retry `TeamDelete`.
+   b. **Round 3**: Wait 5 seconds. Force-stop ALL members via `TaskStop` one more time. Retry `TeamDelete`.
+   c. **Escalation**: If `TeamDelete` still fails after 3 total attempts, escalate to the user:
+
+```yaml
+questions:
+  - header: "Wave Cleanup Failed"
+    question: "Failed to delete the Wave {N} team after 3 cleanup attempts. Some agents may still be active."
+    options:
+      - label: "Force retry"
+        description: "Attempt one more aggressive cleanup (force-stop all agents + delete team)"
+      - label: "Skip cleanup and continue"
+        description: "Proceed to the next wave without deleting this team (next wave uses a different team name)"
+      - label: "Abort session"
+        description: "Stop execution entirely and archive partial results"
+    multiSelect: false
+```
+
+Handle the user's choice:
+- **Force retry**: Repeat the full 5g-2 + 5g-3 sequence one more time. If it still fails after this final attempt, abort the session (proceed to Step 6).
+- **Skip cleanup and continue**: Log a warning in `task_log.md` and `progress.jsonl`. Proceed to Step 5h. The next wave uses a different team name, so lingering agents from the old team will not interfere with the new team's communication. However, they will consume resources until they eventually time out or are cleaned up externally.
+- **Abort session**: Proceed to Step 6 (Summarize & Archive).
+
+#### 5g-4: Log Cleanup Results
+
+Write a `wave_cleanup` event to `progress.jsonl`:
+
+```jsonl
+{"ts":"{ISO 8601}","event":"wave_cleanup","wave":{N},"agents_cooperative":{count},"agents_forced":{count},"agents_already_stopped":{count},"team_deleted":{true|false}}
+```
+
+### 5h: Inter-Wave Transition
+
+Before checking for remaining work, verify the previous wave is fully cleaned up:
+
+1. **Verify team is gone**: Confirm that `~/.claude/teams/{previous-wave-team-name}/` directory no longer exists (or `config.json` is absent). If it still exists:
+   - Log a warning: "Previous wave team directory still exists after cleanup."
+   - Attempt one final `TeamDelete`. If it fails, proceed anyway — the next wave uses a different team name.
+
+2. **Brief cooldown**: Wait 2 seconds between waves. This ensures any asynchronous cleanup (inbox file deletion, process termination) has time to complete before the next wave's `TeamCreate`.
+
+3. **Check for remaining work**:
+   a. Refresh the task list via `TaskList`.
+   b. Identify newly unblocked tasks (tasks that were blocked by wave tasks that just completed).
+   c. If unblocked tasks exist: return to Step 5a for the next wave.
+   d. If no unblocked tasks remain:
+      - If all non-completed tasks are blocked (dependencies not met): log that execution is stalled due to failed dependencies and exit the loop.
+      - If all tasks are completed: exit the loop normally.
 
 Proceed to Step 6.
 

@@ -220,12 +220,29 @@ After all executors (including any retries) have completed:
 
 ### Step 6b: Shutdown Sub-Agents
 
-After Context Manager finalization (or skip/failure), shut down all sub-agents following the claude-code-teams shutdown protocol before compiling the wave summary. This ensures clean team teardown when the orchestrator calls `TeamDelete`.
+After Context Manager finalization (or skip/failure), shut down all sub-agents before compiling the wave summary. This ensures clean team teardown when the orchestrator calls `TeamDelete`. The orchestrator also performs its own verification (defense in depth), but completing this step reduces force-stops at the orchestrator level.
 
-1. Send `shutdown_request` to each task executor (include all spawned, regardless of outcome)
-2. Send `shutdown_request` to the Context Manager (skip if unavailable)
-3. Wait for shutdown responses (up to 15 seconds total)
-4. Force-stop unresponsive agents via `TaskStop`
+**CRITICAL: Complete this entire sequence before proceeding to Step 7. Do NOT skip or abbreviate this step.**
+
+1. **Build shutdown list**: Collect the names of ALL spawned agents — every task executor (including any retry executors spawned during Tier 1/Tier 2 retries) and the Context Manager (if it was successfully launched). Track the total count for the cleanup report.
+
+2. **Send `shutdown_request` to all agents**: For each agent in the shutdown list, send a `shutdown_request` via `SendMessage`. Send these in rapid succession (no delay between sends). Track which agents have been sent requests.
+
+3. **Wait for responses (15 seconds total)**: Monitor for `shutdown_response` messages from each agent. As responses arrive with `approve: true`, mark those agents as confirmed shutdown. After 15 seconds, identify any agents that did not respond.
+
+4. **Force-stop non-responsive agents**: For each agent that did not send a `shutdown_response` within 15 seconds, call `TaskStop` to force-terminate it. Log each force-stop: "Force-stopped agent {name} (no shutdown response within 15s)".
+
+5. **Wait for terminations to propagate**: After all `TaskStop` calls complete, wait 2 seconds. This brief pause ensures force-terminated processes have time to fully exit before the orchestrator attempts `TeamDelete`.
+
+6. **Track cleanup results** for inclusion in the wave summary (Step 8 CLEANUP section):
+   - `agents_cooperative`: Count of agents that responded to `shutdown_request` with `approve: true`
+   - `agents_forced`: Count of agents terminated via `TaskStop`
+   - `agents_already_terminated`: Count of agents where `SendMessage` failed (inbox not found or agent already gone) — count these as successfully terminated, not as errors
+
+**Edge cases**:
+- If `SendMessage` fails for an agent (already terminated, inbox cleaned up): count it as "already terminated" and skip to `TaskStop` for safety. If `TaskStop` also fails (agent not found), that confirms the agent is gone.
+- If an executor is mid-tool-call when shutdown is requested, it will not see the request until its current turn completes. The 15-second window accounts for this. If it's still running after 15 seconds, `TaskStop` handles it.
+- If a shutdown response arrives with `approve: false` (agent rejects shutdown): force-stop that agent via `TaskStop` immediately. During wave cleanup, rejection is not honored — all agents must terminate.
 
 ### Step 7: Compile Wave Summary
 
@@ -261,11 +278,18 @@ FAILED TASKS (for escalation):
 
 CONTEXT UPDATES:
 {Summary of new learnings, patterns, decisions, and issues from this wave}
+
+CLEANUP:
+Agents shutdown cooperatively: {count}
+Agents force-stopped: {count}
+Agents already terminated: {count}
 ```
 
 If there are no failed tasks, omit the `FAILED TASKS` section.
 
 Include spawning failures (rate limit or other) in the RESULTS section with status `SKIPPED` and the failure reason.
+
+Always include the `CLEANUP` section — it gives the orchestrator visibility into whether Step 6b succeeded, informing how aggressive the orchestrator's own verification (Step 5g-2) needs to be. If Step 6b was skipped (e.g., mid-wave shutdown before reaching Step 6b), report all counts as 0.
 
 ### Step 9: Handle Shutdown
 
@@ -282,8 +306,14 @@ If you receive a shutdown request from the orchestrator before completing Step 8
 3. Collect any available results from completed executors
 4. Mark any un-started tasks as `failed` with reason "wave shutdown requested"
 5. Signal Context Manager to finalize (if available) with whatever results were collected
-6. Shut down sub-agents: send `shutdown_request` to all spawned executors and the Context Manager, then use `TaskStop` on any that don't respond within 10 seconds
-7. Send a partial wave summary with whatever results were collected
+6. Shut down sub-agents using the same procedure as Step 6b but with a reduced timeout (10 seconds instead of 15, since time is critical during mid-wave shutdown):
+   a. Build shutdown list of all spawned agents (executors + Context Manager)
+   b. Send `shutdown_request` to each agent via `SendMessage`
+   c. Wait 10 seconds total for responses
+   d. Force-stop non-responsive agents via `TaskStop`
+   e. Wait 2 seconds for terminations to propagate
+   f. Track cleanup counts for the partial wave summary CLEANUP section
+7. Send a partial wave summary with whatever results were collected (include CLEANUP section)
 8. Approve the shutdown request via `SendMessage` with `type: "shutdown_response"` and `approve: true`
 
 ## Task State Management
@@ -353,5 +383,5 @@ If sending a message fails (to orchestrator or receiving from executor):
 - **Single source of truth**: Only you call `TaskUpdate` for tasks in this wave
 - **Graceful degradation**: If the Context Manager or some executors fail, continue with those that succeeded
 - **Clean shutdown**: On shutdown request, collect whatever results are available before reporting
-- **Shutdown sub-agents first**: Always shut down executors and context manager (Step 6b) before sending the wave summary — this ensures `TeamDelete` succeeds
+- **Shutdown sub-agents first**: Always complete the full Step 6b shutdown procedure (send requests, wait 15s, force-stop survivors, wait 2s propagation) before sending the wave summary. Report cleanup results in the CLEANUP section. The orchestrator performs its own verification as a safety net, but completing Step 6b thoroughly reduces force-stops at the orchestrator level
 - **Escalation via summary**: Failed tasks after retry exhaustion go in the FAILED TASKS section for the orchestrator to handle; do NOT attempt user interaction directly

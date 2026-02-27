@@ -102,6 +102,15 @@ Sent by the wave-lead to the orchestrator after all executors in the wave have c
 | `RESULTS` | Required | Per-task breakdown (see sub-fields below) |
 | `FAILED TASKS (for escalation)` | Optional | Failed task details for Tier 3 escalation. Omit section entirely if no tasks failed. |
 | `CONTEXT UPDATES` | Optional | Summary of new learnings from this wave. Omit if no new learnings. |
+| `CLEANUP` | Required | Sub-agent shutdown results from the wave-lead's Step 6b. Always include — gives the orchestrator visibility into cleanup success. |
+
+**Cleanup sub-fields:**
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `Agents shutdown cooperatively` | Required | Count of agents that responded to `shutdown_request` with `approve: true` |
+| `Agents force-stopped` | Required | Count of agents terminated via `TaskStop` (did not respond within 15s) |
+| `Agents already terminated` | Required | Count of agents where `SendMessage` failed (already gone before shutdown attempt) |
 
 **Results sub-fields:**
 
@@ -155,6 +164,11 @@ CONTEXT UPDATES:
 - Redis connection pooling requires explicit pool size configuration in test environment
 - Auth middleware follows `src/middleware/{name}.ts` pattern with co-located tests
 - Session TTL defaults should be configurable via environment variables
+
+CLEANUP:
+Agents shutdown cooperatively: 3
+Agents force-stopped: 1
+Agents already terminated: 0
 ```
 
 ---
@@ -411,8 +425,45 @@ If an agent receives a message that does not match the expected schema:
 
 Agent shutdown follows the claude-code-teams shutdown protocol (`shutdown_request` / `shutdown_response` via SendMessage). See the claude-code-teams messaging protocol reference for the generic shutdown mechanics.
 
-The SDD-specific shutdown sequence for each wave is hierarchical:
+The SDD-specific shutdown sequence uses **defense-in-depth** — multiple layers ensure all agents are terminated before the next wave begins, even if any single layer fails.
 
-1. **Wave-lead shuts down sub-agents** (wave-lead Step 6b): After Context Manager finalization
-2. **Orchestrator shuts down wave-lead** (orchestration Step 5g): After processing the WAVE SUMMARY
-3. **Orchestrator deletes team** (orchestration Step 5g): After all agents are terminated
+### Layer 1: Wave-Lead Internal Cleanup (wave-lead Step 6b)
+
+After all executors complete and Context Manager finalizes:
+
+1. Wave-lead sends `shutdown_request` to all task executors and context manager
+2. Wave-lead waits 15 seconds for `shutdown_response` from each agent
+3. Wave-lead force-stops non-responsive agents via `TaskStop`
+4. Wave-lead waits 2 seconds for terminations to propagate
+5. Wave-lead reports cleanup results in the CLEANUP section of the WAVE SUMMARY
+
+This is the first and most cooperative layer. If the wave-lead completes Step 6b fully, the orchestrator's verification (Layer 2) will find all agents already terminated.
+
+### Layer 2: Orchestrator Verification (orchestration Step 5g-2)
+
+After receiving the wave summary and shutting down the wave-lead:
+
+1. Orchestrator reads `~/.claude/teams/{wave-team-name}/config.json` to enumerate ALL team members
+2. Orchestrator sends `shutdown_request` to any member not yet confirmed terminated
+3. Orchestrator waits 5 seconds for responses (batch wait, not per-agent)
+4. Orchestrator force-stops non-responsive agents via `TaskStop`
+
+This layer does NOT trust the wave-lead's self-reported cleanup. It independently verifies by reading the team config and checking each member. This catches cases where the wave-lead skipped or partially completed Step 6b.
+
+### Layer 3: TeamDelete with Retry (orchestration Step 5g-3)
+
+1. Orchestrator calls `TeamDelete`
+2. On failure: force-stop ALL members again via `TaskStop`, retry `TeamDelete` (up to 3 attempts total)
+3. On persistent failure: escalate to user (force retry / skip cleanup and continue / abort session)
+
+### Layer 4: Inter-Wave Verification (orchestration Step 5h)
+
+Before starting the next wave:
+
+1. Orchestrator verifies previous wave's team directory is removed
+2. Brief 2-second cooldown for async cleanup propagation
+3. Proceed to next wave only after verification passes
+
+### Crash Scenario Cleanup
+
+If the wave-lead crashes, Layer 1 is skipped (wave-lead never executed its cleanup). The orchestrator compensates with an aggressive variant of Layer 2: force-stop ALL members immediately via `TaskStop` without attempting cooperative shutdown first (agents are likely unresponsive after a crash), then proceed to Layer 3.
