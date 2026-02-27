@@ -79,6 +79,15 @@
       "homepage": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/opencode-tools",
       "repository": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/opencode-tools",
       "license": "MIT"
+    },
+    {
+      "name": "agent-alchemy-cs-tools",
+      "version": "0.1.0",
+      "description": "Competitive programming and LeetCode problem-solving with educational explanations",
+      "source": "./claude/cs-tools",
+      "homepage": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/cs-tools",
+      "repository": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/cs-tools",
+      "license": "MIT"
     }
   ]
 }

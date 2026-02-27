@@ -17,7 +17,8 @@ agent-alchemy/
 │   ├── tdd-tools/             # TDD workflows: test generation, RED-GREEN-REFACTOR, coverage
 │   ├── git-tools/             # Git commit automation
 │   ├── plugin-tools/          # Plugin porting, adapter validation, ported plugin maintenance, ecosystem health
-│   └── opencode-tools/        # OpenCode extension creation, update, and validation toolkit
+│   ├── opencode-tools/        # OpenCode extension creation, update, and validation toolkit
+│   └── cs-tools/              # Competitive programming problem-solving and solution verification
 ├── apps/
 │   └── task-manager/          # Next.js 16 real-time Kanban dashboard
 ├── extensions/
@@ -148,6 +149,9 @@ docs-manager -> docs-writer -> technical-diagrams (auto-loaded via skills: front
 oc-tool-dev -> triage interview -> dependency detection -> loads oc-create-*/oc-update-* skills -> oc-generator x N -> oc-validator x N
 oc-create-skill/oc-create-agent/oc-create-command (opencode-tools) -> oc-generator x 1 -> oc-validator x 1
 oc-update-skill/oc-update-agent/oc-update-command (opencode-tools) -> oc-researcher x 1 -> oc-validator x 1
+
+solve (cs-tools) -> classify problem -> load reference skill(s) (dp-patterns, graph-algorithms, etc.) -> problem-solver (opus) x 1
+verify (cs-tools) -> solution-verifier (opus) x 1 -> static analysis + test generation + execution
 ```
 
 ### Task Manager (apps/task-manager/)
@@ -183,6 +187,7 @@ oc-update-skill/oc-update-agent/oc-update-command (opencode-tools) -> oc-researc
 | git-tools | git-commit | — | 0.1.0 |
 | plugin-tools | port-plugin, validate-adapter, update-ported-plugin, dependency-checker, bump-plugin-version | researcher, port-converter | 0.1.1 |
 | opencode-tools | oc-tool-dev, oc-create-skill, oc-update-skill, oc-create-agent, oc-update-agent, oc-create-command, oc-update-command | oc-researcher, oc-validator, oc-generator | 0.1.3 |
+| cs-tools | solve, verify, dp-patterns, graph-algorithms, search-and-optimization, data-structures, math-and-combinatorics, string-algorithms | problem-solver, solution-verifier | 0.1.0 |
 
 ## Critical Plugin Files
 
