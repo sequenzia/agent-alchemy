@@ -6,12 +6,12 @@ Agent Alchemy extends Claude Code through six plugin groups, each targeting a di
 
 | Plugin | Focus | Skills | Agents | Version |
 |--------|-------|--------|--------|---------|
-| [Core Tools](core-tools.md) | Codebase analysis and exploration | 5 | 3 | 0.2.2 |
-| [Dev Tools](dev-tools.md) | Feature development, review, docs | 9 | 4 | 0.3.2 |
-| [SDD Tools](sdd-tools.md) | Spec-Driven Development pipeline | 4 | 4 | 0.2.5 |
+| [Core Tools](core-tools.md) | Codebase analysis and exploration | 5 | 3 | 0.2.3 |
+| [Dev Tools](dev-tools.md) | Feature development, review, docs | 9 | 4 | 0.3.3 |
+| [SDD Tools](sdd-tools.md) | Spec-Driven Development pipeline | 4 | 4 | 0.2.6 |
 | [TDD Tools](tdd-tools.md) | Test-Driven Development workflows | 5 | 3 | 0.2.0 |
 | [Git Tools](git-tools.md) | Git commit automation | 1 | 0 | 0.1.0 |
-| [Plugin Tools](plugin-tools.md) | Plugin porting and ecosystem health | 5 | 2 | 0.1.1 |
+| [Plugin Tools](plugin-tools.md) | Plugin porting and ecosystem health | 5 | 2 | 0.1.2 |
 
 ## How Plugins Work
 
