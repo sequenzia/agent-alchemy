@@ -97,6 +97,12 @@ pnpm lint                      # Lint all packages
 `technical-diagrams` (core-tools) is a reference skill loaded by:
 - `codebase-analysis` (core-tools) — loads in Phase 2 for Mermaid diagrams in reports
 - `docs-writer` agent (dev-tools) — auto-loaded via `skills:` frontmatter for consistent diagram quality
+- `code-architect` agent (core-tools) — auto-loaded via `skills:` frontmatter for blueprint diagrams
+- `code-synthesizer` agent (core-tools) — auto-loaded via `skills:` frontmatter for synthesis report diagrams
+- `feature-dev` (dev-tools) — loads in Phase 4 for architecture proposal diagrams
+- `create-spec` (sdd-tools) — loads in Phase 6 for detailed/full-tech spec diagrams
+- `dependency-checker` (plugin-tools) — loads in Phase 5 for dependency graph visualization
+- `architecture-patterns` (dev-tools) — contains inline Mermaid following technical-diagrams conventions
 
 `claude-code-tasks` and `claude-code-teams` (claude-tools) are reference skills loaded by sdd-tools and available for cross-plugin loading by any skill that interacts with Claude Code Tasks or Agent Teams:
 - `create-tasks` (sdd-tools) — loads claude-code-tasks for task conventions, metadata patterns, and anti-pattern validation
@@ -120,10 +126,11 @@ pnpm lint                      # Lint all packages
 
 ```
 feature-dev -> deep-analysis -> code-explorer (sonnet) x N + code-synthesizer (opus) x 1
-feature-dev -> code-architect (core-tools, opus) x 2-3 -> code-reviewer (opus) x 3
+feature-dev -> architecture-patterns + language-patterns + technical-diagrams -> code-architect (core-tools, opus) x 2-3 -> code-reviewer (opus) x 3
 
 create-spec -> claude-code-teams (reference) -> TeamCreate explorer team -> codebase-explorer (sonnet) x 2-3 (Parallel Specialists pattern)
 create-spec -> researcher agent (for technical research)
+create-spec -> technical-diagrams (Phase 6, detailed/full-tech only) -> spec compilation
 
 create-tasks -> claude-code-tasks (reference) -> reads spec -> generates tasks with anti-pattern validation
 analyze-spec -> spec-analyzer (opus) -> optional fix task creation via claude-code-tasks
@@ -138,7 +145,7 @@ port-plugin -> researcher (sonnet) x 1 -> port-converter (sonnet) x N per wave -
 validate-adapter -> researcher (sonnet) x 1 -> compare adapter sections against research
 update-ported-plugin -> validate-adapter (phases 1-3) + git diff -> incremental re-conversion
 
-dependency-checker -> reads all plugin groups -> builds dependency graph -> 7 analysis passes + doc drift checks
+dependency-checker -> reads all plugin groups -> builds dependency graph -> 7 analysis passes + doc drift checks -> technical-diagrams (Phase 5) for report visualization
 
 bug-killer (quick) -> reads error location, targeted investigation, fix + regression test -> project-learnings
 bug-killer (deep) -> code-explorer (core-tools, sonnet) x 2-3 + bug-investigator (sonnet) x 1-3 -> code-quality (same plugin) for fix validation -> project-learnings
@@ -197,16 +204,16 @@ verify (cs-tools) -> solution-verifier (opus) x 1 -> static analysis + test gene
 | `claude/plugin-tools/skills/port-plugin/SKILL.md` | ~2575 | Largest skill — cross-platform plugin porting with 7-phase (+4.5) workflow, wave-based agent team conversion |
 | `claude/plugin-tools/skills/validate-adapter/SKILL.md` | 625 | Adapter validation against live platform docs (4 phases) |
 | `claude/plugin-tools/skills/update-ported-plugin/SKILL.md` | 793 | Incremental ported plugin updates with dual-track change detection (5 phases) |
-| `claude/sdd-tools/skills/create-spec/SKILL.md` | ~722 | Adaptive interview with context input, complexity detection, and depth-aware questioning |
+| `claude/sdd-tools/skills/create-spec/SKILL.md` | ~742 | Adaptive interview with context input, complexity detection, and depth-aware questioning |
 | `claude/sdd-tools/skills/create-tasks/SKILL.md` | 653 | Spec-to-task decomposition with `task_uid` merge mode |
 | `claude/sdd-tools/skills/run-tasks/SKILL.md` | ~230 | Wave-based parallel execution with claude-tools integration and quality gate hooks |
-| `claude/dev-tools/skills/feature-dev/SKILL.md` | 273 | 7-phase lifecycle spawning architect + reviewer agent teams |
+| `claude/dev-tools/skills/feature-dev/SKILL.md` | 275 | 7-phase lifecycle spawning architect + reviewer agent teams |
 | `claude/dev-tools/skills/bug-killer/SKILL.md` | ~480 | Hypothesis-driven debugging — triage-based quick/deep track with agent investigation |
 | `claude/tdd-tools/skills/tdd-cycle/SKILL.md` | 727 | 7-phase RED-GREEN-REFACTOR TDD workflow |
 | `claude/tdd-tools/skills/generate-tests/SKILL.md` | 524 | Test generation from acceptance criteria or source code |
 | `claude/tdd-tools/skills/create-tdd-tasks/SKILL.md` | 687 | SDD-to-TDD task pair transformation |
 | `claude/tdd-tools/skills/execute-tdd-tasks/SKILL.md` | 630 | TDD-aware wave execution with agent routing |
-| `claude/core-tools/skills/technical-diagrams/SKILL.md` | 345 | Mermaid diagram syntax, styling rules, and quick reference — loaded by codebase-analysis and docs-writer |
+| `claude/core-tools/skills/technical-diagrams/SKILL.md` | 345 | Mermaid diagram syntax, styling rules, and quick reference — loaded by 8 skills/agents across 4 plugin groups |
 | `claude/plugin-tools/skills/dependency-checker/SKILL.md` | 651 | Ecosystem dependency analysis with 7 detection passes + doc drift |
 
 ## Known Challenges

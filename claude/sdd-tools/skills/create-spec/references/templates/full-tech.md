@@ -63,23 +63,33 @@
 
 ### 4.2 User Journey Map
 
+```mermaid
+flowchart LR
+    A["Current State"]:::neutral --> B["Trigger"]:::primary --> C["Action 1"]:::secondary --> D["Action 2"]:::secondary --> E["Outcome"]:::success
+
+    classDef primary fill:#dbeafe,stroke:#2563eb,color:#000
+    classDef secondary fill:#f3e8ff,stroke:#7c3aed,color:#000
+    classDef success fill:#dcfce7,stroke:#16a34a,color:#000
+    classDef neutral fill:#f3f4f6,stroke:#6b7280,color:#000
 ```
-[Current State] --> [Trigger] --> [Action 1] --> [Action 2] --> [Outcome]
-     |                 |              |              |             |
-     v                 v              v              v             v
-  {context}       {what triggers}  {first step}  {next step}  {result}
-```
+
+Fill in: {context} triggers {what triggers}, leading to {first step}, then {next step}, resulting in {result}.
 
 ### 4.3 User Workflows
 
 #### Workflow 1: {Name}
 ```mermaid
-graph TD
-    A[Start] --> B{Decision}
-    B -->|Option 1| C[Action]
-    B -->|Option 2| D[Alternative]
-    C --> E[End]
+flowchart TD
+    A[Start]:::primary --> B{Decision}:::neutral
+    B -->|Option 1| C[Action]:::success
+    B -->|Option 2| D[Alternative]:::warning
+    C --> E[End]:::primary
     D --> E
+
+    classDef primary fill:#dbeafe,stroke:#2563eb,color:#000
+    classDef success fill:#dcfce7,stroke:#16a34a,color:#000
+    classDef warning fill:#fef3c7,stroke:#d97706,color:#000
+    classDef neutral fill:#f3f4f6,stroke:#6b7280,color:#000
 ```
 
 ## 5. Functional Requirements
@@ -176,35 +186,44 @@ graph TD
 
 ### 7.1 System Overview
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                      Client Layer                            │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐         │
-│  │   Web App   │  │ Mobile App  │  │    CLI      │         │
-│  └─────────────┘  └─────────────┘  └─────────────┘         │
-└─────────────────────────────────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│                      API Gateway                             │
-│  - Authentication  - Rate Limiting  - Routing               │
-└─────────────────────────────────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    Service Layer                             │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐         │
-│  │  Service A  │  │  Service B  │  │  Service C  │         │
-│  └─────────────┘  └─────────────┘  └─────────────┘         │
-└─────────────────────────────────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│                     Data Layer                               │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐         │
-│  │  Database   │  │    Cache    │  │   Storage   │         │
-│  └─────────────┘  └─────────────┘  └─────────────┘         │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph client["Client Layer"]
+        WA[Web App]:::primary
+        MA[Mobile App]:::primary
+        CLI[CLI]:::primary
+    end
+    subgraph gateway["API Gateway"]
+        GW["Authentication · Rate Limiting · Routing"]:::secondary
+    end
+    subgraph services["Service Layer"]
+        SA[Service A]:::secondary
+        SB[Service B]:::secondary
+        SC[Service C]:::secondary
+    end
+    subgraph data["Data Layer"]
+        DB[Database]:::neutral
+        CA[Cache]:::neutral
+        ST[Storage]:::neutral
+    end
+    WA --> GW
+    MA --> GW
+    CLI --> GW
+    GW --> SA
+    GW --> SB
+    GW --> SC
+    SA --> DB
+    SB --> CA
+    SC --> ST
+
+    classDef primary fill:#dbeafe,stroke:#2563eb,color:#000
+    classDef secondary fill:#f3e8ff,stroke:#7c3aed,color:#000
+    classDef neutral fill:#f3f4f6,stroke:#6b7280,color:#000
+
+    style client fill:#f8fafc,stroke:#94a3b8,color:#000
+    style gateway fill:#f8fafc,stroke:#94a3b8,color:#000
+    style services fill:#f8fafc,stroke:#94a3b8,color:#000
+    style data fill:#f8fafc,stroke:#94a3b8,color:#000
 ```
 
 ### 7.2 Tech Stack
@@ -222,22 +241,19 @@ graph TD
 
 #### Entity: {Entity Name}
 
+```mermaid
+classDiagram
+    class EntityName {
+        +UUID id PK
+        +string field_1
+        +integer field_2
+        +timestamp field_3
+        +timestamp created_at
+        +timestamp updated_at
+    }
 ```
-┌────────────────────────────────┐
-│         {Entity Name}          │
-├────────────────────────────────┤
-│ id: UUID (PK)                  │
-│ field_1: string                │
-│ field_2: integer               │
-│ field_3: timestamp             │
-│ created_at: timestamp          │
-│ updated_at: timestamp          │
-├────────────────────────────────┤
-│ Indexes:                       │
-│ - idx_field_1 (field_1)        │
-│ - idx_composite (field_1, 2)   │
-└────────────────────────────────┘
-```
+
+**Indexes:** `idx_field_1 (field_1)`, `idx_composite (field_1, field_2)`
 
 **Field Definitions**:
 | Field | Type | Constraints | Description |
@@ -248,10 +264,24 @@ graph TD
 
 #### Entity Relationships
 
-```
-┌──────────┐       ┌──────────┐       ┌──────────┐
-│ Entity A │ 1───* │ Entity B │ *───1 │ Entity C │
-└──────────┘       └──────────┘       └──────────┘
+```mermaid
+erDiagram
+    ENTITY_A ||--o{ ENTITY_B : "has many"
+    ENTITY_B }o--|| ENTITY_C : "belongs to"
+
+    ENTITY_A {
+        UUID id PK
+        string name
+    }
+    ENTITY_B {
+        UUID id PK
+        UUID entity_a_id FK
+        UUID entity_c_id FK
+    }
+    ENTITY_C {
+        UUID id PK
+        string name
+    }
 ```
 
 ### 7.4 API Specifications
@@ -369,11 +399,13 @@ Authorization: Bearer {token}
 **Overview**: {What this integration does}
 
 **Data Flow**:
-```
-Our System ──(1)─> External System
-     │                    │
-     │                    │
-     └───────(2)──────────┘
+```mermaid
+sequenceDiagram
+    participant O as Our System
+    participant E as External System
+
+    O->>E: (1) Request
+    E-->>O: (2) Response
 ```
 
 **Error Handling**:

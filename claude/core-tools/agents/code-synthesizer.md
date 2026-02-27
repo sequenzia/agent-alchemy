@@ -14,6 +14,7 @@ tools:
 skills:
   - project-conventions
   - language-patterns
+  - technical-diagrams
 ---
 
 # Code Synthesizer Agent
@@ -199,6 +200,8 @@ Structure your synthesis as follows:
 ### Architecture Overview
 [2-3 paragraph summary of how the analyzed area is structured, its key layers, and the overall design philosophy]
 
+Include a Mermaid flowchart showing the high-level architecture of the analyzed area. Use subgraphs for layers or domains. Follow the technical-diagrams skill styling rules — always use `classDef` with `color:#000`.
+
 ### Critical Files
 
 | File | Purpose | Relevance | Connections |
@@ -212,10 +215,7 @@ For each critical file, provide:
 - **Notable patterns** used in this file
 
 ### Relationship Map
-[Describe how the critical files connect to each other]
-- Component A → calls → Component B
-- Component B → depends on → Component C
-- Data flows from X through Y to Z
+Include a Mermaid flowchart showing how critical components connect. Use labeled edges for relationship types (calls, depends on, extends). Supplement with brief text for non-obvious relationships.
 
 ### Patterns & Conventions
 - **Pattern 1**: Description and where it's used

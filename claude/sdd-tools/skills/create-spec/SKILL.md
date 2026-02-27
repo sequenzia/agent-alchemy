@@ -601,6 +601,16 @@ Choose the appropriate template based on depth level:
 | Detailed specifications | `references/templates/detailed.md` | Standard development specs with clear requirements |
 | Full technical documentation | `references/templates/full-tech.md` | Complex features requiring API specs, data models, architecture |
 
+### Diagram Guidance (Detailed/Full-Tech Only)
+
+For "Detailed specifications" and "Full technical documentation" depth levels, load the technical-diagrams skill before compilation:
+
+```
+Read ${CLAUDE_PLUGIN_ROOT}/../core-tools/skills/technical-diagrams/SKILL.md
+```
+
+Apply its styling rules when generating Mermaid diagrams in the spec — use `classDef` with `color:#000` for all node styles. For "High-level overview" depth, skip diagram loading.
+
 ### Compilation Steps
 
 1. **Read the appropriate template** based on depth level

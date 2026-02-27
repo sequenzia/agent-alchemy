@@ -485,13 +485,14 @@ If `REPORT_FILE` is set, write the full report before presenting the interactive
 1. **Header** with ecosystem name, date, health score
 2. **Inventory summary** table from Phase 1
 3. **Dependency graph statistics** from Phase 2
-4. **All findings** grouped by severity (critical → low), each with:
+4. **Dependency graph diagram** — Load `Read ${CLAUDE_PLUGIN_ROOT}/../core-tools/skills/technical-diagrams/SKILL.md`, then generate a Mermaid flowchart showing plugin groups as subgraphs and key cross-plugin dependency edges. Limit to 15-20 nodes max. Highlight nodes involved in findings using `danger` (critical) or `warning` (high) classDef styles.
+5. **All findings** grouped by severity (critical → low), each with:
    - Component involved
    - Issue type and description
    - Expected vs actual (where applicable)
    - Suggested fix
-5. **Documentation drift findings** from Phase 4 (if run)
-6. **Health score** and recommendation
+6. **Documentation drift findings** from Phase 4 (if run)
+7. **Health score** and recommendation
 
 ```
 Write: {REPORT_FILE}
@@ -566,6 +567,8 @@ core-tools/
       <- spawned by: deep-analysis
 ...
 ```
+
+Also generate a Mermaid flowchart version showing plugin groups as subgraphs with color-coded finding severity (`danger` classDef for critical, `warning` for high, `primary`/`secondary` for clean nodes). Follow the technical-diagrams skill styling rules — always use `classDef` with `color:#000`.
 
 After displaying, loop back to the interactive menu.
 

@@ -10,6 +10,8 @@ tools:
   - TaskUpdate
   - TaskGet
   - TaskList
+skills:
+  - technical-diagrams
 ---
 
 # Code Architect Agent
@@ -108,6 +110,8 @@ export function existingFunction() {
 3. Y validates and transforms
 4. Z persists/returns result
 
+When the data flow involves 3+ components, include a Mermaid sequence diagram showing the interaction. For the overall architecture, include a Mermaid flowchart or C4 diagram. Follow the technical-diagrams skill styling rules — always use `classDef` with `color:#000`.
+
 ### API Changes (if applicable)
 - New endpoint: `POST /api/feature`
 - Modified endpoint: `GET /api/resource` adds field
@@ -141,6 +145,7 @@ export function existingFunction() {
 3. **Preserve behavior** - Don't break existing functionality
 4. **Enable testing** - Design for testability
 5. **Consider errors** - Handle failure modes gracefully
+6. **Visualize the architecture** - Include Mermaid diagrams for data flow and architecture overview using the technical-diagrams skill styling rules
 
 ## Reading the Codebase
 

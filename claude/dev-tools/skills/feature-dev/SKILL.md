@@ -81,6 +81,7 @@ Execute these phases in order, completing ALL of them:
 1. **Load skills for this phase:**
    - Read `${CLAUDE_PLUGIN_ROOT}/skills/architecture-patterns/SKILL.md` and apply its guidance
    - Read `${CLAUDE_PLUGIN_ROOT}/../core-tools/skills/language-patterns/SKILL.md` and apply its guidance
+   - Read `${CLAUDE_PLUGIN_ROOT}/../core-tools/skills/technical-diagrams/SKILL.md` and apply its styling rules for any Mermaid diagrams in architecture proposals
 
 2. **Launch code-architect agents:**
 
@@ -222,6 +223,7 @@ Execute these phases in order, completing ALL of them:
    - What was built
    - Key files created/modified
    - Architecture decisions made
+   - Architecture diagram (Mermaid flowchart showing the implemented structure)
    - Any known limitations or future work
 
 2. **Update CHANGELOG.md:**

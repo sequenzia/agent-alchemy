@@ -9,6 +9,10 @@ disable-model-invocation: false
 
 This skill provides knowledge about common architectural patterns to help design feature implementations. Apply these patterns based on the project's existing architecture and the feature's requirements.
 
+## Diagram Convention
+
+Architecture visualizations use Mermaid syntax with `classDef` styling (`color:#000` for text readability). When creating architecture visualizations based on these patterns, follow the technical-diagrams skill conventions.
+
 ## Pattern Selection Guide
 
 Choose patterns based on:
@@ -24,16 +28,18 @@ Choose patterns based on:
 **When to use:** Most web applications, CRUD operations, clear separation of concerns needed
 
 **Layers:**
-```
-┌─────────────────────────┐
-│   Presentation Layer    │  UI, API endpoints, controllers
-├─────────────────────────┤
-│    Application Layer    │  Use cases, orchestration, DTOs
-├─────────────────────────┤
-│      Domain Layer       │  Business logic, entities, rules
-├─────────────────────────┤
-│   Infrastructure Layer  │  Database, external services, I/O
-└─────────────────────────┘
+```mermaid
+flowchart TD
+    A["Presentation Layer — UI, API endpoints, controllers"]:::primary
+    B["Application Layer — Use cases, orchestration, DTOs"]:::secondary
+    C["Domain Layer — Business logic, entities, rules"]:::success
+    D["Infrastructure Layer — Database, external services, I/O"]:::neutral
+    A --> B --> C --> D
+
+    classDef primary fill:#dbeafe,stroke:#2563eb,color:#000
+    classDef secondary fill:#f3e8ff,stroke:#7c3aed,color:#000
+    classDef success fill:#dcfce7,stroke:#16a34a,color:#000
+    classDef neutral fill:#f3f4f6,stroke:#6b7280,color:#000
 ```
 
 **Key rules:**
@@ -53,10 +59,18 @@ Choose patterns based on:
 **When to use:** Web applications with server-rendered views, simple CRUD apps
 
 **Components:**
-```
-User → Controller → Model → Controller → View → User
-           ↓           ↑
-        Updates      Reads
+```mermaid
+flowchart LR
+    U1[User]:::neutral -->|input| CT[Controller]:::primary
+    CT -->|updates| M[Model]:::secondary
+    M -->|reads| CT
+    CT -->|renders| V[View]:::success
+    V -->|response| U2[User]:::neutral
+
+    classDef primary fill:#dbeafe,stroke:#2563eb,color:#000
+    classDef secondary fill:#f3e8ff,stroke:#7c3aed,color:#000
+    classDef success fill:#dcfce7,stroke:#16a34a,color:#000
+    classDef neutral fill:#f3f4f6,stroke:#6b7280,color:#000
 ```
 
 **Model:** Data and business logic
@@ -144,10 +158,15 @@ userService.on('userCreated', async (user) => {
 ```
 
 ### Message Queue (Distributed)
-```
-Producer → Queue → Consumer
-              ↓
-           Consumer
+```mermaid
+flowchart LR
+    P[Producer]:::primary --> Q[Queue]:::warning
+    Q --> C1[Consumer 1]:::secondary
+    Q --> C2[Consumer 2]:::secondary
+
+    classDef primary fill:#dbeafe,stroke:#2563eb,color:#000
+    classDef secondary fill:#f3e8ff,stroke:#7c3aed,color:#000
+    classDef warning fill:#fef3c7,stroke:#d97706,color:#000
 ```
 
 **Event structure:**
@@ -175,14 +194,25 @@ interface DomainEvent {
 **When to use:** Complex domains, different read/write patterns, high-performance reads needed
 
 **Structure:**
-```
-Commands (Write)              Queries (Read)
-     ↓                              ↓
-Command Handler              Query Handler
-     ↓                              ↓
-Write Model                  Read Model
-     ↓                              ↓
-Write Database              Read Database
+```mermaid
+flowchart TD
+    subgraph write["Commands (Write)"]
+        CMD[Command]:::primary --> CH[Command Handler]:::secondary
+        CH --> WM[Write Model]:::secondary
+        WM --> WDB[Write Database]:::neutral
+    end
+    subgraph read["Queries (Read)"]
+        QRY[Query]:::primary --> QH[Query Handler]:::secondary
+        QH --> RM[Read Model]:::secondary
+        RM --> RDB[Read Database]:::neutral
+    end
+
+    classDef primary fill:#dbeafe,stroke:#2563eb,color:#000
+    classDef secondary fill:#f3e8ff,stroke:#7c3aed,color:#000
+    classDef neutral fill:#f3f4f6,stroke:#6b7280,color:#000
+
+    style write fill:#f8fafc,stroke:#94a3b8,color:#000
+    style read fill:#f8fafc,stroke:#94a3b8,color:#000
 ```
 
 **Simplified CQRS:**
@@ -210,21 +240,42 @@ class GetUserQuery {
 **When to use:** High testability needs, multiple I/O channels, long-lived applications
 
 **Structure:**
-```
-          ┌──────────────────────────────────────┐
-Adapters  │  HTTP  │  CLI  │  Queue  │  Timer   │
-(Driving) └────────┴───────┴─────────┴──────────┘
-                          ↓ Ports
-          ┌──────────────────────────────────────┐
-          │         Application Core            │
-          │  ┌────────────────────────────────┐ │
-          │  │      Domain Logic              │ │
-          │  └────────────────────────────────┘ │
-          └──────────────────────────────────────┘
-                          ↓ Ports
-          ┌──────────────────────────────────────┐
-Adapters  │  DB   │  Cache │  Email  │  API     │
-(Driven)  └───────┴────────┴─────────┴──────────┘
+```mermaid
+flowchart TD
+    subgraph driving["Driving Adapters"]
+        H[HTTP]:::primary
+        CL[CLI]:::primary
+        Q[Queue]:::primary
+        T[Timer]:::primary
+    end
+    subgraph core["Application Core"]
+        subgraph domain["Domain Logic"]
+            DL[Business Rules]:::success
+        end
+    end
+    subgraph driven["Driven Adapters"]
+        DB[Database]:::neutral
+        CA[Cache]:::neutral
+        EM[Email]:::neutral
+        API[External API]:::neutral
+    end
+    H -->|port| DL
+    CL -->|port| DL
+    Q -->|port| DL
+    T -->|port| DL
+    DL -->|port| DB
+    DL -->|port| CA
+    DL -->|port| EM
+    DL -->|port| API
+
+    classDef primary fill:#dbeafe,stroke:#2563eb,color:#000
+    classDef success fill:#dcfce7,stroke:#16a34a,color:#000
+    classDef neutral fill:#f3f4f6,stroke:#6b7280,color:#000
+
+    style driving fill:#f8fafc,stroke:#94a3b8,color:#000
+    style core fill:#fefce8,stroke:#ca8a04,color:#000
+    style domain fill:#dcfce7,stroke:#16a34a,color:#000
+    style driven fill:#f8fafc,stroke:#94a3b8,color:#000
 ```
 
 **Key concept:** Business logic at center, all I/O through ports/adapters
@@ -258,10 +309,15 @@ const breaker = new CircuitBreaker(remoteService.call, {
 
 ### Saga Pattern
 Coordinate transactions across services
-```
-Service A → Service B → Service C
-    ↓           ↓           ↓
-Compensate ← Compensate ← Compensate (on failure)
+```mermaid
+flowchart LR
+    SA[Service A]:::primary -->|step 1| SB[Service B]:::primary -->|step 2| SC[Service C]:::primary
+    SC -.->|failure| CC[Compensate C]:::danger
+    CC -.-> CB[Compensate B]:::danger
+    CB -.-> CA[Compensate A]:::danger
+
+    classDef primary fill:#dbeafe,stroke:#2563eb,color:#000
+    classDef danger fill:#fee2e2,stroke:#dc2626,color:#000
 ```
 
 ---
