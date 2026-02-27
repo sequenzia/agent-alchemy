@@ -44,6 +44,23 @@ Text output should only be used for:
 
 The tasks are planning artifacts themselves — generating them IS the planning activity.
 
+## Load Reference Skills
+
+Before starting the workflow, load the Claude Code Tasks reference for tool parameters, conventions, and patterns:
+
+```
+Read ${CLAUDE_PLUGIN_ROOT}/../claude-tools/skills/claude-code-tasks/SKILL.md
+```
+
+This reference provides:
+- TaskCreate, TaskGet, TaskUpdate, TaskList tool parameters and return values
+- Status lifecycle and transition rules
+- Naming conventions (imperative subject, present-continuous activeForm)
+- Dependency management with DAG design (blockedBy, blocks)
+- Standard metadata conventions (priority, complexity, task_group, task_uid)
+
+The SDD-specific extensions to these conventions are documented in the "SDD Task Metadata Extensions" section below.
+
 ## Workflow Overview
 
 This workflow has ten phases:
@@ -377,10 +394,10 @@ For each feature, apply the standard layer pattern:
 
 ### Task Structure
 
-Each task must have categorized acceptance criteria and testing requirements:
+Follow the naming conventions from the claude-code-tasks reference (imperative `subject`, present-continuous `activeForm`). Each SDD task must include categorized acceptance criteria and testing requirements in its description:
 
 ```
-subject: "Create User data model"              # Imperative mood
+subject: "Create User data model"
 description: |
   {What needs to be done}
 
@@ -408,19 +425,23 @@ description: |
   • {Spec-specified test}: {What to test}
 
   Source: {spec_path} Section {number}
-activeForm: "Creating User data model"         # Present continuous
-produces_for: ["{consumer_task_id}", ...]      # Optional — IDs of tasks that consume this task's output
-metadata:
-  priority: critical|high|medium|low           # Mapped from P0-P3
-  complexity: XS|S|M|L|XL                      # Estimated size
-  source_section: "7.3 Data Models"            # Spec section
-  spec_path: "specs/SPEC-Example.md"            # Source spec
-  feature_name: "User Authentication"          # Parent feature
-  task_uid: "{spec_path}:{feature}:{type}:{seq}" # Unique ID
-  task_group: "{spec-name}"                    # REQUIRED — Group from spec title
-  spec_phase: 1                                # Phase number from Section 9 (omit if no phases)
-  spec_phase_name: "Foundation"                # Phase name from Section 9 (omit if no phases)
+activeForm: "Creating User data model"
 ```
+
+### SDD Task Metadata Extensions
+
+In addition to the standard metadata keys from the claude-code-tasks reference (`priority`, `complexity`, `task_group`, `task_uid`), SDD tasks use these spec-specific keys:
+
+| Key | Type | Required | Description |
+|-----|------|----------|-------------|
+| `source_section` | string | Yes | Spec section reference (e.g., "7.3 Data Models") |
+| `spec_path` | string | Yes | Path to the source spec file |
+| `feature_name` | string | Yes | Parent feature name from spec |
+| `task_uid` | string | Yes | Composite key for merge mode: `{spec_path}:{feature}:{type}:{seq}` |
+| `task_group` | string | Yes | Slug derived from spec title — REQUIRED for run-tasks `--task-group` filtering |
+| `spec_phase` | integer | Conditional | Phase number from Section 9 (omit if no phases) |
+| `spec_phase_name` | string | Conditional | Phase name from Section 9 (omit if no phases) |
+| `produces_for` | string[] | Optional | IDs of downstream tasks that consume this task's output |
 
 **`produces_for` Field:**
 
@@ -896,15 +917,30 @@ If tasks already exist for this spec, they will be intelligently merged.
 
 ## Important Notes
 
-- Never create duplicate tasks — check task_uid before creating
+- Follow the naming and metadata conventions from the claude-code-tasks reference
+- Never create duplicate tasks — check task_uid before creating (see anti-pattern AP-05)
 - Preserve completed task status during merge — never modify completed tasks
 - Flag uncertainty for human review rather than guessing
-- Always use imperative mood for subjects ("Create X" not "X creation")
-- Always include activeForm in present continuous ("Creating X")
 - Always include source section reference in description
+
+### Anti-Pattern Validation
+
+Before confirming task creation in Phase 8, validate against common anti-patterns. If issues are detected, load the full reference for remediation guidance:
+
+```
+Read ${CLAUDE_PLUGIN_ROOT}/../claude-tools/skills/claude-code-tasks/references/anti-patterns.md
+```
+
+Check for:
+- **AP-01**: Circular dependencies — detect cycles in the dependency graph
+- **AP-02**: Too-granular tasks — flag tasks that change fewer than ~10 lines
+- **AP-05**: Duplicate task creation — verify task_uid uniqueness before creating
+- **AP-07**: Missing task_group — every task MUST have `task_group` metadata
 
 ## Reference Files
 
 - `references/decomposition-patterns.md` — Feature decomposition patterns by type
 - `references/dependency-inference.md` — Automatic dependency inference rules
 - `references/testing-requirements.md` — Test type mappings and acceptance criteria patterns
+- `${CLAUDE_PLUGIN_ROOT}/../claude-tools/skills/claude-code-tasks/SKILL.md` — Task tool parameters, conventions, and patterns (loaded at init)
+- `${CLAUDE_PLUGIN_ROOT}/../claude-tools/skills/claude-code-tasks/references/anti-patterns.md` — Common task anti-patterns (loaded on error/validation)

@@ -1,14 +1,19 @@
 # Codebase Exploration Procedure
 
-This reference describes the standalone codebase exploration workflow for `create-spec` when building specs for new features in existing products. It replaces external deep-analysis with lightweight parallel exploration using `codebase-explorer` agents.
+This reference describes the team-based codebase exploration workflow for `create-spec` when building specs for new features in existing products. It uses the **Parallel Specialists** pattern from claude-code-teams to coordinate `codebase-explorer` agents.
+
+For team lifecycle, spawning, and messaging conventions, see:
+```
+Read ${CLAUDE_PLUGIN_ROOT}/../claude-tools/skills/claude-code-teams/SKILL.md
+```
 
 ## Overview
 
 The exploration has four steps:
 1. **Quick Reconnaissance** — Map the project structure and identify key characteristics
 2. **Plan Focus Areas** — Determine 2-3 exploration themes based on the feature and reconnaissance
-3. **Parallel Exploration** — Spawn `codebase-explorer` agents via the `Task` tool
-4. **Synthesis** — Merge all findings into structured "Codebase Context"
+3. **Parallel Exploration** — Create an explorer team and spawn `codebase-explorer` agents
+4. **Synthesis** — Collect findings via SendMessage and merge into structured "Codebase Context"
 
 ---
 
@@ -54,11 +59,26 @@ Choose focus areas that are most relevant to the specific feature being specifie
 
 ## Step 3: Parallel Exploration
 
-Spawn 2-3 `codebase-explorer` agents in a **single message** using the `Task` tool. Each agent gets:
+Create an explorer team following the Parallel Specialists pattern from claude-code-teams:
+
+### 3a: Create Team
+
+```
+TeamCreate:
+  team_name: "spec-explore-{spec-name}"
+  description: "Codebase exploration for {spec-name} spec creation"
+```
+
+### 3b: Spawn Explorer Agents
+
+Spawn 2-3 `codebase-explorer` agents as background tasks within the team. Launch all in a **single message** for maximum parallelism:
 
 ```
 Task:
   subagent_type: "codebase-explorer"
+  team_name: "spec-explore-{spec-name}"
+  name: "explorer-{N}"
+  run_in_background: true
   description: "Explore {focus area name}"
   prompt: |
     Feature being specified: {user's feature description from Phase 2}
@@ -76,15 +96,25 @@ Task:
 
     Reconnaissance summary:
     {brief summary of what was found in Step 1}
+
+    When finished, send your findings to the team lead via SendMessage.
 ```
 
-All agents run concurrently. Wait for all to complete before proceeding.
+All agents run concurrently within the team. Wait for all to complete before proceeding.
+
+### 3c: Collect Results
+
+Receive findings from each explorer via SendMessage. Explorers send structured findings as documented in the codebase-explorer agent definition.
 
 ---
 
-## Step 4: Synthesis
+## Step 4: Synthesis & Cleanup
 
-After all agents return their findings, merge them into a structured "Codebase Context":
+After all agents return their findings:
+
+### 4a: Merge Findings
+
+Merge all explorer findings into a structured "Codebase Context":
 
 ```markdown
 ## Codebase Context
@@ -112,12 +142,20 @@ After all agents return their findings, merge them into a structured "Codebase C
 
 Store this internally as "Codebase Context" for use in interview rounds and spec compilation.
 
+### 4b: Shutdown Team
+
+Send `shutdown_request` to each explorer, then delete the team:
+
+```
+TeamDelete (team_name: "spec-explore-{spec-name}")
+```
+
 ---
 
 ## Error Handling
 
 - **If an agent fails**: Continue with successful agents' findings. Partial context is still valuable.
-- **If all agents fail**: Use reconnaissance findings only. The spec can still be created with manual user input about the codebase.
+- **If all agents fail**: Shutdown team, use reconnaissance findings only. The spec can still be created with manual user input about the codebase.
 - **Always offer skip option**: Before starting exploration, use `AskUserQuestion` to let the user skip if they prefer:
 
 ```yaml

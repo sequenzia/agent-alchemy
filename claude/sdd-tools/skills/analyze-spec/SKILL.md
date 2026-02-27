@@ -4,7 +4,7 @@ description: Analyze an existing spec for inconsistencies, missing information, 
 argument-hint: "[spec-path]"
 user-invocable: true
 disable-model-invocation: false
-allowed-tools: AskUserQuestion, Task, Read, Glob
+allowed-tools: AskUserQuestion, Task, Read, Glob, TaskCreate, TaskUpdate, TaskList
 arguments:
   - name: spec-path
     description: Path to the spec file to analyze
@@ -13,7 +13,15 @@ arguments:
 
 # Spec Analysis Skill
 
-You are initiating the spec analysis workflow. This process will analyze an existing spec for quality issues and optionally guide the user through resolving them interactively.
+You are initiating the spec analysis workflow. This process will analyze an existing spec for quality issues, optionally guide the user through resolving them interactively, and optionally create fix tasks from approved findings.
+
+## Load Reference Skills
+
+For task creation from findings (Step 8), load the Tasks reference:
+
+```
+Read ${CLAUDE_PLUGIN_ROOT}/../claude-tools/skills/claude-code-tasks/SKILL.md
+```
 
 ## Workflow
 
@@ -103,13 +111,63 @@ Instructions:
 
 ### Step 7: Handoff Complete
 
-Once you have launched the Analyzer Agent, your role is complete. The agent will handle:
+Once you have launched the Analyzer Agent, your role is mostly complete. The agent will handle:
 - Loading analysis criteria for the depth level
 - Performing comprehensive analysis
 - Generating and saving the report (.analysis.md)
 - Generating the interactive HTML review (.analysis.html)
 - Offering three review modes: HTML review, CLI update, or reports only
 - Updating the spec with approved changes
+
+After the analyzer agent completes its work and returns, proceed to Step 8.
+
+### Step 8: Create Fix Tasks (Optional)
+
+After the analyzer agent has finished the review session and returned, check if there are approved findings that could be turned into tasks. This connects analysis output to the SDD task pipeline.
+
+Use `AskUserQuestion` to offer task creation:
+
+```yaml
+questions:
+  - header: "Fix Tasks"
+    question: "Would you like to create tasks from the analysis findings? This connects them to the SDD pipeline for tracking and execution."
+    options:
+      - label: "Create fix tasks (Recommended)"
+        description: "Create tasks from critical and warning findings for tracking via /run-tasks"
+      - label: "Skip"
+        description: "Analysis is complete, no tasks needed"
+    multiSelect: false
+```
+
+If the user selects "Create fix tasks":
+
+1. Read the analysis report at `{report_path}` to get the final findings with resolution status
+2. Filter to findings that were **not resolved and not skipped** (still pending) with severity `critical` or `warning`
+3. Derive `spec-name` slug from the spec filename (strip `SPEC-` prefix, strip `.md`, lowercase, hyphens)
+4. For each qualifying finding, create a task via `TaskCreate`:
+   - **subject**: `Fix: {finding title}` (imperative)
+   - **description**: Include finding category, severity, location (section + line), issue description, and the proposed fix as acceptance criteria
+   - **activeForm**: `Fixing {finding title}`
+   - **metadata**:
+     - `task_group`: `spec-fixes-{spec-name}`
+     - `priority`: Map from severity — `critical` → `critical`, `warning` → `high`
+     - `source_section`: Finding location reference
+     - `spec_path`: Path to the spec file
+
+5. After creating all tasks, display summary:
+```
+Created {N} fix tasks from {M} unresolved findings.
+Task group: spec-fixes-{spec-name}
+
+Run `/run-tasks --task-group spec-fixes-{spec-name}` to execute.
+```
+
+If the user selects "Skip", display:
+```
+Analysis complete. Reports saved to:
+- {report_path}
+- {html_review_path}
+```
 
 ## Example Usage
 

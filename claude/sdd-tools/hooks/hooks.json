@@ -1,5 +1,5 @@
 {
-  "description": "Auto-approve file operations for execute-tasks session management",
+  "description": "SDD execution quality gates and auto-approvals",
   "hooks": {
     "PreToolUse": [
       {
@@ -9,6 +9,27 @@
             "type": "command",
             "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/auto-approve-session.sh",
             "timeout": 5
+          }
+        ]
+      }
+    ],
+    "TaskCompleted": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/verify-task-completion.sh",
+            "timeout": 120
+          }
+        ]
+      }
+    ],
+    "TeammateIdle": [
+      {
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "Before going idle, verify you have completed all required reporting: 1) Have you sent a TASK RESULT message to the wave-lead with your task's status (PASS/PARTIAL/FAIL)? 2) Have you sent a CONTEXT CONTRIBUTION message to the context manager with any learnings? If either message is missing, send it now before going idle."
           }
         ]
       }

@@ -71,9 +71,9 @@ Agent Alchemy is in active development. Current plugin versions:
 
 | Plugin | Version | Status |
 |--------|---------|--------|
-| Core Tools | 0.2.1 | Stable |
-| Dev Tools | 0.3.1 | Stable |
-| SDD Tools | 0.2.2 | Stable |
+| Core Tools | 0.2.2 | Stable |
+| Dev Tools | 0.3.2 | Stable |
+| SDD Tools | 0.2.5 | Stable |
 | TDD Tools | 0.2.0 | Stable |
 | Git Tools | 0.1.0 | Stable |
 | Plugin Tools | 0.1.1 | Stable |

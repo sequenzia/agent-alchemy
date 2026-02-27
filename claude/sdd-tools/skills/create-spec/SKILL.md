@@ -4,7 +4,7 @@ description: Create a new specification through an adaptive interview process wi
 argument-hint: "[context-file-or-text]"
 user-invocable: true
 disable-model-invocation: false
-allowed-tools: AskUserQuestion, Task, Read, Write, Glob, Grep, Bash
+allowed-tools: AskUserQuestion, Task, Read, Write, Glob, Grep, Bash, TeamCreate, TeamDelete, SendMessage
 arguments:
   - name: context
     description: Optional context — a file path (.md, .txt) to read or inline text describing what to build
@@ -68,12 +68,22 @@ AskUserQuestion:
 
 The spec is a planning artifact itself — generating it IS the planning activity.
 
+## Load Reference Skills
+
+When codebase exploration is triggered (Phase 2, "new feature" type), load the teams reference for the Parallel Specialists exploration pattern:
+
+```
+Read ${CLAUDE_PLUGIN_ROOT}/../claude-tools/skills/claude-code-teams/SKILL.md
+```
+
+This provides TeamCreate, SendMessage, and team lifecycle conventions used in the codebase exploration procedure.
+
 ## Workflow Overview
 
 This workflow has six phases:
 
 1. **Settings Check** — Load user configuration
-2. **Initial Inputs** — Gather spec name, type, depth, and description
+2. **Initial Inputs** — Gather spec name, type, depth, and description (includes team-based codebase exploration for "new feature" type)
 3. **Adaptive Interview** — Multi-round depth-aware interview with recommendations and optional research
 4. **Recommendations Round** — Dedicated round for accumulated best-practice suggestions (if applicable)
 5. **Pre-Compilation Summary** — Present gathered requirements for user confirmation
