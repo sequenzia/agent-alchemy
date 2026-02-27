@@ -175,10 +175,10 @@ oc-update-skill/oc-update-agent/oc-update-command (opencode-tools) -> oc-researc
 
 | Group | Skills | Agents | Version |
 |-------|--------|--------|---------|
-| claude-tools | claude-code-tasks, claude-code-teams | — | 0.2.2 |
-| core-tools | deep-analysis, codebase-analysis, language-patterns, project-conventions, technical-diagrams | code-explorer, code-synthesizer, code-architect | 0.2.1 |
-| dev-tools | feature-dev, bug-killer, architecture-patterns, code-quality, project-learnings, changelog-format, docs-manager, release-python-package, document-changes | code-reviewer, bug-investigator, changelog-manager, docs-writer | 0.3.1 |
-| sdd-tools | create-spec, analyze-spec, create-tasks, run-tasks | codebase-explorer, researcher, spec-analyzer, wave-lead, context-manager, task-executor-v2 | 0.2.4 |
+| claude-tools | claude-code-tasks, claude-code-teams | — | 0.2.3 |
+| core-tools | deep-analysis, codebase-analysis, language-patterns, project-conventions, technical-diagrams | code-explorer, code-synthesizer, code-architect | 0.2.2 |
+| dev-tools | feature-dev, bug-killer, architecture-patterns, code-quality, project-learnings, changelog-format, docs-manager, release-python-package, document-changes | code-reviewer, bug-investigator, changelog-manager, docs-writer | 0.3.2 |
+| sdd-tools | create-spec, analyze-spec, create-tasks, run-tasks | codebase-explorer, researcher, spec-analyzer, wave-lead, context-manager, task-executor-v2 | 0.2.5 |
 | tdd-tools | generate-tests, tdd-cycle, analyze-coverage, create-tdd-tasks, execute-tdd-tasks | test-writer, tdd-executor, test-reviewer | 0.2.0 |
 | git-tools | git-commit | — | 0.1.0 |
 | plugin-tools | port-plugin, validate-adapter, update-ported-plugin, dependency-checker, bump-plugin-version | researcher, port-converter | 0.1.1 |
