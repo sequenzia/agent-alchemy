@@ -1,0 +1,11 @@
+hooks:
+  - event: before_action
+    matcher: "Write|Edit|Bash"
+    description: >-
+      Auto-approve file operations targeting deep-analysis session and cache
+      directories. This prevents permission prompts from interrupting the
+      autonomous deep-analysis workflow when writing session files, cache
+      manifests, and progress checkpoints.
+    type: command
+    command: "./scripts/auto-approve-session.sh"
+    timeout: 5

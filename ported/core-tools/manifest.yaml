@@ -1,0 +1,98 @@
+name: core-tools
+description: Agent Alchemy Core Tools — utilities and essential functions for AI agents
+source:
+  platform: "Claude Code"
+  plugin: "agent-alchemy-core-tools"
+  version: "0.2.3"
+converted: "2026-03-03"
+
+components:
+  skills:
+    - name: deep-analysis
+      file: skills/deep-analysis.md
+      description: Deep exploration and synthesis workflow using a team of agents with dynamic planning and hub-and-spoke coordination
+    - name: codebase-analysis
+      file: skills/codebase-analysis.md
+      description: Structured codebase analysis report with architecture overview, critical files, patterns, and actionable recommendations
+    - name: language-patterns
+      file: skills/language-patterns.md
+      description: Language-specific patterns for TypeScript, Python, and React including idioms, best practices, and common patterns
+    - name: project-conventions
+      file: skills/project-conventions.md
+      description: Guides discovery and application of project-specific conventions including code patterns, naming, structure, and team practices
+    - name: technical-diagrams
+      file: skills/technical-diagrams.md
+      description: Mermaid diagram syntax, best practices, and styling rules for technical visualizations
+
+  agents:
+    - name: code-explorer
+      file: agents/code-explorer.md
+      description: Explores codebases to find relevant files, trace execution paths, and map architecture
+      role: explorer
+    - name: code-synthesizer
+      file: agents/code-synthesizer.md
+      description: Synthesizes exploration findings into unified analysis with deep investigation capabilities
+      role: synthesizer
+    - name: code-architect
+      file: agents/code-architect.md
+      description: Designs implementation blueprints for features using exploration findings and architectural best practices
+      role: architect
+
+  hooks:
+    - event: before_action
+      file: hooks/hooks.yaml
+      description: Auto-approve file operations targeting deep-analysis session and cache directories
+
+references:
+  - name: sequence-diagrams
+    file: references/sequence-diagrams.md
+    used_by: [technical-diagrams]
+  - name: class-diagrams
+    file: references/class-diagrams.md
+    used_by: [technical-diagrams]
+  - name: state-diagrams
+    file: references/state-diagrams.md
+    used_by: [technical-diagrams]
+  - name: er-diagrams
+    file: references/er-diagrams.md
+    used_by: [technical-diagrams]
+
+dependencies:
+  internal:
+    - from: codebase-analysis
+      to: deep-analysis
+      relationship: "Loads for Phase 1 codebase exploration"
+    - from: codebase-analysis
+      to: technical-diagrams
+      relationship: "Loads for Phase 2 Mermaid diagrams"
+    - from: codebase-analysis
+      to: code-explorer
+      relationship: "Spawns for actionable insight investigation"
+    - from: codebase-analysis
+      to: code-architect
+      relationship: "Spawns for actionable insight architecture"
+    - from: deep-analysis
+      to: code-explorer
+      relationship: "Spawns N explorer agents for parallel exploration"
+    - from: deep-analysis
+      to: code-synthesizer
+      relationship: "Spawns 1 synthesizer for finding merge and deep investigation"
+    - from: code-explorer
+      to: project-conventions
+      relationship: "Loaded as knowledge context for pattern discovery"
+    - from: code-explorer
+      to: language-patterns
+      relationship: "Loaded as knowledge context for language idioms"
+    - from: code-synthesizer
+      to: project-conventions
+      relationship: "Loaded as knowledge context for pattern matching"
+    - from: code-synthesizer
+      to: language-patterns
+      relationship: "Loaded as knowledge context for language idioms"
+    - from: code-synthesizer
+      to: technical-diagrams
+      relationship: "Loaded for Mermaid architecture diagrams in synthesis"
+    - from: code-architect
+      to: technical-diagrams
+      relationship: "Loaded for Mermaid diagrams in implementation blueprints"
+  external: []
