@@ -192,7 +192,7 @@ verify (cs-tools) -> solution-verifier (opus) x 1 -> static analysis + test gene
 | sdd-tools | create-spec, analyze-spec, create-tasks, run-tasks | codebase-explorer, researcher, spec-analyzer, wave-lead, context-manager, task-executor-v2 | 0.2.6 |
 | tdd-tools | generate-tests, tdd-cycle, analyze-coverage, create-tdd-tasks, execute-tdd-tasks | test-writer, tdd-executor, test-reviewer | 0.2.0 |
 | git-tools | git-commit | — | 0.1.0 |
-| plugin-tools | port-plugin, port-master, validate-adapter, update-ported-plugin, dependency-checker, bump-plugin-version | researcher, port-converter | 0.1.2 |
+| plugin-tools | port-plugin, port-master, validate-adapter, update-ported-plugin, dependency-checker, bump-plugin-version | researcher, port-converter | 0.1.3 |
 | opencode-tools | oc-tool-dev, oc-create-skill, oc-update-skill, oc-create-agent, oc-update-agent, oc-create-command, oc-update-command | oc-researcher, oc-validator, oc-generator | 0.1.3 |
 | cs-tools | solve, verify, dp-patterns, graph-algorithms, search-and-optimization, data-structures, math-and-combinatorics, string-algorithms | problem-solver, solution-verifier | 0.1.0 |
 
