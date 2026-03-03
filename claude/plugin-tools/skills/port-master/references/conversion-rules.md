@@ -1,0 +1,290 @@
+# Conversion Rules Reference
+
+Detailed transformation rules for converting Claude Code plugin components into platform-agnostic format. These rules are applied during Phase 3 of port-master.
+
+The guiding principle: preserve the *intent* of each instruction while removing anything that assumes the Claude Code runtime environment. A developer reading the output should understand what the component does without needing to know how Claude Code works.
+
+---
+
+## 1. Skill Frontmatter Rules
+
+### Fields to Keep
+
+| Field | Treatment |
+|-------|-----------|
+| `name` | Keep as-is |
+| `description` | Keep. Remove trigger phrases that reference Claude Code mechanics (e.g., "Use when the user invokes /skill-name"). Keep phrases describing the task domain |
+
+### Fields to Remove
+
+| Field | Why |
+|-------|-----|
+| `allowed-tools` | Tool restrictions are Claude Code-specific. Capability needs go in Integration Notes prose instead |
+| `user-invocable` | Slash command registration is a Claude Code feature |
+| `disable-model-invocation` | Model auto-invocation is a Claude Code feature |
+| `model` | Model selection is harness-specific. Complexity hints go in Integration Notes instead |
+| `context` | Fork/subagent context is a Claude Code feature |
+| `agent` | Subagent type routing is a Claude Code feature |
+| `argument-hint` | Autocomplete UI is a Claude Code feature |
+| `hooks` | Inline hooks are Claude Code-specific lifecycle events |
+| `arguments` | Structured argument definitions are a Claude Code feature |
+
+### Fields to Add
+
+| Field | Value |
+|-------|-------|
+| `dependencies` | List of skill/agent names this component needs (extracted from dependency analysis) |
+
+---
+
+## 2. Agent Frontmatter Rules
+
+### Fields to Keep
+
+| Field | Treatment |
+|-------|-----------|
+| `name` | Keep as-is |
+| `description` | Keep. Remove tool-list references. Focus on what the agent *does*, not what tools it has |
+
+### Fields to Remove
+
+| Field | Why |
+|-------|-----|
+| `tools` | Tool lists are Claude Code-specific. Capabilities described in prose instead |
+| `disallowedTools` | Same as above |
+| `model` | Model tier is harness-specific |
+| `permissionMode` | Permission modes are a Claude Code feature |
+| `maxTurns` | Turn limits are a Claude Code feature |
+| `skills` | Preload mechanism is Claude Code-specific. Resolved into body text |
+| `hooks` | Inline hooks are Claude Code-specific |
+| `memory` | Memory scoping is a Claude Code feature |
+| `mcpServers` | MCP configuration is Claude Code-specific |
+
+### Fields to Add
+
+| Field | Value |
+|-------|-------|
+| `role` | One of: `explorer`, `reviewer`, `architect`, `executor`, `synthesizer`, `investigator`, `writer`, `researcher`, `validator`. Inferred from the agent's description and body |
+| `dependencies` | Skills this agent needs access to (from `skills:` frontmatter array) |
+
+---
+
+## 3. Body Transformation Rules
+
+Apply these transformations in order to both skill and agent bodies. Each rule includes the pattern to detect, what to replace it with, and an example.
+
+### 3a. Path Variable Resolution
+
+Remove all `${CLAUDE_PLUGIN_ROOT}` path references. The replacement depends on what the path points to:
+
+| Pattern | Replacement |
+|---------|-------------|
+| `Read ${CLAUDE_PLUGIN_ROOT}/skills/{name}/SKILL.md` | Inline the content (if marked "inline" in resolution plan) or replace with: `Refer to the **{name}** skill for {brief description of what it provides}.` |
+| `Read ${CLAUDE_PLUGIN_ROOT}/../{group}/skills/{name}/SKILL.md` | Replace with: `Refer to the **{name}** skill (from the {group} package) for {brief description}.` |
+| `Read ${CLAUDE_PLUGIN_ROOT}/skills/{name}/references/{file}` | Inline the content (if marked "inline") or replace with: `See **references/{file}** for {brief description}.` |
+| `${CLAUDE_PLUGIN_ROOT}/hooks/{script}` | Replace with relative path: `hooks/scripts/{script}` |
+| Any remaining `${CLAUDE_PLUGIN_ROOT}` | Remove the path variable, use relative paths or named references |
+
+### 3b. Tool-Specific Language
+
+Rewrite instructions that reference Claude Code tools by name. The goal is to describe the *action*, not the tool.
+
+| Pattern to Detect | Generic Replacement |
+|-------------------|-------------------|
+| "Use the Read tool to..." / "Read the file at..." | "Read..." / "Open..." |
+| "Use Glob to find..." / "Glob for..." | "Search for files matching..." / "Find files..." |
+| "Use Grep to search..." / "Grep for..." | "Search file contents for..." / "Find occurrences of..." |
+| "Use the Bash tool to..." / "Run with Bash:" | "Run the command:" / "Execute:" |
+| "Use Write to create..." / "Write the file:" | "Create the file:" / "Write:" |
+| "Use Edit to modify..." / "Edit the file:" | "Modify the file:" / "Update:" |
+| "Use the Agent tool to spawn..." | "Delegate to..." / "Have a sub-agent..." |
+| "Use the Task tool..." | "Create a background task to..." |
+
+Also remove tool name lists in prose like "You have access to Read, Glob, Grep, Bash" or "allowed tools: Read, Write, Edit" — these are implementation details.
+
+### 3c. Orchestration Decomposition
+
+Claude Code's team orchestration features (TeamCreate, SendMessage, TaskCreate, etc.) should be decomposed into plain-language workflow descriptions. The intent is to describe *what work happens* and *in what order*, not the specific API.
+
+**Team creation and coordination:**
+
+Before (Claude Code):
+```
+1. Create a team with TeamCreate
+2. Spawn 3 explorer agents via Agent tool with subagent_type: "code-explorer"
+3. Create tasks for each explorer using TaskCreate
+4. Wait for all explorers to complete (monitor via TaskList)
+5. Spawn a synthesizer agent to merge findings
+6. Read findings via SendMessage
+```
+
+After (generic):
+```
+1. Delegate exploration to 3 independent workers, each assigned a different focus area
+   - These can run in parallel if the harness supports concurrent agents
+2. Once all exploration is complete, have a synthesizer agent merge the findings into a unified analysis
+```
+
+**Task management:**
+
+Before: `TaskCreate`, `TaskUpdate`, `TaskList`, `TaskGet`
+After: Describe as a checklist or workflow steps. "Track progress on these sub-tasks:" followed by the task descriptions.
+
+**Message passing:**
+
+Before: `SendMessage` with `type: "message"`, `type: "broadcast"`, `type: "shutdown_request"`
+After: Describe as coordination. "Share findings with the team lead" → "The exploration results feed into the next step." Remove shutdown requests entirely (harness manages agent lifecycle).
+
+**Wave-based execution:**
+
+Before: "Process in waves: Wave 1 handles leaf nodes, Wave 2 handles components depending on Wave 1..."
+After: "Process in dependency order. Components with no dependencies can be processed first (and in parallel if supported). Components that depend on earlier results should wait until their dependencies are complete."
+
+### 3d. Claude-Specific Prompt Engineering
+
+Remove directives that are specific to steering Claude's behavior rather than describing the task:
+
+| Pattern | Action |
+|---------|--------|
+| `"CRITICAL: Complete ALL N phases"` | Remove. The phase structure itself conveys this |
+| `"After completing each phase, immediately proceed to the next"` | Remove |
+| `"Do NOT create an implementation plan"` (plan mode workarounds) | Remove |
+| Model-tier instructions: "Use Sonnet for...", "Spawn as Opus" | Remove |
+| `"NEVER do this" / "ALWAYS do this"` blocks about AskUserQuestion | Remove (AskUserQuestion patterns are Claude Code-specific) |
+| References to `$ARGUMENTS` parsing | Replace with: "Accept the following inputs:" followed by parameter descriptions |
+| `context: fork` behavior descriptions | Remove |
+
+**Keep** phase structure, step numbering, and workflow ordering — these are useful organizational patterns regardless of platform.
+
+### 3e. User Interaction Patterns
+
+Claude Code's `AskUserQuestion` tool has a specific structured format. Convert to generic interaction descriptions:
+
+Before:
+```yaml
+AskUserQuestion:
+  questions:
+    - header: "Approach"
+      question: "Which approach should we use?"
+      options:
+        - label: "Option A"
+          description: "Fast but less thorough"
+        - label: "Option B"
+          description: "Slower but comprehensive"
+      multiSelect: false
+```
+
+After:
+```
+Prompt the user to choose an approach:
+- **Option A**: Fast but less thorough
+- **Option B**: Slower but comprehensive
+```
+
+For `multiSelect: true`, note "The user may select multiple options."
+
+### 3f. Settings and Configuration
+
+References to `.claude/agent-alchemy.local.md` or other Claude Code settings files should be generalized:
+
+Before: "Read `.claude/agent-alchemy.local.md` for `deep-analysis.cache-ttl-hours`"
+After: "Check configuration for cache TTL (default: 24 hours)"
+
+If the skill reads settings, list them in the Integration Notes as configurable parameters.
+
+---
+
+## 4. Hook Event Mapping
+
+Map Claude Code lifecycle events to generic event names with descriptions:
+
+| Claude Code Event | Generic Event | Description |
+|-------------------|---------------|-------------|
+| `PreToolUse` | `before_action` | Fires before the agent executes any action (file write, shell command, etc.) |
+| `PostToolUse` | `after_action` | Fires after an action completes successfully |
+| `PostToolUseFailure` | `after_action_failure` | Fires after an action fails |
+| `Stop` | `agent_stop` | Fires when the agent finishes its turn |
+| `SubagentStop` | `subagent_stop` | Fires when a delegated sub-agent completes |
+| `SubagentStart` | `subagent_start` | Fires when a delegated sub-agent is launched |
+| `SessionStart` | `session_start` | Fires when a new conversation session begins |
+| `SessionEnd` | `session_end` | Fires when a conversation session ends |
+| `UserPromptSubmit` | `user_input` | Fires when the user submits a message |
+| `PreCompact` | `before_context_compact` | Fires before the conversation context is compressed |
+| `Notification` | `notification` | Fires on system notifications |
+| `TaskCompleted` | `task_completed` | Fires when a tracked task is marked complete |
+| `TeammateIdle` | `agent_idle` | Fires when a delegated agent becomes idle |
+| `PermissionRequest` | `permission_request` | Fires when an action requires user approval |
+
+### Hook Entry Format
+
+Convert each hook entry from JSON to YAML:
+
+```yaml
+hooks:
+  - event: before_action
+    matcher: "Write|Edit|Bash"  # Optional regex filter on action type
+    description: "Auto-approve file operations targeting session directories"
+    type: command  # "command" or "prompt"
+    command: "./scripts/auto-approve-session.sh"
+    timeout: 5
+```
+
+For `type: "prompt"` hooks, the `prompt` field contains plain text instructions — keep as-is since they're already generic.
+
+### Script Cleanup
+
+For shell scripts referenced by hooks:
+
+1. Replace `${CLAUDE_PLUGIN_ROOT}` with relative paths (e.g., `./scripts/`)
+2. Remove references to Claude Code-specific JSON input format (`tool_name`, `tool_input`) — add a comment noting the script expects action context as JSON on stdin
+3. Keep the script's core logic intact (path matching, validation, approval decisions)
+4. Add a header comment explaining the script's purpose and expected input format
+
+---
+
+## 5. Integration Notes Template
+
+Append this section to every converted skill and agent. Tailor the content based on what the component actually needs.
+
+```markdown
+## Integration Notes
+
+**What this component does:** {One sentence summary of purpose}
+
+**Capabilities needed:**
+{List only capabilities this specific component requires}
+- File reading and searching (if it reads/searches files)
+- File writing and editing (if it creates/modifies files)
+- Shell command execution (if it runs commands)
+- User interaction / prompting (if it asks the user questions)
+- Sub-agent delegation (if it spawns other agents)
+- Web access (if it fetches URLs or searches the web)
+
+**Adaptation guidance:**
+{Specific notes about what needs manual attention, e.g.:}
+- "The exploration step delegates to multiple agents in parallel — implement as concurrent tasks if your harness supports it, or serialize if not"
+- "References to {skill-name} should point to wherever you've placed that converted skill"
+- "The original used a 3-tier model strategy (fast/balanced/powerful) — use your default model unless specific steps need stronger reasoning"
+
+**Configurable parameters:**
+{If the skill reads settings, list them here with defaults}
+```
+
+---
+
+## 6. Smart Resolution Decision Tree
+
+When deciding whether to inline a reference file or keep it separate:
+
+```
+Is the reference used by multiple components?
+├── Yes → Keep SEPARATE (shared resource, avoid duplication)
+└── No → Check line count
+    ├── Under 250 lines → INLINE into the consuming component
+    │   Insert content under a heading: ## {Reference Name}
+    │   Add a brief intro: "The following reference provides {purpose}:"
+    └── 250+ lines → Keep SEPARATE in references/
+        Replace the Read directive with: See **references/{filename}** for {purpose}.
+```
+
+When inlining, apply the same body transformation rules (sections 3a-3f) to the inlined content.
