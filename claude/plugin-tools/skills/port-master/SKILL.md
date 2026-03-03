@@ -78,7 +78,32 @@ Parse the `plugins` array. Each entry has `name`, `version`, `description`, and 
 
 ### Step 3: Group-Level Selection
 
-If `--all` was specified, select all groups. Otherwise, present groups for selection:
+Determine which plugin groups to convert based on the parsed arguments. Exactly one of these three branches applies:
+
+**If specific plugin names were provided as positional arguments:**
+
+Validate each name against the short group names extracted from the registry's `source` paths (e.g., `core-tools`, `dev-tools`). If all names are valid, use them as `SELECTED_GROUPS`.
+
+If any name doesn't match, present a correction prompt:
+
+```yaml
+AskUserQuestion:
+  questions:
+    - header: "Invalid Plugin"
+      question: "'{invalid-name}' was not found. Which plugin groups would you like to convert?"
+      options:
+        - label: "{group-name} (v{version})"
+          description: "{skill_count} skills, {agent_count} agents{, hooks} — {description}"
+      multiSelect: true
+```
+
+**If `--all` was specified:**
+
+Select all groups from the registry (excluding `plugin-tools`). No user interaction needed.
+
+**If NO arguments were provided (no plugin names, no `--all`):**
+
+Present the full list of available plugin groups for interactive selection. This is MANDATORY — do not assume defaults or skip this step.
 
 ```yaml
 AskUserQuestion:
@@ -91,7 +116,7 @@ AskUserQuestion:
       multiSelect: true
 ```
 
-For each group, scan its directory to count components:
+For each group option, scan its directory to count components:
 - Skills: `Glob claude/{group}/skills/*/SKILL.md`
 - Agents: `Glob claude/{group}/agents/*.md`
 - Hooks: check for `claude/{group}/hooks/hooks.json`
