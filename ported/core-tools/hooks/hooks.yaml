@@ -1,0 +1,9 @@
+description: Auto-approve file operations for deep-analysis session and cache management
+
+hooks:
+  before_action:
+    - matcher: "Write|Edit|Bash"
+      handler:
+        type: command
+        command: "bash hooks/scripts/auto-approve-da-session.sh"
+        timeout: 5
