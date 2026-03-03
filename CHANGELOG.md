@@ -29,3 +29,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Bump claude-tools from 0.2.2 to 0.2.3, core-tools from 0.2.1 to 0.2.2, dev-tools from 0.3.1 to 0.3.2, and sdd-tools from 0.2.4 to 0.2.5
 - Bump core-tools from 0.2.2 to 0.2.3, dev-tools from 0.3.2 to 0.3.3, sdd-tools from 0.2.5 to 0.2.6, and plugin-tools from 0.1.1 to 0.1.2
 - Bump plugin-tools from 0.1.2 to 0.1.3
+- Bump plugin-tools from 0.1.3 to 0.1.4
