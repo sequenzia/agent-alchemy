@@ -81,7 +81,7 @@ Remove all `${CLAUDE_PLUGIN_ROOT}` path references. The replacement depends on w
 |---------|-------------|
 | `Read ${CLAUDE_PLUGIN_ROOT}/skills/{name}/SKILL.md` | Inline the content (if marked "inline" in resolution plan) or replace with: `Refer to the **{name}** skill for {brief description of what it provides}.` |
 | `Read ${CLAUDE_PLUGIN_ROOT}/../{group}/skills/{name}/SKILL.md` | Replace with: `Refer to the **{name}** skill (from the {group} package) for {brief description}.` |
-| `Read ${CLAUDE_PLUGIN_ROOT}/skills/{name}/references/{file}` | Inline the content (if marked "inline") or replace with: `See **references/{file}** for {brief description}.` |
+| `Read ${CLAUDE_PLUGIN_ROOT}/skills/{name}/references/{file}` | Inline the content (if marked "inline"), or if the reference is owned by the current skill: `See **references/{file}** for {brief description}.`, or if owned by another skill: `See the **{file}** reference in the **{owner-skill}** skill directory for {brief description}.` |
 | `${CLAUDE_PLUGIN_ROOT}/hooks/{script}` | Replace with relative path: `hooks/scripts/{script}` |
 | Any remaining `${CLAUDE_PLUGIN_ROOT}` | Remove the path variable, use relative paths or named references |
 
@@ -274,17 +274,51 @@ Append this section to every converted skill and agent. Tailor the content based
 
 ## 6. Smart Resolution Decision Tree
 
-When deciding whether to inline a reference file or keep it separate:
+When deciding how to handle a reference file, first determine the **primary owner** — the skill whose source directory originally contained the reference (from the source path `skills/{owner}/references/{file}`). If the primary owner was not selected for conversion, assign ownership to the first selected consumer.
+
+### Skill-consumed references
 
 ```
-Is the reference used by multiple components?
-├── Yes → Keep SEPARATE (shared resource, avoid duplication)
-└── No → Check line count
-    ├── Under 250 lines → INLINE into the consuming component
-    │   Insert content under a heading: ## {Reference Name}
-    │   Add a brief intro: "The following reference provides {purpose}:"
-    └── 250+ lines → Keep SEPARATE in references/
-        Replace the Read directive with: See **references/{filename}** for {purpose}.
+Is the reference consumed by a single skill?
+├── Yes → Check line count
+│   ├── Under 250 lines → INLINE into the consuming skill's SKILL.md
+│   │   Insert content under a heading: ## {Reference Name}
+│   │   Add a brief intro: "The following reference provides {purpose}:"
+│   └── 250+ lines → Keep SEPARATE in the consuming skill's references/ directory
+│       File path: skills/{consumer}/references/{filename}
+│       Replace the Read directive with: See **references/{filename}** for {purpose}.
+└── No (multiple skill consumers) → Keep SEPARATE in the PRIMARY OWNER's references/ directory
+    File path: skills/{owner}/references/{filename}
+    For the owning skill: See **references/{filename}** for {purpose}.
+    For other consumers: See the **{filename}** reference in the **{owner-skill}** skill directory for {purpose}.
 ```
+
+### Agent-consumed references
+
+When an agent directly reads a reference file:
+
+```
+Check line count:
+├── Under 250 lines → INLINE into the agent body
+│   Insert content under a heading: ## {Reference Name}
+│   Add a brief intro: "The following reference provides {purpose}:"
+└── 250+ lines → PROMOTE TO SKILL
+    Create a new skill: skills/{ref-name}/SKILL.md
+    Frontmatter: name and description inferred from reference content
+    Body: the reference content (with body transformation rules applied)
+    Add the new skill to the agent's dependencies list
+```
+
+If a reference is consumed by both skills and agents, follow the skill-consumed rules. The agent references the owning skill's directory like any other cross-skill reference.
+
+### Path conventions
+
+- Same-skill reference: `references/{filename}` (relative to the skill's own directory)
+- Cross-skill reference: `../{owner-skill}/references/{filename}` (relative path between skill directories)
+- Promoted skill: `skills/{ref-name}/SKILL.md` (treated as a regular skill)
+
+### Name collision handling
+
+If a promoted agent reference shares a name with an existing skill, prefix with the agent name: `skills/{agent-name}-{ref-name}/SKILL.md`.
 
 When inlining, apply the same body transformation rules (sections 3a-3f) to the inlined content.

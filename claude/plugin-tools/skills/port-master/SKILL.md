@@ -180,24 +180,37 @@ For each dependency found, classify it:
 
 ### Step 3: Smart Resolution Planning
 
-For each reference file dependency, check its line count to decide inline vs. separate:
+For each reference file dependency, determine how to handle it based on line count, consumer count, and consumer type.
 
 1. Count lines in the referenced file using `Bash: wc -l < {path}`
-2. Apply the threshold:
-   - **Under 250 lines** → mark for **inline** (content will be embedded directly in the consuming component)
-   - **250 lines or more** → mark as **separate file** (will be copied to `references/` in the output)
-3. If a reference file is used by multiple components, always keep it separate regardless of size
+2. Determine the **primary owner** — the skill whose source directory originally contained the reference file (from the source path `skills/{owner}/references/{file}`). If the primary owner was not selected for conversion, assign ownership to the first selected consumer
+3. Identify all consumers — which skills and agents use this reference
+
+**Decision logic for skill-consumed references:**
+
+- **Under 250 lines AND single consumer** → mark for **inline** (content will be embedded directly in the consuming skill's SKILL.md)
+- **250+ lines AND single consumer** → mark as **separate** in the consuming skill's `references/` directory
+- **Multiple skill consumers** → mark as **separate** in the **primary owner** skill's `references/` directory; other consumers reference via relative path `../{owner-skill}/references/{file}`
+
+**Decision logic for agent-consumed references:**
+
+- **Under 250 lines** → mark for **inline** into the agent's body
+- **250+ lines** → mark as **promote_to_skill** — the reference becomes a new skill at `skills/{ref-name}/SKILL.md` with its content as the body. The agent's converted text will reference it as a dependency. If the name collides with an existing skill, prefix with the agent name: `{agent-name}-{ref-name}`
+
+**Mixed consumers (skill + agent):** Skill-consumed rules take precedence. The agent references the owning skill's directory.
 
 Store decisions as `RESOLUTION_PLAN`:
 ```
-[{ ref_path, line_count, decision: "inline"|"separate", used_by: [component names] }]
+[{ ref_path, line_count, decision: "inline"|"separate"|"promote_to_skill", owner_skill: "{skill-name}", used_by: [component names] }]
 ```
 
 ### Step 4: Present Dependency Summary
 
 Show the user:
 - Total dependencies found
-- How many will be inlined vs. kept separate
+- How many will be inlined vs. kept as separate files
+- Which skill directories will contain `references/` subdirectories and what they own
+- Any references promoted from agent references to standalone skills
 - Any external/missing dependencies that won't be included
 - Ask for confirmation to proceed
 
@@ -255,14 +268,22 @@ For each hooks component:
 
 ### Reference File Handling
 
-For reference files marked as "separate" in the `RESOLUTION_PLAN`:
+For reference files marked as **"separate"** in the `RESOLUTION_PLAN`:
 
 1. Read the source file
 2. Clean any `${CLAUDE_PLUGIN_ROOT}` paths in the content
 3. Remove Claude Code-specific tool references if present
-4. Store for copying to `references/` in the output
+4. Store for copying to the owning skill's `references/` directory (i.e., `skills/{owner_skill}/references/{file}`)
 
-For reference files marked as "inline" — their content was already embedded during skill/agent conversion.
+For reference files marked as **"promote_to_skill"**:
+
+1. Read the source file
+2. Apply the same body transformation rules (3a-3f from conversion-rules.md) to the content
+3. Wrap the content as a new skill with minimal frontmatter (`name` and `description` inferred from the reference content and heading)
+4. Store as a new skill entry at `skills/{ref-name}/SKILL.md`
+5. Update the consuming agent's `dependencies` list to include the new skill name
+
+For reference files marked as **"inline"** — their content was already embedded during skill/agent conversion.
 
 ---
 
@@ -298,16 +319,19 @@ Create the output directory structure and write all converted files:
 ├── manifest.yaml
 ├── INTEGRATION-GUIDE.md
 ├── skills/
-│   └── {name}.md
+│   └── {name}/
+│       ├── SKILL.md
+│       └── references/         (only if this skill owns reference files)
+│           └── {file}.md
 ├── agents/
 │   └── {name}.md
-├── hooks/
-│   ├── hooks.yaml
-│   └── scripts/
-│       └── {script-name}.sh
-└── references/
-    └── {name}.md
+└── hooks/
+    ├── hooks.yaml
+    └── scripts/
+        └── {script-name}.sh
 ```
+
+Each skill gets its own directory with `SKILL.md` inside. Reference files are co-located in the owning skill's `references/` subdirectory — only create the `references/` subdirectory when at least one separate reference file exists. There is no root-level `references/` directory. Agents remain as flat files.
 
 Write each converted component to its appropriate location.
 
@@ -327,8 +351,12 @@ converted: "{YYYY-MM-DD}"
 components:
   skills:
     - name: {name}
-      file: skills/{name}.md
+      file: skills/{name}/SKILL.md
       description: {description}
+      references:                          # only if this skill owns reference files
+        - name: {ref-name}
+          file: skills/{name}/references/{ref-name}.md
+          used_by: [{component names}]
   agents:
     - name: {name}
       file: agents/{name}.md
@@ -338,11 +366,6 @@ components:
     - event: {generic-event-name}
       file: hooks/hooks.yaml
       description: {what the hook does}
-
-references:
-  - name: {name}
-    file: references/{name}.md
-    used_by: [{component names}]
 
 dependencies:
   internal:
@@ -414,8 +437,10 @@ Write all files to the output directory using the `Write` tool. Track every file
 {for each component}
 
 **Files written:** {count}
+**Skill directories created:** {count}
 **References inlined:** {count} ({total lines})
-**References kept separate:** {count}
+**References co-located with skills:** {count}
+**References promoted to skills:** {count} (from agent references)
 **External dependencies:** {count} (not included)
 ```
 
