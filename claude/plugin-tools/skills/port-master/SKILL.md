@@ -40,6 +40,10 @@ Use the `AskUserQuestion` tool for ALL questions to the user. Never ask question
 
 Text output is only for status updates, summaries, and informational context.
 
+### AskUserQuestion Option Limits
+
+Each question in `AskUserQuestion` supports **2-4 options maximum** (plus a built-in "Other" for free-text input). Never create questions with more than 4 options — use presets, categories, or follow-up questions to stay within limits. When users need to pick from a large set, list all available items in the question text and let users specify via "Other".
+
 ### Plan Mode Behavior
 
 This skill performs an interactive conversion workflow. When invoked during plan mode:
@@ -89,24 +93,32 @@ For each group, scan its directory to count components:
 
 ### Step 3: Configuration Wizard
 
-Present all configuration options in a single `AskUserQuestion` call. Build the questions array dynamically — include only questions that still need user input (skip questions fully answered by arguments).
+Present configuration options via `AskUserQuestion`. Build the questions array dynamically — include only questions that still need user input (skip questions fully answered by arguments).
 
 **If ALL arguments were provided** (valid plugin names or `--all`, plus `--output` and `--flatten`), skip this step entirely and proceed to Step 4.
 
-Otherwise, build the questions array from the following, including only the ones needed:
+Otherwise, build the questions array from the following, including only the ones needed. Combine applicable questions into a single `AskUserQuestion` call (max 4 questions per call).
 
-**Q1: Plugin Groups** — include unless `--all` was specified or all positional args are valid group names:
+**Q1: Plugin Groups** — include unless `--all` was specified or all positional args are valid group names.
+
+List all available groups (with component counts) in the question text so users can reference them when choosing "Other". Use preset-based options to stay within the 4-option limit:
 
 ```yaml
 - header: "Plugin Groups"
-  question: "Which plugin groups would you like to convert?"
+  question: "Which plugin groups would you like to convert? Available: {group1} ({N} skills, {M} agents), {group2} (...), ..."
   options:
-    - label: "{group-name} (v{version})"
-      description: "{skill_count} skills, {agent_count} agents{, hooks} — {description}"
-  multiSelect: true
+    - label: "All groups"
+      description: "Convert all {count} available plugin groups"
+    - label: "Core stack"
+      description: "core-tools + dev-tools + claude-tools"
+    - label: "SDD pipeline"
+      description: "sdd-tools + tdd-tools + claude-tools"
+  multiSelect: false
 ```
 
-If positional arguments named specific plugins, pre-select those groups by listing them first with "(pre-selected)" appended to their labels. If any positional arg is invalid, include ALL groups and note the invalid name in the question text: "'{invalid-name}' was not found. Which plugin groups would you like to convert?"
+Build the preset options dynamically from the available groups — create 2-3 logical groupings based on the plugin descriptions. The user can always type specific group names via the built-in "Other" option.
+
+If positional arguments named specific plugins but any name is invalid, note the invalid name in the question text: "'{invalid-name}' was not found."
 
 **Q2: Output Directory** — include unless `--output` was provided:
 
@@ -134,47 +146,38 @@ If positional arguments named specific plugins, pre-select those groups by listi
   multiSelect: false
 ```
 
-Combine applicable questions into a single call:
-
-```yaml
-AskUserQuestion:
-  questions:
-    - {Q1 if needed}
-    - {Q2 if needed}
-    - {Q3 if needed}
-```
-
 Store results as:
-- `SELECTED_GROUPS` — plugin groups to convert
+- `SELECTED_GROUPS` — plugin groups to convert (parse from preset or "Other" text)
 - `OUTPUT_DIR` — base output directory (before timestamp)
 - `FLATTEN_MODE` — boolean, true if "Skills only" selected or `--flatten` provided
 
 ### Step 4: Component-Level Selection
 
-For each selected group, enumerate components by reading frontmatter from each file to extract `name` and `description`. Present for selection:
+For each selected group, enumerate components by reading frontmatter from each file to extract `name` and `description`. Count skills, agents, and hooks.
+
+Present a simplified selection per group using preset options (stays within 4-option limit). List all component names in the question text so users know what's available:
 
 ```yaml
 AskUserQuestion:
   questions:
     - header: "{group-name}"
-      question: "Select components from {group-name}:"
+      question: "Select components from {group-name} ({total} total — Skills: {skill_names}; Agents: {agent_names}; Hooks: {yes/no}):"
       options:
-        - label: "All components"
-          description: "Convert everything ({total} components)"
-        - label: "skill: {name}"
-          description: "{description}"
-        - label: "agent: {name}"
-          description: "{description}{flatten_note}"
-        - label: "hooks"
-          description: "{hook_count} lifecycle hooks{flatten_note}"
-      multiSelect: true
+        - label: "All components (Recommended)"
+          description: "Convert all {total} components"
+        - label: "Skills only"
+          description: "Convert {skill_count} skills, skip agents and hooks"
+        - label: "Custom selection"
+          description: "Specify which components to include via text"
+      multiSelect: false
 ```
 
-In **flatten mode**, append context to non-skill labels:
-- Agent descriptions: append ` — will be converted to skill`
-- Hooks description: append ` — will be absorbed into lifecycle-hooks skill`
+If multiple groups are selected, you can ask about all groups in a single `AskUserQuestion` call (one question per group, max 4 questions per call). For more than 4 groups, use multiple sequential calls.
 
-If "All components" is selected, include everything from that group.
+If the user selects "Custom selection" or types specific names via "Other", parse their response to build the component list.
+
+In **flatten mode**, add context to the question text:
+- Note that agents will be converted to skills and hooks will be absorbed into a lifecycle-hooks skill
 
 Build `SELECTED_COMPONENTS` — a flat list:
 ```
