@@ -192,6 +192,32 @@ After: "Check configuration for cache TTL (default: 24 hours)"
 
 If the skill reads settings, list them in the Integration Notes as configurable parameters.
 
+Note: After generalization, any remaining `.claude/` paths are caught by rule 3g (Platform Path Replacement) which converts them to `.agents/`.
+
+### 3g. Platform Path Replacement
+
+Replace ALL `.claude/` path references with `.agents/` in converted output. This applies as a blanket text replacement AFTER all other body transformations (3a-3f) have completed.
+
+| Pattern | Replacement |
+|---------|-------------|
+| `.claude/sessions/` | `.agents/sessions/` |
+| `.claude/tasks/` | `.agents/tasks/` |
+| `.claude/teams/` | `.agents/teams/` |
+| `.claude/worktrees/` | `.agents/worktrees/` |
+| `.claude/agent-alchemy.local.md` | `.agents/agent-alchemy.local.md` |
+| Any remaining `.claude/` path | `.agents/` equivalent |
+
+This applies to:
+- Skill and agent body text
+- Reference file content
+- Hook script content (shell scripts)
+- Integration guide text
+- Manifest metadata (if paths appear)
+
+**Implementation:** After all other transformations (3a-3f) are complete, perform a global search-and-replace of `.claude/` with `.agents/` on the final output text.
+
+**Exclusion:** The string `.claude-plugin` must NOT be affected — only standalone `.claude/` path segments are replaced. Use a pattern that matches `.claude/` followed by a path segment (e.g., `.claude/sessions/`) but not `.claude-plugin/`.
+
 ---
 
 ## 4. Hook Event Mapping
@@ -321,4 +347,177 @@ If a reference is consumed by both skills and agents, follow the skill-consumed 
 
 If a promoted agent reference shares a name with an existing skill, prefix with the agent name: `skills/{agent-name}-{ref-name}/SKILL.md`.
 
-When inlining, apply the same body transformation rules (sections 3a-3f) to the inlined content.
+When inlining, apply the same body transformation rules (sections 3a-3g) to the inlined content.
+
+---
+
+## 7. Agent-to-Skill Conversion Rules (Flatten Mode)
+
+When flatten mode is active, agents are converted to skills instead of being output as agents. These rules govern the transformation.
+
+### Frontmatter Mapping
+
+| Agent Field | Skill Field | Treatment |
+|-------------|-------------|-----------|
+| `name` | `name` | Keep as-is |
+| `description` | `description` | Keep. Append " (converted from agent)" |
+| `tools` | *(removed)* | Capabilities listed in Integration Notes prose |
+| `disallowedTools` | *(removed)* | Noted as restrictions in Integration Notes |
+| `model` | *(removed)* | Complexity hint in Integration Notes (e.g., "originally required high-reasoning model") |
+| `role` (inferred) | *(removed)* | Added as "Role context" note in Integration Notes |
+| `skills` | `dependencies` | Each preloaded skill becomes a dependency |
+| `permissionMode` | *(removed)* | Platform-specific |
+| `maxTurns` | *(removed)* | Platform-specific |
+| `hooks` | *(removed)* | Platform-specific |
+| `memory` | *(removed)* | Platform-specific |
+| `mcpServers` | *(removed)* | Platform-specific |
+
+### Body Reframing
+
+Agent system prompts are written as identity statements directed at the agent. Skills are written as task instructions for the invoking harness. Apply these reframing patterns:
+
+| Agent Pattern | Skill Replacement |
+|---------------|-------------------|
+| "You are a {role} that..." | "When invoked, perform the following {role} tasks:" |
+| "You are an agent responsible for..." | "This skill handles..." |
+| "Your task is to..." | "Perform the following:" |
+| "As a {role}, you should..." | "For {role} work:" |
+| "You have been assigned to..." | "The objective is to..." |
+| "Your role is..." | "This skill's purpose is..." |
+| "You only have access to {tools}" | *(remove — tools go in Integration Notes)* |
+| "You can use {tool} to..." | Rewrite using rule 3b (tool-specific language) |
+
+Preserve the substantive instructions, workflow steps, and domain knowledge from the agent body. Only reframe the identity and capability framing — the core logic stays intact.
+
+### Skill Preload Resolution
+
+Agent frontmatter `skills:` entries that preload other skills at spawn time become explicit references in the skill body:
+
+Before (agent frontmatter):
+```yaml
+skills:
+  - technical-diagrams
+  - language-patterns
+```
+
+After (in skill body, near the top):
+```markdown
+**Prerequisites:** This skill builds on knowledge from:
+- **technical-diagrams** — Mermaid diagram conventions and styling
+- **language-patterns** — Language-specific coding patterns and idioms
+```
+
+Read each preloaded skill's description to generate the brief summary after the dash.
+
+### Tool Capability Summary
+
+The agent's `tools` list becomes a paragraph in Integration Notes:
+
+```markdown
+**Original tool scope:** This component was originally an agent with access to: {tool list}.
+The target harness may want to scope this skill's capabilities accordingly:
+- File operations: {Read, Glob, Grep — if any present}
+- File modifications: {Write, Edit — if any present}
+- Shell execution: {Bash — if present}
+- Sub-agent delegation: {Agent — if present}
+- User interaction: {AskUserQuestion — if present}
+- Web access: {WebSearch, WebFetch — if any present}
+```
+
+Only include capability lines for tools that were actually in the agent's tools list.
+
+---
+
+## 8. Hook-to-Skill Conversion Rules (Flatten Mode)
+
+When flatten mode is active, all hooks from a group are merged into a single `lifecycle-hooks` skill rather than being output as a separate hooks directory.
+
+### Skill Structure
+
+```yaml
+---
+name: lifecycle-hooks
+description: >-
+  Behavioral rules and lifecycle event handlers for the {group-name} package.
+  Defines automated behaviors that trigger at specific points in the agent workflow.
+  (converted from hooks)
+dependencies: []
+---
+```
+
+### Name Collision Handling
+
+If a group already has a skill named `lifecycle-hooks`, prefix with the group name: `{group}-lifecycle-hooks`.
+
+### Event Conversion
+
+Each hook entry becomes a subsection in the skill body. Use the event mapping from Section 4 (Hook Event Mapping) to translate event names.
+
+Format for each hook:
+
+```markdown
+## On {generic-event-name}
+
+**Trigger:** {description from Section 4 event mapping}
+**Applies when:** {matcher pattern, if present — omit this line if no matcher}
+
+{For prompt hooks: the prompt text verbatim}
+
+{For command hooks: prose description of what the script does}
+```
+
+### Prompt Hook Handling
+
+Prompt hooks contain plain text instructions that are already platform-agnostic. Include the prompt text directly as the rule body under the event heading.
+
+### Command Hook Handling
+
+Command hooks reference shell scripts. For each:
+
+1. Read the referenced script to understand its purpose
+2. Write a prose summary describing the script's behavior as a behavioral rule
+3. Store the original script as a reference file at `skills/lifecycle-hooks/references/{script-name}.sh`
+4. Apply rule 3g (`.claude/` → `.agents/` path replacement) to the script content
+5. Reference the script from the skill body:
+
+```markdown
+The implementation logic is in **references/{script-name}.sh**. This script:
+- {bullet point summary of what the script does}
+- Expected input: {describe expected stdin/environment}
+- Expected output: {describe what it returns/prints}
+```
+
+### Merging Multiple Hooks for Same Event
+
+If multiple hooks fire on the same event (with different matchers), group them under the same `## On {event}` heading with sub-sections for each matcher:
+
+```markdown
+## On before_action
+
+### When action matches `Write|Edit`
+{behavior description}
+
+### When action matches `Bash`
+{behavior description}
+```
+
+### Integration Notes
+
+Append to the lifecycle-hooks skill:
+
+```markdown
+## Integration Notes
+
+**What this component does:** Defines automated behavioral rules that were originally enforced by platform lifecycle hooks.
+
+**Origin:** Converted from {count} lifecycle hooks ({list of original event types})
+
+**Capabilities needed:**
+- Event/lifecycle hook system (if the target harness supports one)
+- Alternatively, implement as middleware, conditional checks, or manual review steps
+
+**Adaptation guidance:**
+- These behaviors were originally enforced automatically by the platform. In the target harness, they may need to be implemented as middleware, event handlers, or manual review steps.
+- Command hook scripts in `references/` can be executed directly if the harness supports shell-based hooks.
+- Prompt hook text can be injected into agent context when the corresponding event fires.
+```
