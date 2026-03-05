@@ -1,0 +1,163 @@
+name: dev-tools
+description: "Agent Alchemy Dev Tools — dev utilities, debugging, and workflow enhancements"
+mode: "nested"
+source:
+  platform: "Claude Code"
+  plugin: "agent-alchemy-dev-tools"
+  version: "0.3.3"
+converted: "2026-03-05"
+
+components:
+  skills:
+    - name: architecture-patterns
+      file: skills/architecture-patterns/SKILL.md
+      description: "Provides architectural pattern knowledge for designing feature implementations including MVC, event-driven, microservices, and CQRS patterns."
+      origin: skill
+
+    - name: code-quality
+      file: skills/code-quality/SKILL.md
+      description: "Provides code quality principles including SOLID, DRY, testing strategies, and best practices for implementation review."
+      origin: skill
+
+    - name: project-learnings
+      file: skills/project-learnings/SKILL.md
+      description: "Captures project-specific patterns and anti-patterns into the project's CLAUDE.md."
+      origin: skill
+
+    - name: changelog-format
+      file: skills/changelog-format/SKILL.md
+      description: "Keep a Changelog format guidelines and entry writing best practices."
+      origin: skill
+
+    - name: document-changes
+      file: skills/document-changes/SKILL.md
+      description: "Generate a markdown report documenting codebase changes from the current session."
+      origin: skill
+
+    - name: release
+      file: skills/release/SKILL.md
+      description: "Prepare and execute a Python package release with verification steps."
+      origin: skill
+      nested_agents:
+        - name: changelog-manager
+          file: skills/release/agents/changelog-manager.md
+          description: "Reviews git history and updates CHANGELOG.md with entries for [Unreleased] section."
+          origin: agent
+          role: writer
+
+    - name: feature-dev
+      file: skills/feature-dev/SKILL.md
+      description: "Feature development workflow with exploration, architecture, implementation, and review phases."
+      origin: skill
+      nested_agents:
+        - name: code-reviewer
+          file: skills/feature-dev/agents/code-reviewer.md
+          description: "Reviews code implementations for correctness, security, maintainability with confidence-scored findings."
+          origin: agent
+          role: reviewer
+      references:
+        - name: adr-template
+          file: skills/feature-dev/references/adr-template.md
+          used_by: [feature-dev]
+        - name: changelog-entry-template
+          file: skills/feature-dev/references/changelog-entry-template.md
+          used_by: [feature-dev]
+
+    - name: bug-killer
+      file: skills/bug-killer/SKILL.md
+      description: "Systematic, hypothesis-driven debugging workflow with triage-based track routing."
+      origin: skill
+      nested_agents:
+        - name: bug-investigator
+          file: skills/bug-killer/agents/bug-investigator.md
+          description: "Executes diagnostic investigation tasks to test debugging hypotheses."
+          origin: agent
+          role: investigator
+      references:
+        - name: python-debugging
+          file: skills/bug-killer/references/python-debugging.md
+          used_by: [bug-killer]
+        - name: typescript-debugging
+          file: skills/bug-killer/references/typescript-debugging.md
+          used_by: [bug-killer]
+
+    - name: docs-manager
+      file: skills/docs-manager/SKILL.md
+      description: "Documentation management workflow for MkDocs sites and standalone markdown files."
+      origin: skill
+      nested_agents:
+        - name: docs-writer
+          file: skills/docs-manager/agents/docs-writer.md
+          description: "Generates MkDocs-flavored or standard GitHub-flavored Markdown documentation."
+          origin: agent
+          role: writer
+      references:
+        - name: markdown-file-templates
+          file: skills/docs-manager/references/markdown-file-templates.md
+          used_by: [docs-manager]
+
+dependencies:
+  internal:
+    - from: feature-dev
+      to: architecture-patterns
+      relationship: "Loads for design pattern guidance in Phase 4"
+    - from: feature-dev
+      to: code-quality
+      relationship: "Loads for quality review in Phase 6"
+    - from: feature-dev
+      to: changelog-format
+      relationship: "Loads for changelog entries in Phase 7"
+    - from: bug-killer
+      to: code-quality
+      relationship: "Loads for fix quality check (deep track)"
+    - from: bug-killer
+      to: project-learnings
+      relationship: "Loads to capture debugging learnings in Phase 5"
+    - from: release
+      to: changelog-manager
+      relationship: "Spawns to update CHANGELOG.md before release"
+    - from: feature-dev
+      to: code-reviewer
+      relationship: "Spawns for quality review in Phase 6"
+    - from: bug-killer
+      to: bug-investigator
+      relationship: "Spawns to test hypotheses in Phase 3"
+    - from: docs-manager
+      to: docs-writer
+      relationship: "Spawns for content generation in Phase 5"
+  external:
+    - from: feature-dev
+      to: deep-analysis
+      source_plugin: "core-tools"
+      relationship: "Loads for codebase exploration in Phase 2"
+      note: "Convert core-tools separately if needed"
+    - from: feature-dev
+      to: language-patterns
+      source_plugin: "core-tools"
+      relationship: "Loads for language-specific patterns in Phase 4"
+      note: "Convert core-tools separately if needed"
+    - from: feature-dev
+      to: technical-diagrams
+      source_plugin: "core-tools"
+      relationship: "Loads for architecture diagrams in Phase 4"
+      note: "Convert core-tools separately if needed"
+    - from: feature-dev
+      to: code-architect
+      source_plugin: "core-tools"
+      relationship: "Spawns for architecture design in Phase 4"
+      note: "Nested under codebase-analysis in core-tools"
+    - from: bug-killer
+      to: code-explorer
+      source_plugin: "core-tools"
+      relationship: "Spawns for deep-track codebase exploration in Phase 2"
+      note: "Nested under deep-analysis in core-tools"
+    - from: docs-manager
+      to: deep-analysis
+      source_plugin: "core-tools"
+      relationship: "Loads for codebase analysis in Phase 3"
+      note: "Convert core-tools separately if needed"
+    - from: docs-manager
+      to: code-explorer
+      source_plugin: "core-tools"
+      relationship: "Spawns for change-summary analysis"
+      note: "Nested under deep-analysis in core-tools"

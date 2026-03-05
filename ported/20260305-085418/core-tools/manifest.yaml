@@ -1,0 +1,111 @@
+name: core-tools
+description: "Agent Alchemy Core Tools — utilities and essential functions for AI agents"
+mode: "nested"
+source:
+  platform: "Claude Code"
+  plugin: "agent-alchemy-core-tools"
+  version: "0.2.3"
+converted: "2026-03-05"
+
+components:
+  skills:
+    - name: language-patterns
+      file: skills/language-patterns/SKILL.md
+      description: "Provides language-specific patterns for TypeScript, Python, and React including idioms, best practices, and common patterns."
+      origin: skill
+
+    - name: project-conventions
+      file: skills/project-conventions/SKILL.md
+      description: "Guides discovery and application of project-specific conventions including code patterns, naming, structure, and team practices."
+      origin: skill
+
+    - name: technical-diagrams
+      file: skills/technical-diagrams/SKILL.md
+      description: "Provides Mermaid diagram syntax, best practices, and styling rules for technical visualizations."
+      origin: skill
+      references:
+        - name: sequence-diagrams
+          file: skills/technical-diagrams/references/sequence-diagrams.md
+          used_by: [technical-diagrams]
+        - name: class-diagrams
+          file: skills/technical-diagrams/references/class-diagrams.md
+          used_by: [technical-diagrams]
+        - name: state-diagrams
+          file: skills/technical-diagrams/references/state-diagrams.md
+          used_by: [technical-diagrams]
+        - name: er-diagrams
+          file: skills/technical-diagrams/references/er-diagrams.md
+          used_by: [technical-diagrams]
+
+    - name: deep-analysis
+      file: skills/deep-analysis/SKILL.md
+      description: "Deep exploration and synthesis workflow with dynamic planning and hub-and-spoke coordination."
+      origin: skill
+      nested_agents:
+        - name: code-explorer
+          file: skills/deep-analysis/agents/code-explorer.md
+          description: "Explores codebases to find relevant files, trace execution paths, and map architecture."
+          origin: agent
+          role: explorer
+        - name: code-synthesizer
+          file: skills/deep-analysis/agents/code-synthesizer.md
+          description: "Synthesizes exploration findings into unified analysis with deep investigation capabilities."
+          origin: agent
+          role: synthesizer
+
+    - name: codebase-analysis
+      file: skills/codebase-analysis/SKILL.md
+      description: "Produce a structured codebase analysis report with architecture overview, critical files, patterns, and actionable recommendations."
+      origin: skill
+      nested_agents:
+        - name: code-architect
+          file: skills/codebase-analysis/agents/code-architect.md
+          description: "Designs implementation blueprints for features using exploration findings and architectural best practices."
+          origin: agent
+          role: architect
+
+    - name: lifecycle-hooks
+      file: skills/lifecycle-hooks/SKILL.md
+      description: "Behavioral rules and lifecycle event handlers for the core-tools package. (converted from hooks)"
+      origin: hooks
+      references:
+        - name: auto-approve-da-session
+          file: skills/lifecycle-hooks/references/auto-approve-da-session.sh
+          used_by: [lifecycle-hooks]
+
+dependencies:
+  internal:
+    - from: codebase-analysis
+      to: deep-analysis
+      relationship: "Loads for codebase exploration and synthesis"
+    - from: codebase-analysis
+      to: technical-diagrams
+      relationship: "Loads for Mermaid diagram styling in reports"
+    - from: deep-analysis
+      to: code-explorer
+      relationship: "Spawns as parallel exploration agents"
+    - from: deep-analysis
+      to: code-synthesizer
+      relationship: "Spawns to merge exploration findings"
+    - from: codebase-analysis
+      to: code-architect
+      relationship: "Spawns for architectural fix proposals"
+    - from: code-explorer
+      to: project-conventions
+      relationship: "Preloads for convention-aware exploration"
+    - from: code-explorer
+      to: language-patterns
+      relationship: "Preloads for language-aware exploration"
+    - from: code-synthesizer
+      to: project-conventions
+      relationship: "Preloads for convention-aware synthesis"
+    - from: code-synthesizer
+      to: language-patterns
+      relationship: "Preloads for language-aware synthesis"
+    - from: code-synthesizer
+      to: technical-diagrams
+      relationship: "Preloads for architecture diagrams in synthesis"
+    - from: code-architect
+      to: technical-diagrams
+      relationship: "Preloads for blueprint diagrams"
+  external: []
