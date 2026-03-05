@@ -4,6 +4,8 @@ description: >-
   Convert Claude Code plugins into generic, platform-agnostic format. Supports full conversion
   (skills, agents, hooks), flatten mode (skills only — agents converted to skills, hooks
   absorbed), or nested mode (agents nested as pure markdown within parent skills, hooks absorbed).
+  Full mode supports per-group or unified output layouts — unified merges all groups into a
+  single directory organized by component type.
   Strips Claude Code-specific implementation details to produce clean markdown files preserving
   only the intent and instructions.
   Use when asked to "make this portable", "convert to generic format", "export plugin",
@@ -11,7 +13,7 @@ description: >-
   "decouple from Claude Code", "flatten to skills only", "nest agents in skills", or when
   the user wants their plugin content usable outside Claude Code. Also use when the user wants
   to share skills with teams using different agent frameworks.
-argument-hint: <plugin-group> [--all] [--output <dir>] [--flatten] [--nested]
+argument-hint: <plugin-group> [--all] [--output <dir>] [--flatten] [--nested] [--unified]
 user-invocable: true
 disable-model-invocation: false
 allowed-tools: Read, Glob, Grep, Write, Edit, Bash, AskUserQuestion
@@ -24,7 +26,9 @@ Extract the platform-agnostic intent from Claude Code plugins, producing clean m
 The goal is portability through clarity — a developer familiar with any agent framework should be able to read the output and integrate it into their system without needing to understand Claude Code's internals.
 
 Three output modes are supported:
-- **Full mode** (default): Produces skills, agents, and hooks — preserves the original component structure in generic format.
+- **Full mode** (default): Produces skills, agents, and hooks — preserves the original component structure in generic format. Supports two output layouts:
+  - **Per-group** (default): Each plugin group gets its own subdirectory with separate manifest and integration guide.
+  - **Unified** (`--unified`): All groups merged into a single directory — one manifest, one integration guide, components organized by type. Cross-group dependencies become internal. Only meaningful when converting multiple groups.
 - **Flatten mode** (`--flatten`): Produces skills only — agents are converted to skills, hooks are absorbed into a `lifecycle-hooks` skill. Use this for agent harnesses that only support skills and not agents or hooks.
 - **Nested mode** (`--nested`): Agents become pure markdown instruction files nested within their parent skill's `agents/` directory. Hooks are absorbed into a `lifecycle-hooks` skill. Use this for harnesses that support sub-agent delegation but use skills as the primary organizational unit.
 
@@ -76,8 +80,13 @@ Parse `$ARGUMENTS` for:
 - `--output <dir>` — Output directory (default: `./ported/`)
 - `--flatten` — Skills-only output mode (agents converted to skills, hooks absorbed)
 - `--nested` — Nested output mode (agents nested as pure markdown within parent skills, hooks absorbed)
+- `--unified` — Unified output layout (all groups merged into a single directory tree; full mode only)
 
 If both `--flatten` and `--nested` are provided, report an error: these flags are mutually exclusive. Ask the user to choose one.
+
+If `--unified` is provided together with `--flatten` or `--nested`, report an error: `--unified` only applies to full mode.
+
+If `--unified` is provided with only one group (not `--all`), ignore it silently — unified and per-group produce identical output for a single group.
 
 ### Step 2: Load Marketplace Registry
 
@@ -153,11 +162,28 @@ If positional arguments named specific plugins but any name is invalid, note the
   multiSelect: false
 ```
 
+**Q4: Output Layout** — include only when ALL of these conditions are met:
+- Output mode is "Full" (not flatten or nested) — determined by arguments or Q3 answer
+- Multiple groups are selected or `--all` was specified — determined by arguments or Q1 answer
+- `--unified` was NOT already provided as an argument
+
+```yaml
+- header: "Output Layout"
+  question: "How should the output be organized?"
+  options:
+    - label: "Per-group (Recommended)"
+      description: "Each group in its own subdirectory with separate manifest and integration guide"
+    - label: "Unified"
+      description: "All groups merged into one directory — single manifest, single integration guide, components organized by type"
+  multiSelect: false
+```
+
 Store results as:
 - `SELECTED_GROUPS` — plugin groups to convert (parse from preset or "Other" text)
 - `OUTPUT_DIR` — base output directory (before timestamp)
 - `FLATTEN_MODE` — boolean, true if "Skills only" selected or `--flatten` provided
 - `NESTED_MODE` — boolean, true if "Nested" selected or `--nested` provided
+- `UNIFIED_LAYOUT` — boolean, true if "Unified" selected or `--unified` provided. Always false in flatten/nested mode or when only one group is selected
 
 ### Step 4: Component-Level Selection
 
@@ -204,7 +230,7 @@ Present a summary table showing selected components, output mode, and output dir
 AskUserQuestion:
   questions:
     - header: "Confirm"
-      question: "Proceed with converting {count} components? Output: {output_mode}, Directory: {OUTPUT_DIR}"
+      question: "Proceed with converting {count} components? Output: {output_mode}{layout_suffix}, Directory: {OUTPUT_DIR}"
       options:
         - label: "Proceed"
           description: "Continue to dependency analysis"
@@ -215,7 +241,7 @@ AskUserQuestion:
       multiSelect: false
 ```
 
-Where `{output_mode}` is "Full", "Flatten (skills only)", or "Nested (skills with embedded agents)".
+Where `{output_mode}` is "Full", "Flatten (skills only)", or "Nested (skills with embedded agents)". `{layout_suffix}` is ` (unified layout)` when `UNIFIED_LAYOUT` is true, empty string otherwise.
 
 ---
 
@@ -250,6 +276,8 @@ For each dependency found, classify it:
 | **External-available** | Target exists on disk but wasn't selected | Reference by name in manifest |
 | **External-missing** | Target doesn't exist locally | Note as unresolved in manifest |
 | **Reference file** | Points to a `references/*.md` file | Smart resolution (see Step 3) |
+
+**Unified layout adjustment:** When `UNIFIED_LAYOUT` is active, dependencies that would be classified as **External-available** between selected groups are reclassified as **Internal**. A component from group A that depends on a component from group B (both selected) is internal in unified mode because both exist in the same output directory. Only dependencies pointing to groups NOT in `SELECTED_GROUPS` remain external.
 
 ### Step 3: Smart Resolution Planning
 
@@ -291,6 +319,8 @@ When `NESTED_MODE` is active, agents are nested within their parent skill's dire
 This keeps all reference files at the skill directory level — nested agents don't have their own `references/` subdirectory.
 
 **Mixed consumers (skill + agent):** Skill-consumed rules take precedence. The agent references the owning skill's directory.
+
+**Unified layout adjustment:** When `UNIFIED_LAYOUT` is active, cross-group reference resolution follows the same rules as same-group resolution. All skills are siblings under a single `skills/` directory, so cross-skill paths use the standard `../{owner-skill}/references/{file}` convention regardless of which group the skills originated from.
 
 Store decisions as `RESOLUTION_PLAN`:
 ```
@@ -337,6 +367,9 @@ Show the user:
   - Agent-to-parent mappings discovered (which agent nests under which skill)
   - Any orphan agents that will be promoted to standalone skills
   - Any agents referenced by multiple skills (which skill gets the nesting, which get cross-references)
+- In **unified layout**, also show:
+  - Cross-group dependencies reclassified as internal (count and list)
+  - Any name collisions detected across groups (components with the same type and name from different groups)
 - Ask for confirmation to proceed
 
 ---
@@ -537,6 +570,16 @@ Create the timestamped output directory structure:
 
 Each selected group gets its own subdirectory under the timestamp. Store the full timestamped path as `TIMESTAMPED_OUTPUT`.
 
+When `UNIFIED_LAYOUT` is active, skip group subdirectories — all components go directly under the timestamp:
+```
+{OUTPUT_DIR}/{YYYYMMDD-HHMMSS}/
+├── manifest.yaml
+├── INTEGRATION-GUIDE.md
+├── skills/
+├── agents/
+└── hooks/
+```
+
 ### Step 2: Write Component Files
 
 Create the output directory structure and write all converted files.
@@ -559,6 +602,34 @@ Create the output directory structure and write all converted files.
     └── scripts/
         └── {script-name}.sh
 ```
+
+**Full mode — unified layout** output structure (when `UNIFIED_LAYOUT` is active):
+
+```
+{TIMESTAMPED_OUTPUT}/
+├── manifest.yaml              (single combined manifest)
+├── INTEGRATION-GUIDE.md       (single combined guide)
+├── skills/
+│   └── {name}/                (all skills from all groups, flat)
+│       ├── SKILL.md
+│       └── references/
+│           └── {file}.md
+├── agents/
+│   └── {name}.md              (all agents from all groups, flat)
+└── hooks/
+    ├── hooks.yaml             (merged hooks from all groups)
+    └── scripts/
+        └── {script-name}.sh
+```
+
+**Name collision handling:** When merging components from different groups, names may collide (e.g., two groups both have a `researcher` agent). Detect collisions before writing:
+
+1. Build a map of `{component-type}:{name}` across all groups
+2. For any collision, prefix the component name with its origin group: `{group}-{name}` (e.g., `sdd-researcher` and `plugin-researcher`)
+3. Update all internal references (dependency lists, spawn instructions, cross-references) to use the prefixed name
+4. Record the original name in the manifest's `original_name` field for traceability
+
+**Hooks merging:** When multiple groups have hooks, merge all hook entries into a single `hooks.yaml`. Add an `origin_group` field to each entry. If script names collide across groups, prefix with group name: `{group}-{script-name}.sh`.
 
 **Flatten mode** output structure (skills only — no `agents/` or `hooks/` directories):
 
@@ -652,6 +723,64 @@ dependencies:
 
 The `origin` field indicates whether each skill was originally a skill, an agent (converted to skill in flatten mode), or hooks (absorbed into lifecycle-hooks skill). In full mode, all skills have `origin: skill`.
 
+**Full mode — unified layout** manifest (when `UNIFIED_LAYOUT` is active):
+
+```yaml
+name: unified-export
+description: "Combined export of {group1}, {group2}, ... plugin groups"
+mode: "full"
+layout: "unified"
+source:
+  platform: "Claude Code"
+  groups:
+    - name: {group1}
+      plugin: "{marketplace-name-1}"
+      version: "{version-1}"
+    - name: {group2}
+      plugin: "{marketplace-name-2}"
+      version: "{version-2}"
+converted: "{YYYY-MM-DD}"
+
+components:
+  skills:
+    - name: {name}
+      file: skills/{name}/SKILL.md
+      description: {description}
+      origin: skill
+      origin_group: {group-name}
+      original_name: {original-name}    # only present if renamed due to collision
+      references:
+        - name: {ref-name}
+          file: skills/{name}/references/{ref-name}.md
+          used_by: [{component names}]
+  agents:
+    - name: {name}
+      file: agents/{name}.md
+      description: {description}
+      role: {role}
+      origin_group: {group-name}
+      original_name: {original-name}    # only present if renamed due to collision
+  hooks:
+    - event: {generic-event-name}
+      file: hooks/hooks.yaml
+      description: {what the hook does}
+      origin_group: {group-name}
+
+dependencies:
+  internal:                             # includes cross-group deps that were external in per-group mode
+    - from: {component}
+      to: {component}
+      relationship: "{what it loads/uses}"
+  external:                             # only deps pointing to groups NOT in SELECTED_GROUPS
+    - from: {component}
+      to: {external name}
+      source_plugin: "{plugin group}"
+      relationship: "{what it needs}"
+      note: "Not included — convert separately if needed"
+```
+
+Key differences from per-group manifest: `name` is `unified-export`, `layout: "unified"` field added, `source.groups` is an array, every component has `origin_group`, and cross-group dependencies appear as internal.
+
 In **flatten mode**, omit the `agents` and `hooks` sections entirely — all components appear under `skills`.
 
 In **nested mode**, use `mode: "nested"` and represent agents within their parent skill entries:
@@ -719,6 +848,43 @@ The guide helps harness developers understand and integrate the converted compon
 - [ ] Configure agent spawning for components that delegate to sub-agents
 - [ ] Set up lifecycle hooks if your harness supports them
 - [ ] Resolve external dependencies listed in manifest.yaml
+- [ ] Test each component individually before combining
+```
+
+**Full mode — unified layout** adjustments to the integration guide:
+
+- Title: `# Integration Guide: Unified Export`
+- Add an "Overview" paragraph explaining this package combines components from N groups, with a brief description of each group
+- Add a "Source Groups" table:
+
+```markdown
+## Source Groups
+| Group | Original Plugin | Version | Skills | Agents | Hooks |
+|-------|----------------|---------|--------|--------|-------|
+{table of all source groups with component counts}
+```
+
+- The "Component Inventory" table adds an "Origin Group" column
+- Add a "Name Collisions" section (omit entirely if no collisions occurred):
+
+```markdown
+## Name Collisions
+| Current Name | Original Name | Origin Group | Reason |
+|-------------|---------------|-------------|--------|
+{collision table}
+```
+
+- "Per-Component Notes" grouped by origin group with `### From {group}` subheadings
+- "Dependency Map" is a single unified graph — cross-group dependencies appear as internal
+- Update the "Adaptation Checklist":
+
+```markdown
+## Adaptation Checklist
+- [ ] Review each skill's instructions and adapt tool-specific language for your harness
+- [ ] Configure agent spawning for components that delegate to sub-agents
+- [ ] Set up lifecycle hooks if your harness supports them (hooks merged from {N} groups)
+- [ ] Resolve external dependencies listed in manifest.yaml
+- [ ] If components were renamed due to collisions, update any external references
 - [ ] Test each component individually before combining
 ```
 
@@ -826,6 +992,14 @@ Write all files to the output directory using the `Write` tool. Track every file
 **External dependencies:** {count} (not included)
 ```
 
+In **unified layout**, add these additional stats:
+```
+**Output layout:** Unified
+**Groups merged:** {count} ({group names})
+**Cross-group deps internalized:** {count}
+**Name collisions resolved:** {count} (renamed with group prefix)
+```
+
 In **flatten mode**, add these additional stats:
 ```
 **Agents converted to skills:** {count}
@@ -850,3 +1024,4 @@ Suggest:
 4. For components that used team orchestration (now decomposed to sequential/parallel steps), test the simplified workflow to ensure it meets needs
 5. In flatten mode: review agent-converted skills to verify the reframing preserved the original intent
 6. In nested mode: verify agent-to-parent mappings — ensure each agent is nested under the skill that logically spawns it. Review cross-skill references for accuracy
+7. In unified layout: check renamed components (if any collisions occurred) and verify the unified dependency map captures all cross-group relationships

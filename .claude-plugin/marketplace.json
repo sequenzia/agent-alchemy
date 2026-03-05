@@ -64,7 +64,7 @@
     },
     {
       "name": "agent-alchemy-plugin-tools",
-      "version": "0.2.3",
+      "version": "0.2.4",
       "description": "Agent Alchemy Plugin Tools — plugin lifecycle tools for AI agents",
       "source": "./claude/plugin-tools",
       "homepage": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/plugin-tools",
