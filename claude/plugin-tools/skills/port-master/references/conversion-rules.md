@@ -521,3 +521,157 @@ Append to the lifecycle-hooks skill:
 - Command hook scripts in `references/` can be executed directly if the harness supports shell-based hooks.
 - Prompt hook text can be injected into agent context when the corresponding event fires.
 ```
+
+---
+
+## 9. Agent-to-Nested Conversion Rules (Nested Mode)
+
+When nested mode is active, agents with a parent skill (determined by `AGENT_PARENT_MAP` from Phase 2) are converted to pure markdown instruction files and placed in the parent skill's `agents/` directory. Agents without a parent (orphans) are promoted to standalone skills using Section 7 rules.
+
+The key difference from flatten mode: nested agents retain their role-based voice because they are still conceptually sub-agents — their instructions are read by the parent skill when spawning. Flatten mode rewrites agent identity as task instructions because the agent loses its sub-agent nature entirely.
+
+### Output Format
+
+Nested agent files have **no YAML frontmatter**. They are pure markdown with a consistent section structure:
+
+```markdown
+# {Agent Name}
+
+{One-line summary of what this agent does — from the original frontmatter `description`.}
+
+## Role
+
+{Description of the agent's role and responsibilities.}
+
+## Inputs
+
+This agent receives:
+- **{param}**: {description}
+
+## Process
+
+{Numbered steps and workflow phases — the core logic from the agent body.}
+
+## Output Format
+
+{Structured output format if the agent produces JSON, markdown sections, etc.
+Omit this section entirely if the agent has no structured output.}
+
+## Guidelines
+
+{Behavioral rules, quality standards, and constraints.
+Omit this section if there are no notable guidelines beyond the process steps.}
+```
+
+### Frontmatter Disposal
+
+All YAML frontmatter fields are handled as follows:
+
+| Agent Field | Treatment |
+|-------------|-----------|
+| `name` | Used as the markdown title: `# {Name}` |
+| `description` | Used as the one-line summary below the title and as the basis for the Role section |
+| `tools` | Removed. Noted in the **parent skill's** Integration Notes as capability requirements for this sub-agent |
+| `disallowedTools` | Removed. Noted in the parent skill's Integration Notes as scope restrictions |
+| `model` | Removed. Noted in the parent skill's Integration Notes as a complexity hint (e.g., "originally ran on a high-reasoning model") |
+| `skills` | Converted to context references in the Role section (see Skill Preload Conversion below) |
+| `permissionMode` | Removed — platform-specific |
+| `maxTurns` | Removed — platform-specific |
+| `hooks` | Removed — platform-specific |
+| `memory` | Removed — platform-specific |
+| `mcpServers` | Removed — platform-specific |
+
+### Body Reframing
+
+Nested agents keep their role-based voice — they describe *who they are* and *what they do*, not task instructions for an invoker. Apply these reframing patterns:
+
+| Agent Pattern | Nested Replacement |
+|---------------|-------------------|
+| "You are a {role} that..." | "{Role} responsible for..." |
+| "You are an agent responsible for..." | "Responsible for..." |
+| "Your task is to..." | "The primary task is to..." |
+| "As a {role}, you should..." | "For {role} work:" |
+| "You have been assigned to..." | "The objective is to..." |
+| "Your role is..." | "This agent's purpose is..." |
+| "You only have access to {tools}" | *(remove — tools noted in parent skill's Integration Notes)* |
+| "You can use {tool} to..." | Rewrite using rule 3b (tool-specific language) |
+
+Preserve substantive instructions, workflow steps, and domain knowledge. Only reframe identity and capability framing — the core logic stays intact.
+
+After reframing, apply all standard Body Transformation Rules (3a-3g) to the body content.
+
+### Skill Preload Conversion
+
+Agent frontmatter `skills:` entries become prose references in the Role section:
+
+Before (agent frontmatter):
+```yaml
+skills:
+  - technical-diagrams
+  - language-patterns
+```
+
+After (in Role section):
+```markdown
+This agent draws on knowledge from:
+- **technical-diagrams** — {brief description from the skill's description field}
+- **language-patterns** — {brief description}
+```
+
+Read each preloaded skill's description to generate the brief summary after the dash.
+
+### Parent Skill Augmentation
+
+After converting all agents for a parent skill, augment the parent skill's converted SKILL.md:
+
+**1. Add a `## Nested Agents` section** listing all nested agents with one-line descriptions:
+
+```markdown
+## Nested Agents
+
+The `agents/` directory contains instructions for specialized sub-agents.
+Read them when spawning the relevant sub-agent.
+
+- `agents/{name}.md` — {one-line description from the agent's original description}
+```
+
+**2. Rewrite spawn instructions** in the parent skill body to reference nested files:
+
+| Before | After |
+|--------|-------|
+| "Spawn N agents via Agent tool with subagent_type: '{name}'" | "Delegate to N independent {role} agents (see `agents/{name}.md` for instructions)" |
+| "Launch a {name} agent to..." | "Delegate to a {role} agent (see `agents/{name}.md`) to..." |
+| "subagent_type: '{plugin}:{name}'" | "Delegate to a {role} agent (see `agents/{name}.md` for instructions)" |
+
+**3. Add agent capability requirements** to the parent skill's Integration Notes:
+
+```markdown
+**Sub-agent capabilities:**
+{For each nested agent:}
+- **{agent-name}**: Requires {capability list derived from the agent's original `tools` field}
+```
+
+### Cross-Skill Agent References
+
+When a skill references an agent that is nested under a **different** parent skill:
+
+- Do NOT duplicate the agent file
+- Add a cross-reference in the referencing skill's body:
+  ```
+  This step uses the **{agent-name}** agent defined in the **{parent-skill}** skill
+  (see `../{parent-skill}/agents/{agent-name}.md` for instructions).
+  ```
+- Add the cross-reference to the referencing skill's `## Nested Agents` section (or create one if it doesn't exist):
+  ```
+  - `../{parent-skill}/agents/{agent-name}.md` — {description} *(defined in {parent-skill})*
+  ```
+
+### Orphan Agent Handling
+
+Agents not spawned by any selected skill are promoted to standalone skills using Section 7 (Agent-to-Skill Conversion Rules). Apply the full Section 7 transformation, then append to Integration Notes:
+
+```markdown
+**Origin:** Promoted from orphan agent `{name}` — no parent skill in this package spawns this agent directly.
+```
+
+These appear at the top level under `skills/{agent-name}/` with `origin: agent` in the manifest.

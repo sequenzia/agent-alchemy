@@ -2,15 +2,16 @@
 name: port-master
 description: >-
   Convert Claude Code plugins into generic, platform-agnostic format. Supports full conversion
-  (skills, agents, hooks) or flatten mode (skills only — agents converted to skills, hooks
-  absorbed — for harnesses that only support skills). Strips Claude Code-specific implementation
-  details to produce clean markdown files preserving only the intent and instructions.
+  (skills, agents, hooks), flatten mode (skills only — agents converted to skills, hooks
+  absorbed), or nested mode (agents nested as pure markdown within parent skills, hooks absorbed).
+  Strips Claude Code-specific implementation details to produce clean markdown files preserving
+  only the intent and instructions.
   Use when asked to "make this portable", "convert to generic format", "export plugin",
   "create universal skills", "strip platform dependencies", "make harness-agnostic",
-  "decouple from Claude Code", "flatten to skills only", or when the user wants their plugin
-  content usable outside Claude Code. Also use when the user wants to share skills with teams
-  using different agent frameworks.
-argument-hint: <plugin-group> [--all] [--output <dir>] [--flatten]
+  "decouple from Claude Code", "flatten to skills only", "nest agents in skills", or when
+  the user wants their plugin content usable outside Claude Code. Also use when the user wants
+  to share skills with teams using different agent frameworks.
+argument-hint: <plugin-group> [--all] [--output <dir>] [--flatten] [--nested]
 user-invocable: true
 disable-model-invocation: false
 allowed-tools: Read, Glob, Grep, Write, Edit, Bash, AskUserQuestion
@@ -22,9 +23,10 @@ Extract the platform-agnostic intent from Claude Code plugins, producing clean m
 
 The goal is portability through clarity — a developer familiar with any agent framework should be able to read the output and integrate it into their system without needing to understand Claude Code's internals.
 
-Two output modes are supported:
+Three output modes are supported:
 - **Full mode** (default): Produces skills, agents, and hooks — preserves the original component structure in generic format.
 - **Flatten mode** (`--flatten`): Produces skills only — agents are converted to skills, hooks are absorbed into a `lifecycle-hooks` skill. Use this for agent harnesses that only support skills and not agents or hooks.
+- **Nested mode** (`--nested`): Agents become pure markdown instruction files nested within their parent skill's `agents/` directory. Hooks are absorbed into a `lifecycle-hooks` skill. Use this for harnesses that support sub-agent delegation but use skills as the primary organizational unit.
 
 Complete ALL 5 phases. After completing each phase, immediately proceed to the next without waiting for user prompts.
 
@@ -73,6 +75,9 @@ Parse `$ARGUMENTS` for:
 - `--all` — Convert all plugin groups
 - `--output <dir>` — Output directory (default: `./ported/`)
 - `--flatten` — Skills-only output mode (agents converted to skills, hooks absorbed)
+- `--nested` — Nested output mode (agents nested as pure markdown within parent skills, hooks absorbed)
+
+If both `--flatten` and `--nested` are provided, report an error: these flags are mutually exclusive. Ask the user to choose one.
 
 ### Step 2: Load Marketplace Registry
 
@@ -95,7 +100,7 @@ For each group, scan its directory to count components:
 
 Present configuration options via `AskUserQuestion`. Build the questions array dynamically — include only questions that still need user input (skip questions fully answered by arguments).
 
-**If ALL arguments were provided** (valid plugin names or `--all`, plus `--output` and `--flatten`), skip this step entirely and proceed to Step 4.
+**If ALL arguments were provided** (valid plugin names or `--all`, plus `--output` and `--flatten` or `--nested`), skip this step entirely and proceed to Step 4.
 
 Otherwise, build the questions array from the following, including only the ones needed. Combine applicable questions into a single `AskUserQuestion` call (max 4 questions per call).
 
@@ -133,7 +138,7 @@ If positional arguments named specific plugins but any name is invalid, note the
   multiSelect: false
 ```
 
-**Q3: Output Mode** — include unless `--flatten` was provided:
+**Q3: Output Mode** — include unless `--flatten` or `--nested` was provided:
 
 ```yaml
 - header: "Output Mode"
@@ -142,7 +147,9 @@ If positional arguments named specific plugins but any name is invalid, note the
     - label: "Full (skills, agents, hooks)"
       description: "Preserves original component structure in generic format"
     - label: "Skills only (flatten)"
-      description: "Converts agents to skills, absorbs hooks into a lifecycle-hooks skill — for harnesses that only support skills"
+      description: "Converts agents to skills, absorbs hooks — for harnesses that only support skills"
+    - label: "Nested (skills with embedded agents)"
+      description: "Agents nested as pure markdown in parent skills, hooks absorbed — for harnesses using skills as primary unit"
   multiSelect: false
 ```
 
@@ -150,6 +157,7 @@ Store results as:
 - `SELECTED_GROUPS` — plugin groups to convert (parse from preset or "Other" text)
 - `OUTPUT_DIR` — base output directory (before timestamp)
 - `FLATTEN_MODE` — boolean, true if "Skills only" selected or `--flatten` provided
+- `NESTED_MODE` — boolean, true if "Nested" selected or `--nested` provided
 
 ### Step 4: Component-Level Selection
 
@@ -179,6 +187,10 @@ If the user selects "Custom selection" or types specific names via "Other", pars
 In **flatten mode**, add context to the question text:
 - Note that agents will be converted to skills and hooks will be absorbed into a lifecycle-hooks skill
 
+In **nested mode**, add context to the question text:
+- Note that agents will be nested as pure markdown instruction files within their parent skill's `agents/` directory
+- Note that hooks will be absorbed into a lifecycle-hooks skill (same as flatten)
+
 Build `SELECTED_COMPONENTS` — a flat list:
 ```
 [{ type: "skill"|"agent"|"hooks", group: "{group}", name: "{name}", path: "{file path}" }]
@@ -203,7 +215,7 @@ AskUserQuestion:
       multiSelect: false
 ```
 
-Where `{output_mode}` is "Full" or "Flatten (skills only)".
+Where `{output_mode}` is "Full", "Flatten (skills only)", or "Nested (skills with embedded agents)".
 
 ---
 
@@ -215,7 +227,7 @@ Where `{output_mode}` is "Full" or "Flatten (skills only)".
 
 For each component in `SELECTED_COMPONENTS`, read its source file and scan for dependency patterns.
 
-**Five dependency patterns to detect:**
+**Six dependency patterns to detect:**
 
 | Pattern | Example | Type |
 |---------|---------|------|
@@ -224,6 +236,7 @@ For each component in `SELECTED_COMPONENTS`, read its source file and scan for d
 | Reference file include | `${CLAUDE_PLUGIN_ROOT}/skills/{name}/references/{file}` | reference |
 | Agent spawn | `subagent_type: "{name}"` or `subagent_type: "{plugin}:{name}"` | agent-ref |
 | Agent skill preload | `skills:` array in agent frontmatter | agent-to-skill |
+| Agent-to-agent reference | Agent body mentions another agent by name in spawning context | agent-to-agent |
 
 Also detect external dependencies (MCP servers, shell scripts) for informational tracking.
 
@@ -267,11 +280,49 @@ When `FLATTEN_MODE` is active, agents are converted to skills. Use skill-consume
 
 This avoids creating promoted skills when the agent itself is already becoming a skill — the reference can live directly in the agent-as-skill's own `references/` directory.
 
+**Decision logic for agent-consumed references (nested mode):**
+
+When `NESTED_MODE` is active, agents are nested within their parent skill's directory. Use skill-consumed rules (same as flatten), but the "owning skill" for a nested agent's references is the **parent skill** from `AGENT_PARENT_MAP`:
+
+- **Under 250 lines AND single consumer** → mark for **inline** into the nested agent's markdown body
+- **250+ lines AND single consumer** → mark as **separate** in the **parent skill's** `references/` directory
+- **Multiple consumers** → mark as **separate** in the **primary owner** skill's `references/` directory
+
+This keeps all reference files at the skill directory level — nested agents don't have their own `references/` subdirectory.
+
 **Mixed consumers (skill + agent):** Skill-consumed rules take precedence. The agent references the owning skill's directory.
 
 Store decisions as `RESOLUTION_PLAN`:
 ```
 [{ ref_path, line_count, decision: "inline"|"separate"|"promote_to_skill", owner_skill: "{skill-name}", used_by: [component names] }]
+```
+
+### Step 3b: Agent-to-Parent Mapping (Nested Mode Only)
+
+Skip this step unless `NESTED_MODE` is active.
+
+For each agent in `SELECTED_COMPONENTS`, determine which skill "owns" it — the parent skill under which the agent will be nested.
+
+**Detection patterns (ordered by priority):**
+
+1. **`subagent_type` references** — Scan all selected skills for `subagent_type` patterns matching the agent name (e.g., `subagent_type: "code-explorer"` or `subagent_type: "core-tools:code-explorer"`). Highest confidence.
+2. **Prose spawning references** — Scan skill bodies and their reference files for the agent name appearing in spawning contexts (e.g., "launch a wave-lead", "spawn the code-explorer agent"). Lower confidence but catches agents referenced without `subagent_type`.
+3. **Agent-to-agent chains** — Scan other agents' bodies for references to this agent. If agent A spawns agent B, and agent A's parent is skill S, then agent B also nests under skill S.
+
+**Priority resolution when multiple skills reference the same agent:**
+
+- **Same-group skill with `subagent_type`** takes priority
+- **Same-group skill with prose reference** is second
+- **Agent-spawner's parent skill** is third (for agent-to-agent chains)
+- If still tied, the skill with the most references to the agent wins
+
+**Agent-spawns-agent chains:** When an agent spawns another agent (e.g., `wave-lead` spawns `context-manager`), both nest under the same grandparent skill. The `agents/` directory is flat — no nesting within nested agents.
+
+**Orphan agents:** If no selected skill references an agent, mark it as `orphan`. Orphan agents will be promoted to standalone skills during Phase 3.
+
+Store the mapping as `AGENT_PARENT_MAP`:
+```
+{ agent_name: parent_skill_name | "orphan" }
 ```
 
 ### Step 4: Present Dependency Summary
@@ -282,6 +333,10 @@ Show the user:
 - Which skill directories will contain `references/` subdirectories and what they own
 - Any references promoted from agent references to standalone skills
 - Any external/missing dependencies that won't be included
+- In **nested mode**, also show:
+  - Agent-to-parent mappings discovered (which agent nests under which skill)
+  - Any orphan agents that will be promoted to standalone skills
+  - Any agents referenced by multiple skills (which skill gets the nesting, which get cross-references)
 - Ask for confirmation to proceed
 
 ---
@@ -316,7 +371,7 @@ For each skill:
 
 ### Agent Conversion (Full Mode)
 
-Skip this section if `FLATTEN_MODE` is active — use "Agent-to-Skill Conversion" below instead.
+Skip this section if `FLATTEN_MODE` or `NESTED_MODE` is active — use "Agent-to-Skill Conversion" or "Agent-to-Nested Conversion" below instead.
 
 For each agent:
 
@@ -330,7 +385,7 @@ For each agent:
 
 ### Hook Conversion (Full Mode)
 
-Skip this section if `FLATTEN_MODE` is active — use "Hook-to-Skill Conversion" below instead.
+Skip this section if `FLATTEN_MODE` or `NESTED_MODE` is active — use "Hook-to-Skill Conversion" below instead.
 
 For each hooks component:
 
@@ -341,6 +396,62 @@ For each hooks component:
    - **Prompt hooks** → Preserve the prompt text as-is (already platform-agnostic). Apply rule 3g to any `.claude/` paths in the prompt text
 4. **Add descriptions** — For each hook entry, add a `description` field explaining when and why this hook fires
 5. **Store result**
+
+### Agent-to-Nested Conversion (Nested Mode)
+
+Skip this section unless `NESTED_MODE` is active.
+
+For each agent **with a parent** in `AGENT_PARENT_MAP`:
+
+1. **Read source** — Read the agent `.md` file, split into YAML frontmatter and markdown body
+2. **Strip frontmatter** — Remove YAML frontmatter entirely (no `---` delimiters in output)
+3. **Structure as pure markdown** — Apply the Agent-to-Nested Conversion Rules from Section 9 of conversion-rules.md:
+   - `# {Agent Name}` title (from frontmatter `name`)
+   - One-line summary (from frontmatter `description`)
+   - `## Role` — Rewrite identity framing to role description. Keep the role-based voice (e.g., "Responsible for exploring codebases...") since this is still a sub-agent — do NOT use task instruction framing like flatten mode
+   - `## Inputs` — Document expected parameters the agent receives when spawned
+   - `## Process` — Preserve numbered workflow steps and phase structure from the body
+   - `## Output Format` — Document structured output format if applicable; omit if not
+   - `## Guidelines` — Consolidate behavioral rules and constraints; omit if none
+4. **Transform body** — Apply all standard Body Transformation Rules (3a-3g from conversion-rules.md) to the content within each section
+5. **Convert `skills:` preloads** — Add "This agent draws on knowledge from:" in the Role section, listing each preloaded skill with a brief description
+6. **Remove tool-restriction prose** — Same as full/flatten mode
+7. **Store result** for output at `skills/{parent-skill}/agents/{agent-name}.md`
+
+For each **orphan agent** (marked as `orphan` in `AGENT_PARENT_MAP`):
+
+1. Apply the Agent-to-Skill conversion rules (same as flatten mode, Section 7 of conversion-rules.md)
+2. Store as `skills/{agent-name}/SKILL.md`
+3. Append to Integration Notes: "**Origin:** Promoted from orphan agent `{name}` — no parent skill in this package spawns this agent directly"
+
+### Parent Skill Augmentation (Nested Mode)
+
+Skip this section unless `NESTED_MODE` is active.
+
+After converting all nested agents, augment each parent skill's converted SKILL.md:
+
+1. **Add a `## Nested Agents` section** listing all agents nested under this skill:
+   ```markdown
+   ## Nested Agents
+
+   The `agents/` directory contains instructions for specialized sub-agents.
+   Read them when spawning the relevant sub-agent.
+
+   - `agents/{agent-name}.md` — {one-line description from the agent's original description}
+   ```
+
+2. **Rewrite spawn instructions** in the parent skill's body to reference nested files:
+   - Before: "Spawn N agents via Agent tool with subagent_type: '{name}'"
+   - After: "Delegate to N independent {role} agents (see `agents/{name}.md` for instructions)"
+
+3. **Add cross-references** for agents nested under a different skill:
+   - "This step uses the **{agent-name}** agent from the **{parent-skill}** skill (see `../{parent-skill}/agents/{agent-name}.md`)"
+
+4. **Add sub-agent capability requirements** to the parent skill's Integration Notes:
+   ```markdown
+   **Sub-agent capabilities:**
+   - **{agent-name}**: Requires {capability list from the agent's original tools field}
+   ```
 
 ### Agent-to-Skill Conversion (Flatten Mode)
 
@@ -364,9 +475,9 @@ For each agent:
    - Include the Tool Capability Summary from Section 7 of conversion-rules.md
 5. **Store result** as a skill entry (output to `skills/{name}/SKILL.md`, not `agents/`)
 
-### Hook-to-Skill Conversion (Flatten Mode)
+### Hook-to-Skill Conversion (Flatten and Nested Modes)
 
-Only applies when `FLATTEN_MODE` is active. ALL hooks from a group are merged into a single `lifecycle-hooks` skill.
+Only applies when `FLATTEN_MODE` or `NESTED_MODE` is active. ALL hooks from a group are merged into a single `lifecycle-hooks` skill.
 
 If the group has no hooks, skip this section.
 
@@ -467,6 +578,27 @@ In flatten mode, this includes:
 - Agent-converted skills (from Agent-to-Skill conversion)
 - The `lifecycle-hooks` skill (from Hook-to-Skill conversion, if hooks existed in the source)
 
+**Nested mode** output structure (skills with embedded agents — no top-level `agents/` or `hooks/`):
+
+```
+{TIMESTAMPED_OUTPUT}/{group-name}/
+├── manifest.yaml
+├── INTEGRATION-GUIDE.md
+└── skills/
+    └── {name}/
+        ├── SKILL.md
+        ├── agents/             (only if this skill owns nested agents)
+        │   └── {agent-name}.md (pure markdown, no YAML frontmatter)
+        └── references/         (only if this skill owns reference files)
+            └── {file}.md
+```
+
+In nested mode, this includes:
+- Original skills (converted as normal, augmented with `## Nested Agents` section if they own agents)
+- Nested agent instruction files within their parent skill's `agents/` directory
+- Orphan agents promoted to standalone skills (from Agent-to-Skill conversion)
+- The `lifecycle-hooks` skill (from Hook-to-Skill conversion, if hooks existed in the source)
+
 Each skill gets its own directory with `SKILL.md` inside. Reference files are co-located in the owning skill's `references/` subdirectory — only create the `references/` subdirectory when at least one separate reference file exists. There is no root-level `references/` directory.
 
 Write each converted component to its appropriate location.
@@ -478,7 +610,7 @@ The manifest provides a machine-readable inventory of the package:
 ```yaml
 name: {group-name}
 description: {from marketplace registry}
-mode: "full"                               # or "flatten"
+mode: "full"                               # or "flatten" or "nested"
 source:
   platform: "Claude Code"
   plugin: "{marketplace-name}"
@@ -521,6 +653,35 @@ dependencies:
 The `origin` field indicates whether each skill was originally a skill, an agent (converted to skill in flatten mode), or hooks (absorbed into lifecycle-hooks skill). In full mode, all skills have `origin: skill`.
 
 In **flatten mode**, omit the `agents` and `hooks` sections entirely — all components appear under `skills`.
+
+In **nested mode**, use `mode: "nested"` and represent agents within their parent skill entries:
+
+```yaml
+mode: "nested"
+
+components:
+  skills:
+    - name: {skill-name}
+      file: skills/{skill-name}/SKILL.md
+      description: {description}
+      origin: skill
+      nested_agents:                                         # only if this skill has nested agents
+        - name: {agent-name}
+          file: skills/{skill-name}/agents/{agent-name}.md
+          description: {description}
+          origin: agent
+          role: {role}
+      references:                                            # only if this skill owns reference files
+        - name: {ref-name}
+          file: skills/{skill-name}/references/{ref-name}.md
+          used_by: [{component names}]
+    - name: {orphan-agent-name}                              # orphan agents appear as top-level skills
+      file: skills/{orphan-agent-name}/SKILL.md
+      description: {description}
+      origin: agent
+```
+
+In nested mode, omit top-level `agents` and `hooks` sections. Agents appear as `nested_agents` within their parent skill. Orphan agents appear as top-level skill entries with `origin: agent`.
 
 ### Step 4: Generate INTEGRATION-GUIDE.md
 
@@ -593,6 +754,48 @@ This package was converted in flatten mode — all components are skills.
 - [ ] Test each component individually before combining
 ```
 
+**Nested mode** adjustments to the integration guide:
+
+- The "Component Inventory" table includes columns: Component, Type, Origin, Parent Skill, Description. Nested agents have their parent skill listed; top-level skills and orphans have "—".
+- The "Capability Requirements" section notes that agent capabilities are documented within their parent skill's Integration Notes under "Sub-agent capabilities"
+- Add a "Nested Mode Notes" section after "Per-Component Notes":
+
+```markdown
+## Nested Mode Notes
+
+This package was converted in nested mode — agents are embedded within their parent skills as pure markdown instruction files.
+
+### Nesting Map
+| Agent | Parent Skill | Role | Purpose |
+|-------|-------------|------|---------|
+{table of agent-to-parent mappings from AGENT_PARENT_MAP}
+
+### Reading Nested Agents
+Each parent skill's SKILL.md contains a "Nested Agents" section listing its sub-agents with one-line descriptions. The agent files in `agents/` are pure markdown instructions — read them when spawning the corresponding sub-agent. They have no YAML frontmatter.
+
+### Orphan Agents
+{If any orphan agents were promoted to standalone skills, list them here with explanation. Otherwise: "No orphan agents — all agents are nested under a parent skill."}
+
+### Cross-Skill Agent References
+{If any skills reference agents nested under a different skill, list the cross-references here.}
+
+### Lifecycle Hooks Skill
+{Same as flatten mode — describe the behavioral rules it contains and their original event triggers, if hooks existed in the source}
+```
+
+- Update the "Adaptation Checklist" for nested mode:
+
+```markdown
+## Adaptation Checklist
+- [ ] Review each skill's instructions and adapt tool-specific language for your harness
+- [ ] For skills with nested agents, configure sub-agent spawning to read instructions from the agents/ directory
+- [ ] Review orphan agents (promoted to standalone skills) for role-appropriate context
+- [ ] Check cross-skill agent references and ensure relative paths work in your harness
+- [ ] Implement lifecycle-hooks rules as middleware, event handlers, or manual checks
+- [ ] Resolve external dependencies listed in manifest.yaml
+- [ ] Test each component individually before combining
+```
+
 ### Step 5: Write All Files
 
 Write all files to the output directory using the `Write` tool. Track every file written for the summary.
@@ -608,7 +811,7 @@ Write all files to the output directory using the `Write` tool. Track every file
 ```
 ## Conversion Complete
 
-**Output mode:** {Full | Flatten (skills only)}
+**Output mode:** {Full | Flatten (skills only) | Nested (skills with embedded agents)}
 **Output directory:** {TIMESTAMPED_OUTPUT}
 
 | Component | Type | Origin | Lines (source → output) | Notes |
@@ -629,6 +832,13 @@ In **flatten mode**, add these additional stats:
 **Hooks absorbed into lifecycle-hooks:** {count} ({hook_count} events)
 ```
 
+In **nested mode**, add these additional stats:
+```
+**Agents nested within skills:** {count} (across {parent_count} parent skills)
+**Orphan agents promoted to skills:** {count}
+**Hooks absorbed into lifecycle-hooks:** {count} ({hook_count} events)
+```
+
 The "Origin" column shows "skill", "agent", or "hooks" — in full mode this always matches "Type", but in flatten mode it shows the original component type before conversion.
 
 ### Next Steps
@@ -639,3 +849,4 @@ Suggest:
 3. If external dependencies exist, note which plugin groups they come from
 4. For components that used team orchestration (now decomposed to sequential/parallel steps), test the simplified workflow to ensure it meets needs
 5. In flatten mode: review agent-converted skills to verify the reframing preserved the original intent
+6. In nested mode: verify agent-to-parent mappings — ensure each agent is nested under the skill that logically spawns it. Review cross-skill references for accuracy
