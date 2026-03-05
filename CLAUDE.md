@@ -19,6 +19,7 @@ agent-alchemy/
 │   ├── plugin-tools/          # Plugin porting, adapter validation, ported plugin maintenance, ecosystem health
 │   ├── opencode-tools/        # OpenCode extension creation, update, and validation toolkit
 │   └── cs-tools/              # Competitive programming problem-solving and solution verification
+├── agent-tools/               # Python CLI for cross-harness skill management (Typer)
 ├── apps/
 │   └── task-manager/          # Next.js 16 real-time Kanban dashboard
 ├── extensions/
@@ -40,6 +41,13 @@ npm install
 npm run build                  # Build with esbuild
 npm run watch                  # Watch mode
 npm run package                # Package VSIX
+
+# Agent Tools CLI
+cd agent-tools
+uv sync                        # Install dependencies
+uv run agent-tools --help      # Run CLI
+uv run pytest                  # Run tests (~295 tests)
+uv run ruff check .            # Lint
 
 # Linting
 pnpm lint                      # Lint all packages

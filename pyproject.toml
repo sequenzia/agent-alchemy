@@ -18,3 +18,8 @@ docs = [
 [tool.uv]
 
 default-groups = ["dev", "docs"]
+
+[tool.uv.workspace]
+members = [
+    "agent-tools",
+]
