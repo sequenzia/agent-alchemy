@@ -1,0 +1,255 @@
+name: unified-export
+description: "Combined export of core-tools, dev-tools, git-tools plugin groups"
+mode: "full"
+layout: "unified"
+source:
+  platform: "Claude Code"
+  groups:
+    - name: core-tools
+      plugin: "agent-alchemy-core-tools"
+      version: "0.2.3"
+    - name: dev-tools
+      plugin: "agent-alchemy-dev-tools"
+      version: "0.3.3"
+    - name: git-tools
+      plugin: "agent-alchemy-git-tools"
+      version: "0.1.0"
+converted: "2026-03-05"
+
+components:
+  skills:
+    - name: deep-analysis
+      file: skills/deep-analysis/SKILL.md
+      description: "Deep exploration and synthesis workflow with dynamic planning and hub-and-spoke coordination"
+      origin: skill
+      origin_group: core-tools
+    - name: codebase-analysis
+      file: skills/codebase-analysis/SKILL.md
+      description: "Structured codebase analysis report with architecture overview, critical files, patterns, and recommendations"
+      origin: skill
+      origin_group: core-tools
+      references:
+        - name: report-template
+          file: skills/codebase-analysis/SKILL.md
+          used_by: [codebase-analysis]
+        - name: actionable-insights-template
+          file: skills/codebase-analysis/SKILL.md
+          used_by: [codebase-analysis]
+    - name: language-patterns
+      file: skills/language-patterns/SKILL.md
+      description: "Language-specific patterns for TypeScript, Python, and React"
+      origin: skill
+      origin_group: core-tools
+    - name: project-conventions
+      file: skills/project-conventions/SKILL.md
+      description: "Guides discovery and application of project-specific conventions"
+      origin: skill
+      origin_group: core-tools
+    - name: technical-diagrams
+      file: skills/technical-diagrams/SKILL.md
+      description: "Mermaid diagram syntax, best practices, and styling rules for technical visualizations"
+      origin: skill
+      origin_group: core-tools
+      references:
+        - name: sequence-diagrams
+          file: skills/technical-diagrams/references/sequence-diagrams.md
+          used_by: [technical-diagrams]
+        - name: class-diagrams
+          file: skills/technical-diagrams/references/class-diagrams.md
+          used_by: [technical-diagrams]
+        - name: state-diagrams
+          file: skills/technical-diagrams/references/state-diagrams.md
+          used_by: [technical-diagrams]
+        - name: er-diagrams
+          file: skills/technical-diagrams/references/er-diagrams.md
+          used_by: [technical-diagrams]
+    - name: feature-dev
+      file: skills/feature-dev/SKILL.md
+      description: "Feature development workflow with exploration, architecture, implementation, and review phases"
+      origin: skill
+      origin_group: dev-tools
+    - name: bug-killer
+      file: skills/bug-killer/SKILL.md
+      description: "Systematic, hypothesis-driven debugging workflow with triage-based track routing"
+      origin: skill
+      origin_group: dev-tools
+      references:
+        - name: python-debugging
+          file: skills/bug-killer/references/python-debugging.md
+          used_by: [bug-killer]
+        - name: typescript-debugging
+          file: skills/bug-killer/references/typescript-debugging.md
+          used_by: [bug-killer]
+    - name: architecture-patterns
+      file: skills/architecture-patterns/SKILL.md
+      description: "Architectural pattern knowledge for designing feature implementations"
+      origin: skill
+      origin_group: dev-tools
+    - name: code-quality
+      file: skills/code-quality/SKILL.md
+      description: "Code quality principles including SOLID, DRY, testing strategies, and best practices"
+      origin: skill
+      origin_group: dev-tools
+    - name: project-learnings
+      file: skills/project-learnings/SKILL.md
+      description: "Captures project-specific patterns and anti-patterns into project documentation"
+      origin: skill
+      origin_group: dev-tools
+    - name: changelog-format
+      file: skills/changelog-format/SKILL.md
+      description: "Keep a Changelog format guidelines and entry writing best practices"
+      origin: skill
+      origin_group: dev-tools
+    - name: docs-manager
+      file: skills/docs-manager/SKILL.md
+      description: "Documentation management workflow for MkDocs sites and standalone markdown files"
+      origin: skill
+      origin_group: dev-tools
+      references:
+        - name: markdown-file-templates
+          file: skills/docs-manager/references/markdown-file-templates.md
+          used_by: [docs-manager]
+    - name: release
+      file: skills/release/SKILL.md
+      description: "Prepare and execute a Python package release with verification steps"
+      origin: skill
+      origin_group: dev-tools
+    - name: document-changes
+      file: skills/document-changes/SKILL.md
+      description: "Generate a markdown report documenting codebase changes from the current session"
+      origin: skill
+      origin_group: dev-tools
+    - name: git-commit
+      file: skills/git-commit/SKILL.md
+      description: "Commit staged changes with conventional commit message"
+      origin: skill
+      origin_group: git-tools
+  agents:
+    - name: code-explorer
+      file: agents/code-explorer.md
+      description: "Explores codebases to find relevant files, trace execution paths, and map architecture"
+      role: explorer
+      origin_group: core-tools
+    - name: code-synthesizer
+      file: agents/code-synthesizer.md
+      description: "Synthesizes exploration findings into unified analysis with deep investigation capabilities"
+      role: synthesizer
+      origin_group: core-tools
+    - name: code-architect
+      file: agents/code-architect.md
+      description: "Designs implementation blueprints for features using exploration findings"
+      role: architect
+      origin_group: core-tools
+    - name: code-reviewer
+      file: agents/code-reviewer.md
+      description: "Reviews code implementations for correctness, security, maintainability"
+      role: reviewer
+      origin_group: dev-tools
+    - name: bug-investigator
+      file: agents/bug-investigator.md
+      description: "Executes diagnostic investigation tasks to test debugging hypotheses"
+      role: investigator
+      origin_group: dev-tools
+    - name: changelog-manager
+      file: agents/changelog-manager.md
+      description: "Reviews git history and updates CHANGELOG.md with entries"
+      role: writer
+      origin_group: dev-tools
+    - name: docs-writer
+      file: agents/docs-writer.md
+      description: "Generates MkDocs-flavored or GitHub-flavored Markdown documentation"
+      role: writer
+      origin_group: dev-tools
+  hooks:
+    - event: before_action
+      file: hooks/hooks.yaml
+      description: "Auto-approve file operations targeting deep-analysis session directories"
+      origin_group: core-tools
+
+dependencies:
+  internal:
+    - from: codebase-analysis
+      to: deep-analysis
+      relationship: "Loads for exploration and synthesis"
+    - from: codebase-analysis
+      to: technical-diagrams
+      relationship: "Loads for report diagrams"
+    - from: feature-dev
+      to: deep-analysis
+      relationship: "Loads for codebase exploration in Phase 2"
+    - from: feature-dev
+      to: architecture-patterns
+      relationship: "Loads for design guidance in Phase 4"
+    - from: feature-dev
+      to: language-patterns
+      relationship: "Loads for implementation patterns in Phase 4"
+    - from: feature-dev
+      to: technical-diagrams
+      relationship: "Loads for architecture diagrams in Phase 4"
+    - from: feature-dev
+      to: code-quality
+      relationship: "Loads for quality review in Phase 6"
+    - from: feature-dev
+      to: changelog-format
+      relationship: "Loads for changelog entry in Phase 7"
+    - from: bug-killer
+      to: code-quality
+      relationship: "Loads for fix validation on deep track"
+    - from: bug-killer
+      to: project-learnings
+      relationship: "Loads to capture debugging discoveries"
+    - from: docs-manager
+      to: deep-analysis
+      relationship: "Loads for codebase exploration in Phase 3"
+    - from: deep-analysis
+      to: code-explorer
+      relationship: "Spawns N explorers for parallel exploration"
+    - from: deep-analysis
+      to: code-synthesizer
+      relationship: "Spawns 1 synthesizer to merge findings"
+    - from: codebase-analysis
+      to: code-architect
+      relationship: "Spawns for actionable insight fixes"
+    - from: codebase-analysis
+      to: code-explorer
+      relationship: "Spawns for actionable insight investigation"
+    - from: feature-dev
+      to: code-architect
+      relationship: "Spawns 2-3 for architecture proposals"
+    - from: feature-dev
+      to: code-reviewer
+      relationship: "Spawns 3 for quality review"
+    - from: bug-killer
+      to: code-explorer
+      relationship: "Spawns 2-3 for deep track investigation"
+    - from: bug-killer
+      to: bug-investigator
+      relationship: "Spawns 1-3 for hypothesis testing"
+    - from: docs-manager
+      to: docs-writer
+      relationship: "Spawns for documentation generation"
+    - from: release
+      to: changelog-manager
+      relationship: "Spawns for changelog update"
+    - from: code-explorer
+      to: project-conventions
+      relationship: "Preloads for convention guidance"
+    - from: code-explorer
+      to: language-patterns
+      relationship: "Preloads for language idioms"
+    - from: code-synthesizer
+      to: project-conventions
+      relationship: "Preloads for convention guidance"
+    - from: code-synthesizer
+      to: language-patterns
+      relationship: "Preloads for language idioms"
+    - from: code-synthesizer
+      to: technical-diagrams
+      relationship: "Preloads for analysis diagrams"
+    - from: code-architect
+      to: technical-diagrams
+      relationship: "Preloads for blueprint diagrams"
+    - from: docs-writer
+      to: technical-diagrams
+      relationship: "Preloads for documentation diagrams"
+  external: []

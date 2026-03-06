@@ -1,0 +1,8 @@
+hooks:
+  - event: before_action
+    matcher: "Write|Edit|Bash"
+    description: "Auto-approve file operations targeting deep-analysis session and cache directories"
+    type: command
+    command: "./scripts/auto-approve-da-session.sh"
+    timeout: 5
+    origin_group: core-tools
