@@ -1,7 +1,7 @@
 ---
 name: run-tasks
 description: Execute pending tasks in dependency order with wave-based concurrent execution via Agent Teams
-argument-hint: "[--task-group <name>] [--phase <N,M>] [--dry-run]"
+argument-hint: "[<task-id>] [--task-group <name>] [--phase <N,M>] [--max-parallel <N>] [--retries <N>] [--dry-run]"
 allowed-tools:
   - TaskList
   - TaskGet
@@ -57,14 +57,20 @@ Parse the following arguments from the user's invocation:
 
 | Argument | Format | Default | Description |
 |----------|--------|---------|-------------|
+| `<task-id>` | positional integer | _(none — all tasks)_ | Execute a single specific task by ID. Mutually exclusive with `--task-group` and `--phase`. |
 | `--task-group` | `<name>` | _(none — all tasks)_ | Filter tasks to those with matching `metadata.task_group` |
 | `--phase` | `<N>` or `<N,M,...>` | _(none — all phases)_ | Comma-separated integers. Filter tasks by `metadata.spec_phase`. Tasks without `spec_phase` are excluded when active. |
+| `--max-parallel` | `<N>` | _(from settings)_ | Override `run-tasks.max_parallel` setting for this run. Must be a positive integer. |
+| `--retries` | `<N>` | _(from settings)_ | Override `run-tasks.max_retries` setting for this run. Must be a non-negative integer (0 = no retries). |
 | `--dry-run` | _(flag)_ | `false` | Complete Steps 1-3 only: load, plan, display. No agents spawned, no session directory created. |
 
-When both `--task-group` and `--phase` are provided, both filters apply (intersection).
+When both `--task-group` and `--phase` are provided, both filters apply (intersection). CLI args `--max-parallel` and `--retries` take precedence over settings file values.
 
 **Validation:**
 - `--phase` values must be positive integers. If a non-integer value is provided (e.g., `--phase abc`), report: "Invalid --phase value: must be comma-separated positive integers (e.g., --phase 1,2)." and stop.
+- `--max-parallel` must be a positive integer. If invalid, report: "Invalid --max-parallel value: must be a positive integer." and stop.
+- `--retries` must be a non-negative integer. If invalid, report: "Invalid --retries value: must be a non-negative integer." and stop.
+- If `<task-id>` is provided alongside `--task-group` or `--phase`, report: "Cannot combine task ID with --task-group or --phase filters." and stop.
 - If no tasks match the applied filters, report the available values. For `--phase`: "No tasks found for phase(s) {N}. Available phases: {sorted distinct spec_phase values}." For `--task-group`: "No tasks found for group '{name}'. Available groups: {sorted distinct task_group values}."
 
 ## 7-Step Orchestration Loop
@@ -94,8 +100,8 @@ See `references/orchestration.md` Step 2 for settings and the full planning proc
 
 Present the execution plan to the user via `AskUserQuestion`:
 
-- Total task count, wave count, and estimated team composition per wave (1 wave-lead + 1 context-manager + N executors).
-- Per-wave breakdown with task subjects, priorities, and model tiers.
+- Total task count, wave count, and estimated team composition per wave. For waves with task count >= `context_manager_threshold`: 1 wave-lead + 1 context-manager + N executors. For smaller waves: 1 wave-lead + N executors (no CM).
+- Per-wave breakdown with task subjects, priorities, and model tiers. Waves that skip CM are annotated with "(no context manager)".
 - Any circular dependency warnings or broken links.
 
 **If `--dry-run`**: Display the full plan details (wave breakdown, task assignments, model tiers, timeout estimates) and exit. No `TaskUpdate` calls, no session directory created, no agents spawned.
@@ -136,7 +142,7 @@ See `references/orchestration.md` Step 5 for the full wave execution procedure, 
 
 Generate a session summary and archive the session:
 
-- Write `session_summary.md` with pass/fail/partial/skipped counts, total execution time, per-wave breakdown, failed task list with reasons, and key decisions made during execution.
+- Write `session_summary.md` with pass/partial/fail/skipped counts, total execution time, per-wave breakdown, failed task list with reasons, and key decisions made during execution. PARTIAL tasks (core functionality works, non-critical criteria have issues) are tracked separately from PASS and FAIL — they are counted as completed but distinguished in metrics.
 - Write `session_complete` event to `progress.jsonl`.
 - Archive: Move `__live_session__/` contents to `.claude/sessions/{session-id}/`.
 
@@ -167,6 +173,7 @@ See `references/orchestration.md` Step 7 for the CLAUDE.md update criteria.
 - **Per-task timeouts**: Complexity-based (XS/S: 5 min, M: 10 min, L/XL: 20 min). Override via `metadata.timeout_minutes`.
 - **Dry-run mode**: `--dry-run` completes Steps 1-3 only. Displays the full execution plan without spawning agents or creating a session.
 - **Autonomous after confirmation**: After the user confirms at Step 3, no further prompts occur unless a Tier 3 escalation is triggered by persistent failures.
+- **Graceful abort**: Users can stop execution between waves by creating `.claude/sessions/__live_session__/.abort` from another terminal. The current wave completes, remaining tasks are marked failed, and the session is archived. Optionally include an abort reason as file content (e.g., `echo "requirements changed" > .claude/sessions/__live_session__/.abort`).
 - **Single-session invariant**: Only one execution session at a time per project. Existing sessions must be resolved before starting a new one.
 - **Phase and group filtering**: `--phase` and `--task-group` can be combined (AND logic). Filters narrow the task set before planning.
 
@@ -204,6 +211,28 @@ Hook definitions are in `${CLAUDE_PLUGIN_ROOT}/hooks/hooks.json`. For hook event
 ### Preview the execution plan without running
 ```
 /run-tasks --dry-run
+```
+
+### Execute a single task
+```
+/run-tasks 5
+```
+
+### Override parallelism for this run
+```
+/run-tasks --max-parallel 2
+```
+
+### Disable retries for this run
+```
+/run-tasks --retries 0
+```
+
+### Abort a running session (from another terminal)
+```
+touch .claude/sessions/__live_session__/.abort
+# Or with a reason:
+echo "requirements changed" > .claude/sessions/__live_session__/.abort
 ```
 
 ### Dry-run with filters

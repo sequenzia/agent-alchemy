@@ -11,6 +11,7 @@ tools:
   - TaskStop
   - SendMessage
   - Read
+  - Write
   - Glob
   - Grep
 ---
@@ -53,14 +54,24 @@ Extract from the orchestrator's prompt:
 2. Task list with full details (ID, subject, description, criteria, priority, complexity)
 3. `max_parallel` hint
 4. `max_retries` setting
-5. Session directory path
-6. Cross-wave context summary
+5. `retry_partial` setting (default: `false`)
+6. `context_manager_threshold` setting (default: `3`)
+7. Session directory path
+8. Cross-wave context summary
 
 Validate that the task list is non-empty. If empty, send a wave summary with zero tasks and exit.
 
-### Step 2: Launch Context Manager
+### Step 2: Launch Context Manager (Conditional)
 
-Launch the Context Manager agent as the **FIRST team member** before any task executors.
+**Adaptive CM spawning**: If the wave's task count is **less than** `context_manager_threshold` (default: 3), skip CM spawning. The wave-lead handles context distribution and finalization inline:
+- Read `execution_context.md` from the session directory directly
+- Include the cross-wave context summary inline in each executor's prompt
+- After all executors complete, write the wave's context updates to `execution_context.md` directly via `Write`
+- Set `context_manager_available = false` (Tier 2 enrichment is unavailable when CM is skipped)
+
+When CM is skipped, proceed directly to Step 3.
+
+**When task count >= threshold**, launch the Context Manager agent as the **FIRST team member** before any task executors.
 
 1. **Spawn the Context Manager** via `Task` tool with the following information:
    - Session directory path
@@ -87,9 +98,13 @@ Launch the Context Manager agent as the **FIRST team member** before any task ex
 For each task in the wave, in priority order:
 
 1. **Mark task `in_progress`** via `TaskUpdate` before launching its executor
-2. **Spawn the executor** via `Task` tool with the task's details, context summary, and instructions to send results back via `SendMessage`
-3. **Apply staggered spawning delay** (1-2 seconds) before spawning the next executor
-4. **Track the executor**: record task ID, executor agent ID, launch timestamp, and computed timeout
+2. **Spawn the executor** via `Task` tool with the task's details, context summary, and instructions to send results back via `SendMessage`. If the orchestrator provided a `PRODUCER OUTPUTS` section and any entries are relevant to this task (producer's `produces_for` includes this task's ID), include those entries in the executor's prompt under a `PRODUCER OUTPUTS` section so the executor has precise knowledge of dependency outputs (file paths, key decisions).
+3. **Write `task_start` event** to `progress.jsonl` in the session directory (best-effort — failures do not affect execution):
+   ```jsonl
+   {"ts":"{ISO 8601}","event":"task_start","wave":{N},"task_id":"{id}","subject":"{subject}"}
+   ```
+4. **Apply staggered spawning delay** (1-2 seconds) before spawning the next executor
+5. **Track the executor**: record task ID, executor agent ID, launch timestamp, and computed timeout
 
 **Pacing rules:**
 - Use `max_parallel` as a guideline for how many executors to have running concurrently
@@ -149,13 +164,18 @@ Monitor for structured result messages from executors via `SendMessage`. As each
 
 1. **Acknowledge immediately** — process each result as it arrives; do not batch or wait for all executors
 2. **Parse the result message** to extract: status (PASS/PARTIAL/FAIL), summary, files modified, verification results, issues
-3. **Handle based on status**:
+3. **Write `task_complete` event** to `progress.jsonl` in the session directory (best-effort):
+   ```jsonl
+   {"ts":"{ISO 8601}","event":"task_complete","wave":{N},"task_id":"{id}","status":"{PASS|PARTIAL|FAIL}","duration_s":{seconds}}
+   ```
+4. **Handle based on status**:
    - **PASS**: Mark task `completed` via `TaskUpdate`. Record metrics. No retry needed.
-   - **PARTIAL or FAIL**: Enter the retry flow (see below)
+   - **PARTIAL** (when `retry_partial` is `false`): Mark task `completed` via `TaskUpdate`. Record as PARTIAL in wave summary. No retry needed — core functionality works and retrying risks regressions.
+   - **PARTIAL** (when `retry_partial` is `true`) **or FAIL**: Enter the retry flow (see below)
 
 #### 3-Tier Retry Model
 
-When an executor reports FAIL or PARTIAL (or is terminated due to timeout):
+When an executor reports FAIL, or PARTIAL with `retry_partial: true` (or is terminated due to timeout):
 
 **Tier 1 — Immediate Retry:**
 
@@ -224,7 +244,7 @@ After Context Manager finalization (or skip/failure), shut down all sub-agents b
 
 **CRITICAL: Complete this entire sequence before proceeding to Step 7. Do NOT skip or abbreviate this step.**
 
-1. **Build shutdown list**: Collect the names of ALL spawned agents — every task executor (including any retry executors spawned during Tier 1/Tier 2 retries) and the Context Manager (if it was successfully launched). Track the total count for the cleanup report.
+1. **Build shutdown list**: Collect the names of ALL spawned agents — every task executor (including any retry executors spawned during Tier 1/Tier 2 retries) and the Context Manager (if it was launched — exclude from list when CM was skipped due to adaptive threshold). Track the total count for the cleanup report.
 
 2. **Send `shutdown_request` to all agents**: For each agent in the shutdown list, send a `shutdown_request` via `SendMessage`. Send these in rapid succession (no delay between sends). Track which agents have been sent requests.
 
@@ -248,10 +268,11 @@ After Context Manager finalization (or skip/failure), shut down all sub-agents b
 
 After all executors have completed (or timed out) and Context Manager finalization is done (or skipped):
 
-1. **Count results**: tasks passed, tasks failed, tasks skipped
+1. **Count results**: tasks passed, tasks partial, tasks failed, tasks skipped
 2. **Calculate wave duration**: time from first executor launch to last result received
-3. **Gather context updates**: collect any learnings, patterns, or decisions reported by executors
-4. **Build the wave summary message** following the format defined in `${CLAUDE_PLUGIN_ROOT}/skills/run-tasks/references/communication-protocols.md`
+3. **Compute per-executor durations**: For each executor, calculate duration from launch timestamp to result receipt. Include in the per-task results section.
+4. **Gather context updates**: collect any learnings, patterns, or decisions reported by executors
+5. **Build the wave summary message** following the format defined in `${CLAUDE_PLUGIN_ROOT}/skills/run-tasks/references/communication-protocols.md`
 
 ### Step 8: Report to Orchestrator
 
@@ -262,6 +283,7 @@ WAVE SUMMARY
 Wave: {N}
 Duration: {total_wave_duration}
 Tasks Passed: {count}
+Tasks Partial: {count}
 Tasks Failed: {count}
 Tasks Skipped: {count}
 
@@ -324,7 +346,8 @@ If you receive a shutdown request from the orchestrator before completing Step 8
 |-------|------------------|
 | Before executor launch | Mark task `in_progress` |
 | Executor reports PASS | Mark task `completed` |
-| Executor reports PARTIAL | Mark task `failed` |
+| Executor reports PARTIAL (`retry_partial: false`) | Mark task `completed` |
+| Executor reports PARTIAL (`retry_partial: true`) | Mark task `failed` (enters retry flow) |
 | Executor reports FAIL | Mark task `failed` |
 | Tier 1 retry succeeds (PASS) | Mark task `completed` |
 | Tier 2 retry succeeds (PASS) | Mark task `completed` |

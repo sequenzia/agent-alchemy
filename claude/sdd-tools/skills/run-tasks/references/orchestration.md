@@ -52,6 +52,29 @@ If `--phase` was provided (one or more comma-separated positive integers):
 
 ### 1c: Validate Task Set
 
+**Single-task mode** (`<task-id>` positional argument):
+
+If a task ID was provided as a positional argument:
+
+1. Look up the task by ID via `TaskList`. If no task matches the ID:
+   ```
+   Task #{id} not found. Use TaskList to see available tasks.
+   ```
+   Stop execution.
+
+2. If the task is already `completed`:
+   ```
+   Task #{id} '{subject}' is already completed.
+   ```
+   Stop execution.
+
+3. If the task has unmet dependencies (blockedBy tasks that are not completed), warn but allow execution:
+   ```
+   Warning: Task #{id} has unmet dependencies: [{blocker_ids}]. Proceeding anyway (single-task mode).
+   ```
+
+4. Set the filtered task set to just this single task and continue to Step 2.
+
 After filtering, validate the resulting task set against these edge cases in order:
 
 **Empty task list** (no tasks at all, before or after filtering):
@@ -115,6 +138,8 @@ Read `.claude/agent-alchemy.local.md` if it exists. Parse YAML frontmatter betwe
 |---------|-------------|---------|-------------|
 | Max Parallel | `run-tasks.max_parallel` | `5` | Hint to wave-lead for executor pacing |
 | Max Retries | `run-tasks.max_retries` | `1` | Autonomous retries per tier before escalation |
+| Retry Partial | `run-tasks.retry_partial` | `false` | Whether to retry PARTIAL tasks. When false, PARTIAL tasks are marked completed (not retried). |
+| CM Threshold | `run-tasks.context_manager_threshold` | `3` | Minimum task count per wave to spawn a Context Manager. Waves with fewer tasks skip CM. |
 | Wave Lead Model | `run-tasks.wave_lead_model` | `opus` | Model tier for wave-lead agents |
 | Context Manager Model | `run-tasks.context_manager_model` | `sonnet` | Model tier for context manager agents |
 | Executor Model | `run-tasks.executor_model` | `opus` | Model tier for task executor agents |
@@ -127,10 +152,13 @@ Read `.claude/agent-alchemy.local.md` if it exists. Parse YAML frontmatter betwe
    ```
    Warning: Malformed YAML in .claude/agent-alchemy.local.md — using default settings.
    ```
-4. For each of the 5 settings, look up the key (e.g., `run-tasks.max_parallel`) in the parsed YAML:
+4. For each setting, look up the key (e.g., `run-tasks.max_parallel`) in the parsed YAML:
    - If the key is present and has a valid value, use it.
    - If the key is missing, use the documented default.
-5. CLI arguments take precedence over file settings: `--max-parallel` overrides `run-tasks.max_parallel`.
+5. **CLI argument precedence**: CLI args override file settings:
+   - `--max-parallel` overrides `run-tasks.max_parallel`
+   - `--retries` overrides `run-tasks.max_retries`
+   - Precedence order: CLI arg > settings file > default value
 
 **Edge cases**:
 - **No settings file**: All 5 defaults used silently — not an error.
@@ -152,6 +180,8 @@ run-tasks.executor_model: opus
 ```
 
 ### 2b: Topological Wave Assignment
+
+**Single-task mode**: If a single task was selected via positional `<task-id>`, skip topological sorting. Create a single wave containing just that task. Proceed to Step 2c.
 
 Build a dependency graph from the filtered task set and assign tasks to waves using topological sorting:
 
@@ -370,8 +400,8 @@ This file will be populated by the orchestrator after each wave with learnings f
 ```markdown
 # Task Log
 
-| Task | Subject | Wave | Status | Attempts | Duration |
-|------|---------|------|--------|----------|----------|
+| Task | Subject | Wave | Status | Attempts | Duration | Tokens |
+|------|---------|------|--------|----------|----------|--------|
 ```
 
 Updated by the orchestrator after each wave with per-task results from the wave summary.
@@ -406,7 +436,18 @@ Updated by the orchestrator after each wave with per-task results from the wave 
 {"ts":"{ISO 8601 timestamp}","event":"session_start","task_group":"{task_group}","total_tasks":{count},"total_waves":{wave_count}}
 ```
 
-**Progress event writing is best-effort** — failures do not affect execution flow. All event writes throughout the orchestration loop (session_start, wave_start, task_complete, wave_complete, session_complete) follow this principle: if an append to `progress.jsonl` fails for any reason (permissions, disk full, etc.), log a warning and continue execution normally. Progress events are informational — they must never interrupt the execution pipeline.
+**Progress event writing is best-effort** — failures do not affect execution flow. All event writes throughout the orchestration loop (session_start, wave_start, task_start, task_complete, wave_complete, session_complete) follow this principle: if an append to `progress.jsonl` fails for any reason (permissions, disk full, etc.), log a warning and continue execution normally. Progress events are informational — they must never interrupt the execution pipeline.
+
+**Per-task progress events** (written by the wave-lead, not the orchestrator):
+
+The wave-lead writes `task_start` and `task_complete` events directly to `progress.jsonl` for real-time visibility within a wave:
+
+```jsonl
+{"ts":"{ISO 8601}","event":"task_start","wave":{N},"task_id":"{id}","subject":"{subject}"}
+{"ts":"{ISO 8601}","event":"task_complete","wave":{N},"task_id":"{id}","status":"{PASS|PARTIAL|FAIL}","duration_s":{seconds}}
+```
+
+These events appear between the orchestrator's `wave_start` and `wave_complete` events, providing fine-grained progress tracking for dashboards and monitoring tools.
 
 ### 4d: Emit Session Start
 
@@ -495,6 +536,8 @@ WAVE ASSIGNMENT
 Wave: {N} of {total_waves}
 Max Parallel: {max_parallel}
 Max Retries: {max_retries}
+Retry Partial: {retry_partial}
+CM Threshold: {context_manager_threshold}
 Session Dir: {absolute path to .claude/sessions/__live_session__/}
 Context Manager Model: {context_manager_model}
 Executor Model: {executor_model}
@@ -513,6 +556,15 @@ CROSS-WAVE CONTEXT:
 {Summary of execution_context.md content from prior waves.
  For Wave 1: omit this section entirely if no prior context exists.
  For Wave 2+: include wave-by-wave learnings, key decisions, and known issues.}
+
+PRODUCER OUTPUTS:
+{For each task in this wave that has blockedBy relationships to completed tasks
+ whose produces_for metadata includes this task's ID, include a structured entry:}
+- Producer: Task #{id} ({subject})
+  Files: {comma-separated list of files from task_results mapping}
+  Summary: {brief summary from task_results mapping}
+{Omit this section entirely if no tasks in this wave have producer dependencies.
+ For Wave 1: always omitted (no prior completions).}
 ```
 
 **Cross-Wave Context Bridge** (bridges knowledge between waves):
@@ -559,6 +611,12 @@ The orchestrator receives the wave summary containing:
 - Per-task results (status, duration, summary, files modified)
 - Failed task details for escalation (if any)
 - Context updates from this wave
+
+**Capture wave-level metrics via `TaskOutput`**:
+
+After the wave-lead foreground Task completes, call `TaskOutput` on the wave-lead's task ID to capture aggregate wave metrics (`duration_ms`, `total_tokens` if available). Store these metrics for inclusion in `task_log.md` and `session_summary.md`.
+
+**Caveat**: Whether `TaskOutput` on a foreground Task returns `duration_ms`/`total_tokens` depends on runtime capabilities. If the fields are not present in the `TaskOutput` response, fall back to the wave-lead's self-reported duration from the wave summary. Do not fail if metrics are unavailable — they are informational only. Per-executor token data is not available to the orchestrator; only aggregate wave-level metrics from the wave-lead task are captured.
 
 **Wave-Lead Crash Recovery**:
 
@@ -637,8 +695,10 @@ After receiving the wave summary from the wave-lead:
 Read the current `task_log.md`, then append a row for each task in the wave summary:
 
 ```markdown
-| #{id} | {subject} | {wave_number} | {status} | {attempts} | {duration} |
+| #{id} | {subject} | {wave_number} | {status} | {attempts} | {duration} | {tokens or "--"} |
 ```
+
+The Tokens column shows per-task token usage if reported by the wave-lead, or `--` if unavailable.
 
 Write the complete updated file (read-modify-write pattern).
 
@@ -655,7 +715,7 @@ Write one event per task, in the order they appear in the wave summary. Best-eff
 **3. Write `wave_complete` event to `progress.jsonl`**:
 
 ```jsonl
-{"ts":"{ISO 8601 timestamp}","event":"wave_complete","wave":{N},"tasks_passed":{count},"tasks_failed":{count},"duration_s":{seconds}}
+{"ts":"{ISO 8601 timestamp}","event":"wave_complete","wave":{N},"tasks_passed":{count},"tasks_partial":{count},"tasks_failed":{count},"duration_s":{seconds}}
 ```
 
 **4. Update `execution_context.md`**:
@@ -681,7 +741,22 @@ If the wave summary includes a `CONTEXT UPDATES` section, append a new wave sect
 
 Write the complete updated file (read-modify-write pattern).
 
-**5. Emit wave completion summary**:
+**5. Store per-task result summaries for producer-consumer handoff**:
+
+For each task in the wave summary, store a result record in a persistent mapping (maintained across waves by the orchestrator). This mapping enables the producer-consumer handoff in Step 5d:
+
+```
+task_results[task_id] = {
+  subject: "{task subject}",
+  status: "{PASS|PARTIAL|FAIL}",
+  files: "{comma-separated list of modified files from wave summary}",
+  summary: "{brief summary from wave summary}"
+}
+```
+
+This mapping is used in Step 5d when constructing the wave-lead prompt for subsequent waves: if a Wave N task has `blockedBy` relationships to completed tasks whose `produces_for` metadata includes the current task's ID, the orchestrator injects a `PRODUCER OUTPUTS` section with the producer's result details.
+
+**6. Emit wave completion summary**:
 
 ```
 Wave {N}/{total_waves} complete: {passed} passed, {failed} failed ({duration})
@@ -690,7 +765,7 @@ Wave {N}/{total_waves} complete: {passed} passed, {failed} failed ({duration})
   ...
 ```
 
-**6. Handle Tier 3 escalations**:
+**7. Handle Tier 3 escalations**:
 
 If the wave summary includes a `FAILED TASKS (for escalation)` section, these are tasks that exhausted Tier 1 and Tier 2 retries within the wave-lead. The orchestrator must present each failed task to the user individually.
 
@@ -877,7 +952,20 @@ Write a `wave_cleanup` event to `progress.jsonl`:
 
 ### 5h: Inter-Wave Transition
 
-Before checking for remaining work, verify the previous wave is fully cleaned up:
+Before checking for remaining work, check for an abort signal and verify the previous wave is fully cleaned up:
+
+**0. Check for abort signal**: Check whether `.claude/sessions/__live_session__/.abort` exists.
+
+If the `.abort` file exists:
+1. Read its content (optional abort reason from the user).
+2. Mark all remaining pending tasks as `failed` via `TaskUpdate` with reason "session aborted by user" (or the abort reason if provided).
+3. Log: `Abort signal detected. Reason: {reason or "user requested abort"}. Marking {count} remaining task(s) as failed.`
+4. Write an `abort_detected` event to `progress.jsonl`:
+   ```jsonl
+   {"ts":"{ISO 8601}","event":"abort_detected","reason":"{reason}","tasks_aborted":{count}}
+   ```
+5. Include the `.abort` file in the session archive.
+6. Proceed directly to Step 6 (Summarize & Archive) — do not start any more waves.
 
 1. **Verify team is gone**: Confirm that `~/.claude/teams/{previous-wave-team-name}/` directory no longer exists (or `config.json` is absent). If it still exists:
    - Log a warning: "Previous wave team directory still exists after cleanup."
@@ -916,6 +1004,7 @@ Read `task_log.md` and `execution_context.md` to build a comprehensive session r
 **Started**: {ISO 8601 timestamp from session_start event}
 **Completed**: {ISO 8601 timestamp now}
 **Total Duration**: {human-readable duration}
+**Total Tokens**: {aggregate total_tokens from TaskOutput across all waves, or "unavailable" if not captured}
 
 ## Results
 
@@ -967,7 +1056,7 @@ Read `task_log.md` and `execution_context.md` to build a comprehensive session r
 Append the final event to `progress.jsonl`:
 
 ```jsonl
-{"ts":"{ISO 8601 timestamp}","event":"session_complete","total_passed":{pass_count},"total_failed":{fail_count},"total_duration_s":{seconds}}
+{"ts":"{ISO 8601 timestamp}","event":"session_complete","total_passed":{pass_count},"total_failed":{fail_count},"total_partial":{partial_count},"total_duration_s":{seconds},"total_tokens":{tokens_or_null}}
 ```
 
 ### 6c: Display Summary

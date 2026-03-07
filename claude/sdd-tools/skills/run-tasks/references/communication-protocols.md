@@ -25,9 +25,12 @@ The orchestrator provides the wave assignment as the wave-lead agent's launch pr
 | `Wave` | Required | Wave number and total waves (e.g., `2 of 4`) |
 | `Max Parallel` | Required | Hint for concurrent executor count |
 | `Max Retries` | Required | Number of autonomous retry attempts per tier |
+| `Retry Partial` | Required | Whether to retry PARTIAL tasks (`true` or `false`). When `false`, PARTIAL tasks are marked completed. |
+| `CM Threshold` | Required | Minimum task count to spawn a Context Manager. Waves with fewer tasks skip CM spawning. |
 | `Session Dir` | Required | Absolute path to `.claude/sessions/__live_session__/` |
 | `TASKS` | Required | List of tasks with full details (see sub-fields below) |
 | `CROSS-WAVE CONTEXT` | Optional | Summary of `execution_context.md` from prior waves. Omitted for Wave 1 if no prior context exists. |
+| `PRODUCER OUTPUTS` | Optional | Structured per-task producer results for tasks with `produces_for` dependencies. Omitted when no tasks have producer relationships. |
 
 **Task sub-fields:**
 
@@ -47,6 +50,8 @@ WAVE ASSIGNMENT
 Wave: 2 of 4
 Max Parallel: 5
 Max Retries: 3
+Retry Partial: false
+CM Threshold: 3
 Session Dir: /Users/dev/my-project/.claude/sessions/__live_session__/
 
 TASKS:
@@ -97,7 +102,8 @@ Sent by the wave-lead to the orchestrator after all executors in the wave have c
 | `Wave` | Required | Wave number |
 | `Duration` | Required | Total wave duration from first executor launch to last result |
 | `Tasks Passed` | Required | Count of tasks with PASS status |
-| `Tasks Failed` | Required | Count of tasks with FAIL or PARTIAL status |
+| `Tasks Partial` | Required | Count of tasks with PARTIAL status (completed without retry when `retry_partial: false`) |
+| `Tasks Failed` | Required | Count of tasks with FAIL status (or PARTIAL when `retry_partial: true` and retries exhausted) |
 | `Tasks Skipped` | Required | Count of tasks not attempted (spawn failure, shutdown, etc.) |
 | `RESULTS` | Required | Per-task breakdown (see sub-fields below) |
 | `FAILED TASKS (for escalation)` | Optional | Failed task details for Tier 3 escalation. Omit section entirely if no tasks failed. |
@@ -119,6 +125,7 @@ Sent by the wave-lead to the orchestrator after all executors in the wave have c
 | `Task #{id}` | Required | Task ID, status, and duration |
 | `Summary` | Required | Brief description of what was accomplished or why it failed |
 | `Files` | Optional | Comma-separated list of modified files. Omit if no files were modified. |
+| `Tokens` | Optional | Estimated token usage for the executor (if available from wave-lead tracking). Omit if unavailable. |
 
 **Failed Tasks sub-fields:**
 
@@ -135,6 +142,7 @@ WAVE SUMMARY
 Wave: 2
 Duration: 8m 32s
 Tasks Passed: 3
+Tasks Partial: 0
 Tasks Failed: 1
 Tasks Skipped: 0
 

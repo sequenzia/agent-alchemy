@@ -246,6 +246,8 @@ User preferences are stored in `.claude/agent-alchemy.local.md` (not committed):
 - `tdd.strictness`: RED phase enforcement level (`strict` | `normal` | `relaxed`, default: `normal`)
 - `tdd.test-review-threshold`: Minimum test quality score (0-100, default: `70`)
 - `tdd.test-review-on-generate`: Auto-run test-reviewer after generate-tests (default: `false`)
+- `run-tasks.retry_partial`: Whether to retry PARTIAL tasks. When false, PARTIAL is marked completed. When true, PARTIAL enters retry flow. (default: `false`)
+- `run-tasks.context_manager_threshold`: Minimum task count per wave to spawn a Context Manager. Waves with fewer tasks skip CM and wave-lead handles context inline. (default: `3`)
 - `plugin-tools.dependency-checker.severity-threshold`: Minimum severity to show (`critical` | `high` | `medium` | `low`, default: `low`)
 - `plugin-tools.dependency-checker.check-docs-drift`: Run Phase 4 CLAUDE.md/README cross-referencing (default: `true`)
 - `plugin-tools.dependency-checker.line-count-tolerance`: Percentage tolerance for line count drift in CLAUDE.md tables (default: `10`)
