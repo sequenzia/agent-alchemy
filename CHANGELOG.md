@@ -38,3 +38,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Bump plugin-tools from 0.2.3 to 0.2.4
 - Bump plugin-tools from 0.2.4 to 0.2.5
 - Bump sdd-tools from 0.2.6 to 0.2.7
+- Bump sdd-tools from 0.2.7 to 0.2.8
