@@ -33,6 +33,17 @@
           }
         ]
       }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/resolve-cross-plugins.sh ${CLAUDE_PLUGIN_ROOT}",
+            "timeout": 10
+          }
+        ]
+      }
     ]
   }
 }

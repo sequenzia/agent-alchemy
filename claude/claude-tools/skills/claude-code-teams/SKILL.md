@@ -12,7 +12,7 @@ A shared reference for Claude Code's Agent Teams features. Load this skill when 
 
 This skill covers team lifecycle, tool parameters, spawning mechanics, and file structure. For deeper topics, load the reference files listed in [Loading Reference Files](#loading-reference-files).
 
-> **Cross-reference**: For Claude Code Tasks (TaskCreate, TaskGet, TaskUpdate, TaskList), see the companion skill: `Read ${CLAUDE_PLUGIN_ROOT}/../claude-tools/skills/claude-code-tasks/SKILL.md`
+> **Cross-reference**: For Claude Code Tasks (TaskCreate, TaskGet, TaskUpdate, TaskList), see the companion skill: `Read ${CLAUDE_PLUGIN_ROOT}/skills/claude-code-tasks/SKILL.md`
 
 ---
 

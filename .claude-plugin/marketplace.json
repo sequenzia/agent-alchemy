@@ -10,7 +10,7 @@
   "plugins": [
     {
       "name": "agent-alchemy-claude-tools",
-      "version": "0.2.3",
+      "version": "0.2.4",
       "description": "Reference skills for Claude Code Tasks and Agent Teams features",
       "source": "./claude/claude-tools",
       "homepage": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/claude-tools",
@@ -28,7 +28,7 @@
     },
     {
       "name": "agent-alchemy-dev-tools",
-      "version": "0.3.3",
+      "version": "0.3.4",
       "description": "Agent Alchemy Dev Tools — dev utilities, debugging, and workflow enhancements",
       "source": "./claude/dev-tools",
       "homepage": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/dev-tools",
@@ -46,7 +46,7 @@
     },
     {
       "name": "agent-alchemy-sdd-tools",
-      "version": "0.2.8",
+      "version": "0.2.9",
       "description": "Agent Alchemy SDD Tools — Spec Driven Development tools for AI agents",
       "source": "./claude/sdd-tools",
       "homepage": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/sdd-tools",
@@ -55,7 +55,7 @@
     },
     {
       "name": "agent-alchemy-tdd-tools",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "description": "Agent Alchemy TDD Tools — Test Driven Development tools for AI agents",
       "source": "./claude/tdd-tools",
       "homepage": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/tdd-tools",
@@ -64,7 +64,7 @@
     },
     {
       "name": "agent-alchemy-plugin-tools",
-      "version": "0.2.5",
+      "version": "0.2.6",
       "description": "Agent Alchemy Plugin Tools — plugin lifecycle tools for AI agents",
       "source": "./claude/plugin-tools",
       "homepage": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/plugin-tools",
