@@ -10,7 +10,7 @@
   "plugins": [
     {
       "name": "agent-alchemy-claude-tools",
-      "version": "0.2.4",
+      "version": "0.2.5",
       "description": "Reference skills for Claude Code Tasks and Agent Teams features",
       "source": "./claude/claude-tools",
       "homepage": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/claude-tools",
@@ -46,7 +46,7 @@
     },
     {
       "name": "agent-alchemy-sdd-tools",
-      "version": "0.2.9",
+      "version": "0.2.10",
       "description": "Agent Alchemy SDD Tools — Spec Driven Development tools for AI agents",
       "source": "./claude/sdd-tools",
       "homepage": "https://github.com/sequenzia/agent-alchemy/tree/main/claude/sdd-tools",
