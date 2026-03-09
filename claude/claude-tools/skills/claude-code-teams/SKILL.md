@@ -3,7 +3,7 @@ name: claude-code-teams
 description: Reference for Claude Code Agent Teams — lifecycle, messaging, spawning, orchestration, and hooks
 user-invocable: false
 disable-model-invocation: false
-last-verified: 2026-02-23
+last-verified: 2026-03-09
 ---
 
 # Claude Code Agent Teams Reference
@@ -23,10 +23,10 @@ Creates a new named team and registers the caller as team lead.
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `team_name` | string | Yes | Unique team identifier. Used in file paths, environment variables, and member discovery. Use kebab-case (e.g., `analysis-team`). |
-| `description` | string | Yes | Human-readable description of the team's purpose. Shown in team config and used by teammates to understand their team's mission. |
+| `description` | string | No | Human-readable description of the team's purpose. Shown in team config and used by teammates to understand their team's mission. |
 | `agent_type` | string | No | The type of agent running as team lead. Informational; stored in config.json for member discovery. |
 
-**Return behavior**: Returns a confirmation with the team name. The team is immediately ready for member spawning after creation. A `config.json` file is created at `~/.claude/teams/{team-name}/config.json` with team metadata including lead identity, description, and member roster.
+**Return behavior**: Returns a confirmation with the team name. The team is immediately ready for member spawning after creation. Teams have a 1:1 correspondence with task lists — creating a team also creates a task list at `~/.claude/tasks/{team-name}/`. A `config.json` file is created at `~/.claude/teams/{team-name}/config.json` with team metadata including lead identity, description, and a `members` array where each member has `name`, `agentId`, and `agentType`.
 
 **Constraints**:
 - Team names must be unique across all active teams
@@ -37,68 +37,72 @@ Creates a new named team and registers the caller as team lead.
 
 ## TeamDelete Tool
 
-Deletes a team and cleans up its resources.
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `team_name` | string | Yes | Name of the team to delete. Must match an existing team created by the caller. |
+Deletes a team and cleans up its resources. Takes no parameters — the team name is determined from the current session's team context.
 
 **Prerequisites**: All team members must be shut down before deletion. Attempting to delete a team with active members will fail.
 
-**Cleanup behavior**: Removes the team's `config.json`, clears inbox directories, and deregisters the team. Task files associated with the team (under `~/.claude/tasks/{team-name}/`) are preserved for history.
+**Cleanup behavior**: Removes the team directory (`~/.claude/teams/{team-name}/`) and the task directory (`~/.claude/tasks/{team-name}/`), clears inbox directories, and deregisters the team.
 
 ---
 
 ## Team Lifecycle
 
-The full lifecycle of an agent team follows five phases:
+The full lifecycle of an agent team follows seven steps:
 
 ```
-Creation --> Member Spawning --> Coordination --> Shutdown --> Cleanup
+Create Team --> Create Tasks --> Spawn Teammates --> Assign Tasks --> Work --> Shutdown --> Cleanup
 ```
 
 ```mermaid
 stateDiagram-v2
     [*] --> Created: TeamCreate
-    Created --> Spawning: Task tool (team_name)
-    Spawning --> Coordinating: Members active
-    Spawning --> Coordinating: Spawn more members
-    Coordinating --> ShuttingDown: Work complete
+    Created --> TasksReady: TaskCreate
+    TasksReady --> Spawning: Agent tool (team_name, name)
+    Spawning --> Assigning: TaskUpdate (owner)
+    Spawning --> Spawning: Spawn more members
+    Assigning --> Working: Teammates active
+    Working --> Assigning: More tasks to assign
+    Working --> ShuttingDown: All work complete
     ShuttingDown --> Cleanup: All members stopped
     Cleanup --> [*]: TeamDelete
 
     classDef active fill:#e8f5e9,color:#000
     classDef transition fill:#fff3e0,color:#000
-    class Created,Cleanup transition
-    class Spawning,Coordinating,ShuttingDown active
+    class Created,TasksReady,Cleanup transition
+    class Spawning,Assigning,Working,ShuttingDown active
 ```
 
-### Phase Details
+### Step Details
 
-**1. Creation**: Team lead calls `TeamCreate` with a name and description. The team config file is written and the lead is registered.
+**1. Create team**: Team lead calls `TeamCreate` with a name. The team config file is written, a task list is created, and the lead is registered.
 
-**2. Member Spawning**: Team lead uses the `Task` tool with `team_name` parameter to spawn teammates. Each teammate runs as an isolated Claude Code session. Members can be spawned incrementally as work demands change.
+**2. Create tasks**: Team lead uses `TaskCreate` to add tasks. Tasks auto-use the team's task list at `~/.claude/tasks/{team-name}/`.
 
-**3. Coordination**: Members work on assigned tasks, communicate via `SendMessage`, and report results. The team lead monitors progress, assigns new work, and handles issues. Members may cycle between active and idle states — this is normal.
+**3. Spawn teammates**: Team lead uses the `Agent` tool with `team_name` and `name` parameters to spawn teammates. Each teammate runs as an isolated Claude Code session. Members can be spawned incrementally as work demands change.
 
-**4. Shutdown**: When all work is complete, the team lead sends `shutdown_request` messages to each member. Members acknowledge with `shutdown_response` and terminate. The lead waits for all members to confirm shutdown.
+**4. Assign tasks**: Team lead uses `TaskUpdate` with `owner` to assign tasks to specific teammates.
 
-**5. Cleanup**: After all members have stopped, the team lead calls `TeamDelete` to remove the team config and clean up resources.
+**5. Teammates work**: Members complete assigned tasks, communicate via `SendMessage`, and report results. The team lead monitors progress, assigns new work, and handles issues. Members go idle between turns — this is normal, not an error.
+
+**6. Shutdown**: When all work is complete, the team lead sends `shutdown_request` messages to each member. Members acknowledge with `shutdown_response` and terminate. The lead waits for all members to confirm shutdown.
+
+**7. Cleanup**: After all members have stopped, the team lead calls `TeamDelete` to remove the team and task directories.
 
 ---
 
 ## Teammate Spawning
 
-Teammates are spawned using the **Task tool** with the `team_name` parameter. Each teammate runs as a separate Claude Code session.
+Teammates are spawned using the **Agent tool** with the `team_name` parameter. Each teammate runs as a separate Claude Code session.
 
 ### Spawn Parameters
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `description` | string | Yes | The task/prompt for the teammate. This is the initial instruction the teammate receives. |
+| `prompt` | string | Yes | The task/prompt for the teammate. This is the initial instruction the teammate receives. |
 | `team_name` | string | Yes | Associates the spawned agent with this team. Must match an existing team name. |
+| `name` | string | Yes | Human-readable name for the teammate (e.g., `"researcher-1"`). Appears in team config and messages. |
+| `description` | string | Yes | Short (3-5 word) description of the agent's task. |
 | `subagent_type` | string | No | Model tier for the teammate: `"default"` (Opus), `"fast"` (Sonnet). Choose based on task complexity. |
-| `name` | string | No | Human-readable name for the teammate (e.g., `"researcher-1"`). Appears in team config and messages. |
 | `run_in_background` | boolean | No | If `true`, the spawning agent does not block waiting for the teammate to finish. Essential for parallel teammate workflows. Default: `false`. |
 
 ### Subagent Type Selection
@@ -121,9 +125,9 @@ Each teammate runs in its own Claude Code session with:
 For parallel teammates, spawn all with `run_in_background: true`:
 
 ```
-Task(description="Analyze module A", team_name="analysis-team", name="analyzer-1", run_in_background=true)
-Task(description="Analyze module B", team_name="analysis-team", name="analyzer-2", run_in_background=true)
-Task(description="Analyze module C", team_name="analysis-team", name="analyzer-3", run_in_background=true)
+Agent(prompt="Analyze module A", team_name="analysis-team", name="analyzer-1", description="Analyze module A", run_in_background=true)
+Agent(prompt="Analyze module B", team_name="analysis-team", name="analyzer-2", description="Analyze module B", run_in_background=true)
+Agent(prompt="Analyze module C", team_name="analysis-team", name="analyzer-3", description="Analyze module C", run_in_background=true)
 ```
 
 The team lead continues running and can coordinate via messages while teammates work.
@@ -226,7 +230,7 @@ Messages sent via `SendMessage` are written as JSON files to the recipient's inb
 
 ### Task Files
 
-Each teammate's assigned work is tracked as task files under `~/.claude/tasks/{team-name}/`. These follow the standard Claude Code Tasks format (same as non-team tasks) and persist after team deletion for history.
+Each teammate's assigned work is tracked as task files under `~/.claude/tasks/{team-name}/`. These follow the standard Claude Code Tasks format (same as non-team tasks). The task directory is removed when `TeamDelete` is called.
 
 ---
 
@@ -243,6 +247,11 @@ Each teammate's assigned work is tracked as task files under `~/.claude/tasks/{t
 | `plan_approval_response` | Direct (requester) | Approve or reject a teammate's proposed plan with optional feedback. |
 
 **Message delivery is automatic** — Claude Code writes message files to recipient inboxes and notifies them. No polling required.
+
+**Key rules**:
+- Don't send structured JSON status messages — use `TaskUpdate` instead
+- Idle notifications are sent automatically by the system when a teammate's turn ends
+- Prefer `message` over `broadcast` in almost all cases
 
 **Peer DM visibility**: Team leads can see direct messages between team members for oversight and coordination purposes.
 

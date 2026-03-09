@@ -56,24 +56,24 @@ Lead --> Specialist-3 (shutdown_request)
 TeamCreate(team_name="analysis-team", description="Parallel codebase analysis across 3 modules")
 
 # Phase 2: Spawn specialists in background
-Task(
-  description="Explore the authentication module (src/auth/). Analyze all files, document public APIs, identify patterns and issues. Write findings to .claude/sessions/analysis/auth-findings.md",
+Agent(
+  prompt="Explore the authentication module (src/auth/). Analyze all files, document public APIs, identify patterns and issues. Write findings to .claude/sessions/analysis/auth-findings.md",
   team_name="analysis-team",
   name="auth-analyst",
   subagent_type="fast",
   run_in_background=true
 )
 
-Task(
-  description="Explore the database module (src/db/). Analyze all files, document schemas, identify patterns and issues. Write findings to .claude/sessions/analysis/db-findings.md",
+Agent(
+  prompt="Explore the database module (src/db/). Analyze all files, document schemas, identify patterns and issues. Write findings to .claude/sessions/analysis/db-findings.md",
   team_name="analysis-team",
   name="db-analyst",
   subagent_type="fast",
   run_in_background=true
 )
 
-Task(
-  description="Explore the API module (src/api/). Analyze all files, document endpoints, identify patterns and issues. Write findings to .claude/sessions/analysis/api-findings.md",
+Agent(
+  prompt="Explore the API module (src/api/). Analyze all files, document endpoints, identify patterns and issues. Write findings to .claude/sessions/analysis/api-findings.md",
   team_name="analysis-team",
   name="api-analyst",
   subagent_type="fast",
@@ -95,15 +95,15 @@ SendMessage(
 # Phase 4: Synthesize
 # Lead reads all findings files and produces merged analysis
 # OR spawn a dedicated synthesizer:
-Task(
-  description="Read analysis findings from .claude/sessions/analysis/*.md. Synthesize into a unified report covering cross-cutting concerns, contradictions, and recommendations. Write to .claude/sessions/analysis/synthesis.md",
+Agent(
+  prompt="Read analysis findings from .claude/sessions/analysis/*.md. Synthesize into a unified report covering cross-cutting concerns, contradictions, and recommendations. Write to .claude/sessions/analysis/synthesis.md",
   team_name="analysis-team",
   name="synthesizer",
   subagent_type="default"
 )
 
 # Phase 5: Cleanup
-TeamDelete(team_name="analysis-team")
+TeamDelete()
 ```
 
 ### Scaling Notes
@@ -203,8 +203,8 @@ TaskCreate(
 # Phase 3: Execute pipeline stages sequentially
 # Stage 1: Research (Sonnet for broad exploration)
 TaskUpdate(taskId="task-1", status="in_progress")
-Task(
-  description="Execute task-1: Research authentication patterns. Write findings to .claude/pipeline/research.md",
+Agent(
+  prompt="Execute task-1: Research authentication patterns. Write findings to .claude/pipeline/research.md",
   team_name="feature-pipeline",
   name="researcher",
   subagent_type="fast"
@@ -214,8 +214,8 @@ TaskUpdate(taskId="task-1", status="completed")
 
 # Stage 2: Design (Opus for architecture decisions)
 TaskUpdate(taskId="task-2", status="in_progress")
-Task(
-  description="Execute task-2: Design authentication architecture based on .claude/pipeline/research.md. Write to .claude/pipeline/design.md",
+Agent(
+  prompt="Execute task-2: Design authentication architecture based on .claude/pipeline/research.md. Write to .claude/pipeline/design.md",
   team_name="feature-pipeline",
   name="architect",
   subagent_type="default"
@@ -224,8 +224,8 @@ TaskUpdate(taskId="task-2", status="completed")
 
 # Stage 3: Implement (Sonnet for straightforward coding)
 TaskUpdate(taskId="task-3", status="in_progress")
-Task(
-  description="Execute task-3: Implement authentication following .claude/pipeline/design.md",
+Agent(
+  prompt="Execute task-3: Implement authentication following .claude/pipeline/design.md",
   team_name="feature-pipeline",
   name="implementer",
   subagent_type="fast"
@@ -234,8 +234,8 @@ TaskUpdate(taskId="task-3", status="completed")
 
 # Stage 4: Review (Opus for quality judgment)
 TaskUpdate(taskId="task-4", status="in_progress")
-Task(
-  description="Execute task-4: Review auth implementation against design",
+Agent(
+  prompt="Execute task-4: Review auth implementation against design",
   team_name="feature-pipeline",
   name="reviewer",
   subagent_type="default"
@@ -243,7 +243,7 @@ Task(
 TaskUpdate(taskId="task-4", status="completed")
 
 # Phase 4: Cleanup
-TeamDelete(team_name="feature-pipeline")
+TeamDelete()
 ```
 
 ### Scaling Notes
@@ -319,24 +319,24 @@ TaskCreate(subject="Implement auth routes", description="Create src/routes/auth.
 TaskCreate(subject="Write user model tests", description="Test src/models/user.ts ...", status="pending", blockedBy=["task-1"])
 
 # Phase 3: Spawn worker pool
-Task(
-  description="You are a task worker in a swarm pool. Wait for task assignments via messages. For each assigned task: read the task details via TaskGet, execute the work, update the task status, and report results back to the lead. Continue until you receive a shutdown request.",
+Agent(
+  prompt="You are a task worker in a swarm pool. Wait for task assignments via messages. For each assigned task: read the task details via TaskGet, execute the work, update the task status, and report results back to the lead. Continue until you receive a shutdown request.",
   team_name="execution-pool",
   name="worker-1",
   subagent_type="fast",
   run_in_background=true
 )
 
-Task(
-  description="You are a task worker in a swarm pool. Wait for task assignments via messages. For each assigned task: read the task details via TaskGet, execute the work, update the task status, and report results back to the lead. Continue until you receive a shutdown request.",
+Agent(
+  prompt="You are a task worker in a swarm pool. Wait for task assignments via messages. For each assigned task: read the task details via TaskGet, execute the work, update the task status, and report results back to the lead. Continue until you receive a shutdown request.",
   team_name="execution-pool",
   name="worker-2",
   subagent_type="fast",
   run_in_background=true
 )
 
-Task(
-  description="You are a task worker in a swarm pool. Wait for task assignments via messages. For each assigned task: read the task details via TaskGet, execute the work, update the task status, and report results back to the lead. Continue until you receive a shutdown request.",
+Agent(
+  prompt="You are a task worker in a swarm pool. Wait for task assignments via messages. For each assigned task: read the task details via TaskGet, execute the work, update the task status, and report results back to the lead. Continue until you receive a shutdown request.",
   team_name="execution-pool",
   name="worker-3",
   subagent_type="fast",
@@ -386,7 +386,7 @@ SendMessage(type="shutdown_request", recipient="worker-1", content="All tasks co
 SendMessage(type="shutdown_request", recipient="worker-2", content="All tasks complete.", request_id="shutdown-w2")
 SendMessage(type="shutdown_request", recipient="worker-3", content="All tasks complete.", request_id="shutdown-w3")
 
-TeamDelete(team_name="execution-pool")
+TeamDelete()
 ```
 
 ### Scaling Notes
@@ -458,24 +458,24 @@ Lead: shutdown implementer, cleanup
 TeamCreate(team_name="feature-team", description="Research and implement OAuth2 authentication")
 
 # Phase 2: Spawn researchers (Sonnet for broad exploration)
-Task(
-  description="Explore the existing authentication code in src/auth/. Document: file structure, public APIs, middleware chain, session management approach. Write findings to .claude/research/current-auth.md",
+Agent(
+  prompt="Explore the existing authentication code in src/auth/. Document: file structure, public APIs, middleware chain, session management approach. Write findings to .claude/research/current-auth.md",
   team_name="feature-team",
   name="auth-researcher",
   subagent_type="fast",
   run_in_background=true
 )
 
-Task(
-  description="Research OAuth2 implementation patterns for Express.js with Passport.js. Document: recommended strategy, required dependencies, configuration patterns. Write findings to .claude/research/oauth2-patterns.md",
+Agent(
+  prompt="Research OAuth2 implementation patterns for Express.js with Passport.js. Document: recommended strategy, required dependencies, configuration patterns. Write findings to .claude/research/oauth2-patterns.md",
   team_name="feature-team",
   name="oauth-researcher",
   subagent_type="fast",
   run_in_background=true
 )
 
-Task(
-  description="Analyze integration points that would be affected by adding OAuth2: routes, middleware, session store, environment variables, test setup. Write findings to .claude/research/integration-points.md",
+Agent(
+  prompt="Analyze integration points that would be affected by adding OAuth2: routes, middleware, session store, environment variables, test setup. Write findings to .claude/research/integration-points.md",
   team_name="feature-team",
   name="integration-researcher",
   subagent_type="fast",
@@ -493,15 +493,15 @@ SendMessage(type="shutdown_request", recipient="integration-researcher", content
 # Lead produces implementation plan at .claude/research/implementation-plan.md
 
 # Phase 4: Implement (Opus for complex implementation)
-Task(
-  description="Read the implementation plan at .claude/research/implementation-plan.md and all research files in .claude/research/. Implement OAuth2 authentication following the plan. Create/modify files as specified in the plan.",
+Agent(
+  prompt="Read the implementation plan at .claude/research/implementation-plan.md and all research files in .claude/research/. Implement OAuth2 authentication following the plan. Create/modify files as specified in the plan.",
   team_name="feature-team",
   name="implementer",
   subagent_type="default"
 )
 
 # Phase 5: Cleanup
-TeamDelete(team_name="feature-team")
+TeamDelete()
 ```
 
 ### Scaling Notes
@@ -568,8 +568,8 @@ Lead --> Worker (shutdown_request)
 TeamCreate(team_name="migration-team", description="Database migration with plan approval")
 
 # Phase 2: Spawn the planner
-Task(
-  description="You are tasked with designing and implementing a database migration to add OAuth2 support. IMPORTANT: Before making any changes, you MUST first produce a detailed migration plan and send it to the team lead for approval. Include: 1) Tables to create/modify, 2) Column definitions, 3) Index strategy, 4) Data migration steps, 5) Rollback plan. Send your plan via SendMessage and wait for approval before implementing.",
+Agent(
+  prompt="You are tasked with designing and implementing a database migration to add OAuth2 support. IMPORTANT: Before making any changes, you MUST first produce a detailed migration plan and send it to the team lead for approval. Include: 1) Tables to create/modify, 2) Column definitions, 3) Index strategy, 4) Data migration steps, 5) Rollback plan. Send your plan via SendMessage and wait for approval before implementing.",
   team_name="migration-team",
   name="migration-planner",
   subagent_type="default",
@@ -611,7 +611,7 @@ SendMessage(
   request_id="shutdown-planner"
 )
 
-TeamDelete(team_name="migration-team")
+TeamDelete()
 ```
 
 ### Scaling Notes
@@ -680,24 +680,24 @@ Lead: shutdown all agents, cleanup
 TeamCreate(team_name="audit-team", description="Security audit with follow-up investigation")
 
 # Phase 2: Spawn explorers
-Task(
-  description="Explore authentication and authorization code. Document: auth flows, token handling, permission checks, session management. Write to .claude/audit/auth-findings.md. Stay available for follow-up questions from the synthesizer.",
+Agent(
+  prompt="Explore authentication and authorization code. Document: auth flows, token handling, permission checks, session management. Write to .claude/audit/auth-findings.md. Stay available for follow-up questions from the synthesizer.",
   team_name="audit-team",
   name="auth-explorer",
   subagent_type="fast",
   run_in_background=true
 )
 
-Task(
-  description="Explore input validation and data sanitization. Document: validation patterns, SQL injection protection, XSS prevention, file upload handling. Write to .claude/audit/input-findings.md. Stay available for follow-up questions from the synthesizer.",
+Agent(
+  prompt="Explore input validation and data sanitization. Document: validation patterns, SQL injection protection, XSS prevention, file upload handling. Write to .claude/audit/input-findings.md. Stay available for follow-up questions from the synthesizer.",
   team_name="audit-team",
   name="input-explorer",
   subagent_type="fast",
   run_in_background=true
 )
 
-Task(
-  description="Explore dependency security and configuration. Document: known vulnerable dependencies, environment variable handling, secrets management, CORS configuration. Write to .claude/audit/config-findings.md. Stay available for follow-up questions from the synthesizer.",
+Agent(
+  prompt="Explore dependency security and configuration. Document: known vulnerable dependencies, environment variable handling, secrets management, CORS configuration. Write to .claude/audit/config-findings.md. Stay available for follow-up questions from the synthesizer.",
   team_name="audit-team",
   name="config-explorer",
   subagent_type="fast",
@@ -705,8 +705,8 @@ Task(
 )
 
 # Phase 3: Spawn synthesizer (waits for findings)
-Task(
-  description="You are the security audit synthesizer. Wait for all explorer findings to be written, then: 1) Read all files in .claude/audit/. 2) Cross-reference findings for contradictions or gaps. 3) Send follow-up questions to specific explorers via SendMessage if clarification is needed. 4) Produce the final audit report at .claude/audit/security-report.md with severity ratings and remediation priorities.",
+Agent(
+  prompt="You are the security audit synthesizer. Wait for all explorer findings to be written, then: 1) Read all files in .claude/audit/. 2) Cross-reference findings for contradictions or gaps. 3) Send follow-up questions to specific explorers via SendMessage if clarification is needed. 4) Produce the final audit report at .claude/audit/security-report.md with severity ratings and remediation priorities.",
   team_name="audit-team",
   name="synthesizer",
   subagent_type="default",
@@ -727,7 +727,7 @@ SendMessage(type="shutdown_request", recipient="input-explorer", content="Audit 
 SendMessage(type="shutdown_request", recipient="config-explorer", content="Audit complete.", request_id="sd-config")
 SendMessage(type="shutdown_request", recipient="synthesizer", content="Audit complete.", request_id="sd-synth")
 
-TeamDelete(team_name="audit-team")
+TeamDelete()
 ```
 
 ### Scaling Notes
