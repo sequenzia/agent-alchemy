@@ -39,6 +39,10 @@ Before executing your steps, load the foundational references for task and team 
 
 These provide tool parameter tables, status lifecycle, messaging protocol (SendMessage types, shutdown protocol), and spawning conventions.
 
+For the complete SendMessage field tables and delivery mechanics:
+
+- **Messaging Protocol**: `Read ${CLAUDE_PLUGIN_ROOT}/../claude-tools/skills/claude-code-teams/references/messaging-protocol.md`
+
 For the SDD-specific message schemas used within this wave:
 
 - **Communication Protocols**: `Read ${CLAUDE_PLUGIN_ROOT}/skills/run-tasks/references/communication-protocols.md`
@@ -56,8 +60,9 @@ Extract from the orchestrator's prompt:
 4. `max_retries` setting
 5. `retry_partial` setting (default: `false`)
 6. `context_manager_threshold` setting (default: `3`)
-7. Session directory path
-8. Cross-wave context summary
+7. Wave team name (from the orchestrator's TeamCreate — used as `team_name` for all sub-spawns)
+8. Session directory path
+9. Cross-wave context summary
 
 Validate that the task list is non-empty. If empty, send a wave summary with zero tasks and exit.
 
@@ -73,7 +78,19 @@ When CM is skipped, proceed directly to Step 3.
 
 **When task count >= threshold**, launch the Context Manager agent as the **FIRST team member** before any task executors.
 
-1. **Spawn the Context Manager** via `Task` tool with the following information:
+1. **Spawn the Context Manager** as a team member:
+   ```
+   Task:
+     prompt: "<CM instructions with session dir, wave number, executor list>"
+     team_name: "<wave team name from orchestrator>"
+     name: "context-mgr"
+     description: "Manage wave context"
+     subagent_type: "context-manager"
+     run_in_background: true
+   ```
+   The `team_name` MUST match the wave team created by the orchestrator. This registers the CM in `config.json`, enabling defense-in-depth cleanup and SendMessage routing.
+
+   Include in the CM prompt:
    - Session directory path
    - Wave number
    - Task list summary (IDs and subjects for relevance filtering)
@@ -98,7 +115,22 @@ When CM is skipped, proceed directly to Step 3.
 For each task in the wave, in priority order:
 
 1. **Mark task `in_progress`** via `TaskUpdate` before launching its executor
-2. **Spawn the executor** via `Task` tool with the task's details, context summary, and instructions to send results back via `SendMessage`. If the orchestrator provided a `PRODUCER OUTPUTS` section and any entries are relevant to this task (producer's `produces_for` includes this task's ID), include those entries in the executor's prompt under a `PRODUCER OUTPUTS` section so the executor has precise knowledge of dependency outputs (file paths, key decisions).
+2. **Spawn the executor** as a team member:
+   ```
+   Task:
+     prompt: "<task details, context summary, SendMessage instructions>"
+     team_name: "<wave team name from orchestrator>"
+     name: "executor-{task_id}"
+     description: "Execute task #{id}"
+     subagent_type: "task-executor-v2"
+     run_in_background: true
+   ```
+   The `team_name` parameter is CRITICAL — without it, the executor is spawned as a regular subagent that won't appear in the team's `config.json`, breaking:
+   - Defense-in-depth cleanup (Layer 2 reads `config.json` to enumerate members)
+   - `TeamDelete` (only cleans up registered team members)
+   - SendMessage routing (may not route to non-team agents)
+
+   If the orchestrator provided a `PRODUCER OUTPUTS` section and any entries are relevant to this task (producer's `produces_for` includes this task's ID), include those entries in the executor's prompt under a `PRODUCER OUTPUTS` section so the executor has precise knowledge of dependency outputs (file paths, key decisions).
 3. **Write `task_start` event** to `progress.jsonl` in the session directory (best-effort — failures do not affect execution):
    ```jsonl
    {"ts":"{ISO 8601}","event":"task_start","wave":{N},"task_id":"{id}","subject":"{subject}"}
@@ -248,7 +280,7 @@ After Context Manager finalization (or skip/failure), shut down all sub-agents b
 
 2. **Send `shutdown_request` to all agents**: For each agent in the shutdown list, send a `shutdown_request` via `SendMessage`. Send these in rapid succession (no delay between sends). Track which agents have been sent requests.
 
-3. **Wait for responses (15 seconds total)**: Monitor for `shutdown_response` messages from each agent. As responses arrive with `approve: true`, mark those agents as confirmed shutdown. After 15 seconds, identify any agents that did not respond.
+3. **Wait for responses (15 seconds total)**: Monitor for `shutdown_response` messages from each agent. Each response contains a `request_id` matching the one sent in the `shutdown_request`. As responses arrive with `approve: true`, mark those agents as confirmed shutdown. After 15 seconds, identify any agents that did not respond.
 
 4. **Force-stop non-responsive agents**: For each agent that did not send a `shutdown_response` within 15 seconds, call `TaskStop` to force-terminate it. Log each force-stop: "Force-stopped agent {name} (no shutdown response within 15s)".
 
@@ -408,3 +440,9 @@ If sending a message fails (to orchestrator or receiving from executor):
 - **Clean shutdown**: On shutdown request, collect whatever results are available before reporting
 - **Shutdown sub-agents first**: Always complete the full Step 6b shutdown procedure (send requests, wait 15s, force-stop survivors, wait 2s propagation) before sending the wave summary. Report cleanup results in the CLEANUP section. The orchestrator performs its own verification as a safety net, but completing Step 6b thoroughly reduces force-stops at the orchestrator level
 - **Escalation via summary**: Failed tasks after retry exhaustion go in the FAILED TASKS section for the orchestrator to handle; do NOT attempt user interaction directly
+
+## Anti-Pattern Awareness
+
+From the claude-code-tasks anti-patterns reference:
+- **AP-04 (Batch Status Updates)**: Never mark multiple tasks `in_progress` simultaneously. Mark each task `in_progress` immediately before spawning its executor, not in a batch.
+- **Staleness checks**: Before calling `TaskUpdate`, verify the task's current state hasn't changed by reading the latest status. This prevents acting on stale data when multiple waves or retries are in play.

@@ -27,6 +27,7 @@ The orchestrator provides the wave assignment as the wave-lead agent's launch pr
 | `Max Retries` | Required | Number of autonomous retry attempts per tier |
 | `Retry Partial` | Required | Whether to retry PARTIAL tasks (`true` or `false`). When `false`, PARTIAL tasks are marked completed. |
 | `CM Threshold` | Required | Minimum task count to spawn a Context Manager. Waves with fewer tasks skip CM spawning. |
+| `Team Name` | Required | Wave team name (from TeamCreate). Wave-lead uses this as `team_name` when spawning all sub-agents. |
 | `Session Dir` | Required | Absolute path to `.claude/sessions/__live_session__/` |
 | `TASKS` | Required | List of tasks with full details (see sub-fields below) |
 | `CROSS-WAVE CONTEXT` | Optional | Summary of `execution_context.md` from prior waves. Omitted for Wave 1 if no prior context exists. |
@@ -52,6 +53,7 @@ Max Parallel: 5
 Max Retries: 3
 Retry Partial: false
 CM Threshold: 3
+Team Name: wave-2-auth-feature-20260223-143022
 Session Dir: /Users/dev/my-project/.claude/sessions/__live_session__/
 
 TASKS:
@@ -427,11 +429,17 @@ If an agent receives a message that does not match the expected schema:
 
 4. **Empty optional sections**: Optional sections may be omitted entirely (section header and content both absent). This is normal and should not trigger warnings. Do not include empty section headers with no content -- simply omit the section.
 
+For agent-level anti-patterns that lead to malformed messages (AP-03: Missing activeForm, AP-06: TaskList-Only Consumption), see the claude-code-tasks anti-patterns reference (`${CLAUDE_PLUGIN_ROOT}/../claude-tools/skills/claude-code-tasks/references/anti-patterns.md`).
+
 ---
 
 ## Shutdown Lifecycle
 
-Agent shutdown follows the claude-code-teams shutdown protocol (`shutdown_request` / `shutdown_response` via SendMessage). See the claude-code-teams messaging protocol reference for the generic shutdown mechanics.
+Agent shutdown follows the claude-code-teams shutdown protocol (`shutdown_request` / `shutdown_response` via SendMessage). For the generic shutdown mechanics (message types, `request_id` handling, approve/reject flows), see:
+
+```
+Read ${CLAUDE_PLUGIN_ROOT}/../claude-tools/skills/claude-code-teams/references/messaging-protocol.md
+```
 
 The SDD-specific shutdown sequence uses **defense-in-depth** — multiple layers ensure all agents are terminated before the next wave begins, even if any single layer fails.
 

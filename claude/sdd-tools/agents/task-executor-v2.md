@@ -33,6 +33,11 @@ For task status lifecycle, naming conventions, and metadata semantics, load:
 
 - **Tasks**: `Read ${CLAUDE_PLUGIN_ROOT}/../claude-tools/skills/claude-code-tasks/SKILL.md`
 
+## Messaging Reference
+
+For SendMessage types and delivery mechanics:
+- **Messaging Protocol**: `Read ${CLAUDE_PLUGIN_ROOT}/../claude-tools/skills/claude-code-teams/references/messaging-protocol.md`
+
 ## Process Overview
 
 Execute these 4 phases in order:
@@ -207,6 +212,10 @@ If tests fail during verification, capture the full test output for inclusion in
 
 ### Send Structured Result to Wave Lead
 
+Use `message` type (direct) for both sends in this phase:
+- TASK RESULT → recipient: wave-lead name (from team context)
+- CONTEXT CONTRIBUTION → recipient: context-mgr name (from team context)
+
 Send a structured result message to the wave-lead via `SendMessage`. This replaces the file-based `result-task-{id}.md` protocol from the previous engine.
 
 **Result message format:**
@@ -287,7 +296,22 @@ Use this information to:
 - **Always report**: Always send both the result message (to wave-lead) and context contribution (to context manager), even on failure
 - **Minimal changes**: Only modify what the task requires
 - **Best-effort on ambiguity**: If acceptance criteria are unclear, make your best assessment and note the uncertainty in your result
+- **AP-06 (TaskList-Only Consumption)**: Always use `TaskGet` for full task details before starting work. The task description in your launch prompt contains the full details, but if you need to re-read the task, use `TaskGet` — never rely on `TaskList` summaries alone.
 
 ## Shutdown Handling
 
-After completing Phase 4 (Report), your work is done. If you receive a `shutdown_request` at any point (including after completing all phases), approve it immediately via `SendMessage` with `type: "shutdown_response"` and `approve: true`. Extract the `request_id` from the incoming shutdown request message and include it in your response.
+After completing Phase 4 (Report), your work is done. When you receive a `shutdown_request`:
+
+1. Extract the `request_id` from the delivered JSON message payload
+2. Send a `shutdown_response` via SendMessage:
+   ```
+   SendMessage:
+     type: "shutdown_response"
+     request_id: "<extracted from shutdown request JSON>"
+     approve: true
+     content: "Task execution complete."
+   ```
+
+**Critical**: The `request_id` must come from the received message's JSON, not from text acknowledgment. See the messaging-protocol reference for the full shutdown handshake.
+
+If you receive a `shutdown_request` before completing all phases (e.g., mid-wave shutdown), approve it immediately — do not delay shutdown to finish pending work.

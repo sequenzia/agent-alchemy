@@ -197,6 +197,8 @@ Any Test FAIL -> FAIL
 
 ## Result Reporting
 
+For common task-level mistakes that affect verification results, see the claude-code-tasks anti-patterns reference (`${CLAUDE_PLUGIN_ROOT}/../claude-tools/skills/claude-code-tasks/references/anti-patterns.md`).
+
 After verification, send a structured result message to the wave-lead via `SendMessage`:
 
 ```

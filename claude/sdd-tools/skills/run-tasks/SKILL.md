@@ -44,6 +44,11 @@ Read ${CLAUDE_PLUGIN_ROOT}/../claude-tools/skills/claude-code-teams/SKILL.md
 
 These references provide tool parameters, lifecycle rules, messaging protocols, and orchestration patterns. The SDD-specific execution procedures are in the orchestration reference below.
 
+### Orchestration Patterns Reference (optional, for context)
+```
+Read ${CLAUDE_PLUGIN_ROOT}/../claude-tools/skills/claude-code-teams/references/orchestration-patterns.md
+```
+
 ### Orchestration Reference
 ```
 Read ${CLAUDE_PLUGIN_ROOT}/skills/run-tasks/references/orchestration.md
@@ -163,9 +168,10 @@ See `references/orchestration.md` Step 7 for the CLAUDE.md update criteria.
 
 ## Key Behaviors
 
-- **Orchestration pattern**: Based on the Swarm pattern from claude-code-teams (wave-based parallel execution with dependency ordering), extended with a 3-tier agent hierarchy for context management and retry intelligence. See `claude-code-teams/references/orchestration-patterns.md` for the base pattern.
+- **Orchestration pattern**: Extends the **Swarm / Self-Organizing Pool** pattern (Pattern 3 from `claude-code-teams/references/orchestration-patterns.md`) with a 3-tier agent hierarchy that adds Context Managers for cross-task knowledge flow and structured retry intelligence.
 - **3-tier agent hierarchy**: Orchestrator (this skill) handles planning and user interaction. Wave Leads coordinate executors within a wave. Context Managers distribute and collect execution context.
 - **Agent Team coordination**: All inter-agent communication uses `TeamCreate`, `SendMessage`, and `TaskOutput` following the claude-code-teams lifecycle. No file-based signaling.
+- **Team member spawning**: All agents within a wave (wave-lead, context manager, executors) are spawned as team members using the `Task` tool with `team_name` parameter. This ensures they appear in the team's `config.json`, enabling defense-in-depth cleanup and proper SendMessage routing. See the claude-code-teams spawning reference for required parameters: `team_name`, `name`, `description`, `subagent_type`, `run_in_background`.
 - **Wave-based parallelism**: Tasks at the same dependency level run simultaneously via the wave-lead's executor team. Tasks in later waves wait until their dependencies complete.
 - **3-tier retry model**: Tier 1 (Immediate) — wave-lead retries failed executor with failure context. Tier 2 (Context-Enriched) — wave-lead requests additional context from Context Manager and retries. Tier 3 (User Escalation) — persistent failures reported to orchestrator for user decision.
 - **Wave-lead crash recovery**: If a wave-lead crashes or times out, the orchestrator force-stops all team members, resets in-progress tasks to pending, and spawns a new wave team. If the retry also fails, the user is escalated.
@@ -247,4 +253,6 @@ echo "requirements changed" > .claude/sessions/__live_session__/.abort
 - `references/verification-patterns.md` — Verification logic for spec-generated vs general tasks
 - `${CLAUDE_PLUGIN_ROOT}/../claude-tools/skills/claude-code-tasks/SKILL.md` — Task tool parameters and conventions (loaded at init)
 - `${CLAUDE_PLUGIN_ROOT}/../claude-tools/skills/claude-code-teams/SKILL.md` — Team lifecycle, messaging, and orchestration patterns (loaded at init)
-- `${CLAUDE_PLUGIN_ROOT}/../claude-tools/skills/claude-code-teams/references/orchestration-patterns.md` — 6 orchestration patterns (optional, for reference)
+- `${CLAUDE_PLUGIN_ROOT}/../claude-tools/skills/claude-code-teams/references/orchestration-patterns.md` — 6 orchestration patterns (loaded at init, for context)
+- `${CLAUDE_PLUGIN_ROOT}/../claude-tools/skills/claude-code-teams/references/messaging-protocol.md` — SendMessage types, delivery mechanics, shutdown handshake (loaded by agents)
+- `${CLAUDE_PLUGIN_ROOT}/../claude-tools/skills/claude-code-teams/references/hooks-integration.md` — TeammateIdle/TaskCompleted hook events

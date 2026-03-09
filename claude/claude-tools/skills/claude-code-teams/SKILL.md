@@ -94,6 +94,8 @@ stateDiagram-v2
 
 Teammates are spawned using the **Agent tool** with the `team_name` parameter. Each teammate runs as a separate Claude Code session.
 
+> **Plugin tool name**: In Claude Code plugin frontmatter (`allowed-tools` in skills, `tools` in agents), the Agent tool is listed as `Task`. Both names refer to the same spawning capability with identical parameters (`prompt`, `team_name`, `name`, `description`, `subagent_type`, `run_in_background`). Use `Task` in frontmatter definitions and `Agent` or `Task` in skill/agent body instructions.
+
 ### Spawn Parameters
 
 | Parameter | Type | Required | Description |
@@ -125,10 +127,15 @@ Each teammate runs in its own Claude Code session with:
 For parallel teammates, spawn all with `run_in_background: true`:
 
 ```
-Agent(prompt="Analyze module A", team_name="analysis-team", name="analyzer-1", description="Analyze module A", run_in_background=true)
-Agent(prompt="Analyze module B", team_name="analysis-team", name="analyzer-2", description="Analyze module B", run_in_background=true)
-Agent(prompt="Analyze module C", team_name="analysis-team", name="analyzer-3", description="Analyze module C", run_in_background=true)
+Task(prompt="Analyze module A", team_name="analysis-team", name="analyzer-1",
+     description="Analyze module A", run_in_background=true)
+Task(prompt="Analyze module B", team_name="analysis-team", name="analyzer-2",
+     description="Analyze module B", run_in_background=true)
+Task(prompt="Analyze module C", team_name="analysis-team", name="analyzer-3",
+     description="Analyze module C", run_in_background=true)
 ```
+
+Note: In skill/agent instructions, this tool may be referenced as either `Task` or `Agent`. Both are equivalent.
 
 The team lead continues running and can coordinate via messages while teammates work.
 

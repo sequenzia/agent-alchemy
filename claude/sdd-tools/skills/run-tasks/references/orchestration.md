@@ -497,6 +497,12 @@ Starting Wave {N}/{total_waves}: {count} tasks...
 
 Create a wave team via `TeamCreate` following the claude-code-teams lifecycle (Creation → Member Spawning → Coordination → Shutdown → Cleanup). Team name: `wave-{N}-{session_id}`.
 
+```
+TeamCreate:
+  team_name: "wave-{N}-{session_id}"
+  description: "Wave {N} execution team for {task_group}"
+```
+
 Team composition: 1 wave-lead (foreground, `wave_lead_model` tier) + N task executors (managed by wave-lead, `executor_model` tier). The orchestrator does not directly interact with executors.
 
 **TeamCreate failure handling**:
@@ -527,7 +533,23 @@ Handle the user's choice accordingly:
 
 ### 5d: Launch Wave Lead
 
-Spawn the wave-lead as a foreground Task with the `team_name` parameter (see claude-code-teams spawning conventions). The wave-lead runs to completion, managing all executors and collecting results before reporting back.
+Spawn the wave-lead as a foreground Task with full team spawning parameters:
+
+```
+Task:
+  prompt: "<Protocol 1 wave assignment>"
+  team_name: "wave-{N}-{session_id}"
+  name: "wave-lead"
+  description: "Lead wave {N} execution"
+  subagent_type: "wave-lead"
+```
+
+The `team_name` parameter registers the wave-lead as a team member, enabling:
+- Team environment variables (`CLAUDE_CODE_TEAM_NAME`, `CLAUDE_CODE_AGENT_NAME`)
+- Appearance in `config.json` for defense-in-depth cleanup (Step 5g-2)
+- Proper SendMessage routing within the team
+
+The wave-lead runs to completion, managing all executors and collecting results before reporting back.
 
 Construct the wave-lead prompt using the **Protocol 1: Orchestrator to Wave Lead** format from `communication-protocols.md`:
 
@@ -538,6 +560,7 @@ Max Parallel: {max_parallel}
 Max Retries: {max_retries}
 Retry Partial: {retry_partial}
 CM Threshold: {context_manager_threshold}
+Team Name: {wave-team-name from TeamCreate}
 Session Dir: {absolute path to .claude/sessions/__live_session__/}
 Context Manager Model: {context_manager_model}
 Executor Model: {executor_model}
@@ -689,6 +712,8 @@ If `TeamCreate` fails while attempting to spawn a replacement wave team (Step 5c
 ### 5f: Process Wave Summary
 
 After receiving the wave summary from the wave-lead:
+
+**Staleness check**: Before updating task status based on wave results, read the current state via `TaskGet` for each task to verify it hasn't been modified by hooks, other processes, or prior wave recovery. This prevents overwriting status changes made by `TaskCompleted` hooks.
 
 **1. Update `task_log.md`**:
 
@@ -894,8 +919,8 @@ The wave-lead should respond quickly since it has already sent its WAVE SUMMARY 
 
 After the wave-lead is terminated, verify that ALL sub-agents are also stopped. The wave-lead's Step 6b may have partially or fully succeeded — this step catches any survivors.
 
-1. Read the team config file at `~/.claude/teams/{wave-team-name}/config.json`.
-2. Extract the `members` array to get all registered team members (names and agent IDs).
+1. Read the team config file at `~/.claude/teams/{wave-team-name}/config.json`. This is the authoritative roster of all agents spawned into the team — it includes the wave-lead, context manager, and all executors (including retry executors). Any agent found here that is still running must be terminated.
+2. Extract the `members` array to get all registered team members. Each member has `name`, `agentId`, and `agentType`.
 3. For each member that is NOT the wave-lead (i.e., task executors, retry executors, and the context manager):
    a. Send a `shutdown_request` via `SendMessage`.
    b. Wait 5 seconds total for all responses (batch wait, not 5 seconds per agent).
