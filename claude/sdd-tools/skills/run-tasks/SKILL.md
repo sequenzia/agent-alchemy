@@ -7,8 +7,6 @@ allowed-tools:
   - TaskGet
   - TaskUpdate
   - TaskCreate
-  - TeamCreate
-  - TeamDelete
   - SendMessage
   - TaskOutput
   - TaskStop
@@ -26,7 +24,7 @@ allowed-tools:
 
 This skill orchestrates autonomous task execution using Claude Code's native Agent Team system. It takes tasks produced by `/create-tasks`, builds a dependency-aware execution plan, and executes them in waves via a 3-tier agent hierarchy: Orchestrator (this skill) plans and coordinates waves, Wave Leads manage parallel executors within each wave, and Context Managers handle knowledge flow between tasks.
 
-All inter-agent coordination uses message-based primitives (`TeamCreate`, `SendMessage`, `TaskOutput`) rather than file-based signaling.
+The wave-lead creates its own team and coordinates teammates via `SendMessage`. The orchestrator communicates with the wave-lead via file-based summaries (`wave-{N}-summary.md`).
 
 ## Load Reference Skills
 
@@ -134,12 +132,11 @@ See `references/orchestration.md` Step 4 for the full initialization procedure a
 For each wave in the execution plan:
 
 1. **Refresh unblocked tasks** via `TaskList` (dynamic unblocking after prior wave completions).
-2. **Create wave team** via `TeamCreate` with a wave-lead agent (foreground `Task`) and team members (context-manager + executors).
-3. **Launch wave-lead** with the wave assignment (task list, max_parallel, max_retries, wave number) and cross-wave context from `execution_context.md`.
-4. **Wait for wave-lead summary** — the wave-lead manages all executor coordination, retries (Tier 1 immediate, Tier 2 context-enriched), and reports results via `SendMessage`.
-5. **Process wave summary**: Update `task_log.md`, write `wave_complete` event to `progress.jsonl`, handle Tier 3 escalations (present failures to user via `AskUserQuestion` with options: Fix manually, Skip, Provide guidance, Abort).
-6. **Cleanup and delete wave team**: Verify all agents are terminated (defense in depth — orchestrator independently verifies beyond wave-lead cleanup), force-stop any survivors via `TaskStop`, then delete the team via `TeamDelete`. Includes inter-wave verification and cooldown before starting the next wave.
-7. **Repeat** until no more unblocked tasks remain.
+2. **Launch wave-lead** as a foreground subagent via `Task` (no `team_name` — the wave-lead creates its own team internally).
+3. **Read wave summary file** from `{session_dir}/wave-{N}-summary.md` after the foreground Task completes.
+4. **Process wave summary**: Update `task_log.md`, write `wave_complete` event to `progress.jsonl`, handle Tier 3 escalations (present failures to user via `AskUserQuestion` with options: Fix manually, Skip, Provide guidance, Abort).
+5. **Verify cleanup**: Check that the wave-lead deleted its team. If the team directory still exists, force-stop any survivors via `TaskStop`. Includes inter-wave verification and cooldown before starting the next wave.
+6. **Repeat** until no more unblocked tasks remain.
 
 See `references/orchestration.md` Step 5 for the full wave execution procedure, retry escalation flow, and wave-lead crash recovery.
 
@@ -170,12 +167,12 @@ See `references/orchestration.md` Step 7 for the CLAUDE.md update criteria.
 
 - **Orchestration pattern**: Extends the **Swarm / Self-Organizing Pool** pattern (Pattern 3 from `claude-code-teams/references/orchestration-patterns.md`) with a 3-tier agent hierarchy that adds Context Managers for cross-task knowledge flow and structured retry intelligence.
 - **3-tier agent hierarchy**: Orchestrator (this skill) handles planning and user interaction. Wave Leads coordinate executors within a wave. Context Managers distribute and collect execution context.
-- **Agent Team coordination**: All inter-agent communication uses `TeamCreate`, `SendMessage`, and `TaskOutput` following the claude-code-teams lifecycle. No file-based signaling.
-- **Team member spawning**: All agents within a wave (wave-lead, context manager, executors) are spawned as team members using the `Task` tool with `team_name` parameter. This ensures they appear in the team's `config.json`, enabling defense-in-depth cleanup and proper SendMessage routing. See the claude-code-teams spawning reference for required parameters: `team_name`, `name`, `description`, `subagent_type`, `run_in_background`.
+- **Agent Team coordination**: The wave-lead creates its own team (via `TeamCreate`) and becomes the team lead. It spawns context managers and executors as teammates using `SendMessage` for coordination. The orchestrator spawns the wave-lead as a plain foreground subagent and reads results from a summary file.
+- **Team member spawning**: The wave-lead spawns context managers and executors as team members using the `Task` tool with `team_name` parameter. This ensures they appear in the team's `config.json`, enabling defense-in-depth cleanup and proper SendMessage routing. The orchestrator does NOT use `team_name` when spawning the wave-lead — the wave-lead is the team creator, not a member.
 - **Wave-based parallelism**: Tasks at the same dependency level run simultaneously via the wave-lead's executor team. Tasks in later waves wait until their dependencies complete.
 - **3-tier retry model**: Tier 1 (Immediate) — wave-lead retries failed executor with failure context. Tier 2 (Context-Enriched) — wave-lead requests additional context from Context Manager and retries. Tier 3 (User Escalation) — persistent failures reported to orchestrator for user decision.
-- **Wave-lead crash recovery**: If a wave-lead crashes or times out, the orchestrator force-stops all team members, resets in-progress tasks to pending, and spawns a new wave team. If the retry also fails, the user is escalated.
-- **Defense-in-depth cleanup**: Agent shutdown is enforced at two levels. The wave-lead shuts down its sub-agents (Step 6b) and reports cleanup results in the wave summary CLEANUP section. The orchestrator independently verifies all agents are stopped by reading the team config, force-stopping any survivors via `TaskStop`, and confirming `TeamDelete` succeeds before starting the next wave. This prevents zombie agents across wave boundaries.
+- **Wave-lead crash recovery**: If a wave-lead crashes or times out, the orchestrator force-stops all team members, resets in-progress tasks to pending, and spawns a new wave-lead (which creates its own fresh team). If the retry also fails, the user is escalated.
+- **Defense-in-depth cleanup**: Agent shutdown is enforced at two levels. (1) The wave-lead shuts down its sub-agents (Step 6b), calls `TeamDelete`, and reports cleanup results in the wave summary file. (2) The orchestrator verifies cleanup by checking if the team directory still exists and force-stops any survivors via `TaskStop`. The orchestrator cannot call `TeamDelete` (not the team lead), so orphaned team directories are cleaned up during session initialization.
 - **Per-task timeouts**: Complexity-based (XS/S: 5 min, M: 10 min, L/XL: 20 min). Override via `metadata.timeout_minutes`.
 - **Dry-run mode**: `--dry-run` completes Steps 1-3 only. Displays the full execution plan without spawning agents or creating a session.
 - **Autonomous after confirmation**: After the user confirms at Step 3, no further prompts occur unless a Tier 3 escalation is triggered by persistent failures.
@@ -188,7 +185,7 @@ See `references/orchestration.md` Step 7 for the CLAUDE.md update criteria.
 This skill uses Claude Code hooks for automated quality gates during execution:
 
 - **TaskCompleted**: When a task executor marks a task completed, the `verify-task-completion.sh` hook runs the project's test suite. If tests fail, the completion is blocked and the task reverts to in_progress with feedback to the executor.
-- **TeammateIdle**: When a task executor goes idle, a prompt-based hook verifies it has sent both required messages (TASK RESULT to wave-lead, CONTEXT CONTRIBUTION to context manager) before resting.
+- **TeammateIdle**: When a teammate goes idle, a role-aware prompt-based hook checks if the agent is a task executor and, if so, verifies it has sent both required messages (TASK RESULT to wave-lead, CONTEXT CONTRIBUTION to context manager) before resting. Non-executor roles (context manager, wave-lead) are not affected.
 
 Hook definitions are in `${CLAUDE_PLUGIN_ROOT}/hooks/hooks.json`. For hook event documentation, see `claude-code-teams/references/hooks-integration.md`.
 

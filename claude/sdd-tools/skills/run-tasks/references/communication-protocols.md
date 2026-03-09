@@ -27,7 +27,7 @@ The orchestrator provides the wave assignment as the wave-lead agent's launch pr
 | `Max Retries` | Required | Number of autonomous retry attempts per tier |
 | `Retry Partial` | Required | Whether to retry PARTIAL tasks (`true` or `false`). When `false`, PARTIAL tasks are marked completed. |
 | `CM Threshold` | Required | Minimum task count to spawn a Context Manager. Waves with fewer tasks skip CM spawning. |
-| `Team Name` | Required | Wave team name (from TeamCreate). Wave-lead uses this as `team_name` when spawning all sub-agents. |
+| `Session ID` | Required | Session identifier used by wave-lead to construct team name (`wave-{N}-{session_id}`) |
 | `Session Dir` | Required | Absolute path to `.claude/sessions/__live_session__/` |
 | `TASKS` | Required | List of tasks with full details (see sub-fields below) |
 | `CROSS-WAVE CONTEXT` | Optional | Summary of `execution_context.md` from prior waves. Omitted for Wave 1 if no prior context exists. |
@@ -53,7 +53,7 @@ Max Parallel: 5
 Max Retries: 3
 Retry Partial: false
 CM Threshold: 3
-Team Name: wave-2-auth-feature-20260223-143022
+Session ID: auth-feature-20260223-143022
 Session Dir: /Users/dev/my-project/.claude/sessions/__live_session__/
 
 TASKS:
@@ -89,13 +89,13 @@ Issues:
 
 ---
 
-## Protocol 2: Wave Lead to Orchestrator (via SendMessage)
+## Protocol 2: Wave Lead to Orchestrator (via summary file)
 
 **Direction**: Wave Lead -> Orchestrator
-**Transport**: SendMessage
+**Transport**: File-based (`{session_dir}/wave-{N}-summary.md`)
 **Phase**: Phase 1
 
-Sent by the wave-lead to the orchestrator after all executors in the wave have completed (or timed out). This is the primary result channel for the orchestrator to understand wave outcomes.
+Written by the wave-lead to the session directory after all executors in the wave have completed (or timed out). The orchestrator reads this file after the wave-lead's foreground Task completes. This is the primary result channel for the orchestrator to understand wave outcomes.
 
 ### Schema
 
@@ -119,6 +119,7 @@ Sent by the wave-lead to the orchestrator after all executors in the wave have c
 | `Agents shutdown cooperatively` | Required | Count of agents that responded to `shutdown_request` with `approve: true` |
 | `Agents force-stopped` | Required | Count of agents terminated via `TaskStop` (did not respond within 15s) |
 | `Agents already terminated` | Required | Count of agents where `SendMessage` failed (already gone before shutdown attempt) |
+| `Team deleted` | Required | Whether the wave-lead successfully called `TeamDelete` (`yes` or `no`) |
 
 **Results sub-fields:**
 
@@ -179,6 +180,7 @@ CLEANUP:
 Agents shutdown cooperatively: 3
 Agents force-stopped: 1
 Agents already terminated: 0
+Team deleted: yes
 ```
 
 ---
@@ -451,35 +453,51 @@ After all executors complete and Context Manager finalizes:
 2. Wave-lead waits 15 seconds for `shutdown_response` from each agent
 3. Wave-lead force-stops non-responsive agents via `TaskStop`
 4. Wave-lead waits 2 seconds for terminations to propagate
-5. Wave-lead reports cleanup results in the CLEANUP section of the WAVE SUMMARY
+5. Wave-lead calls `TeamDelete` to clean up the team (wave-lead is the team lead)
+6. Wave-lead writes cleanup results (including `Team deleted: yes/no`) to the wave summary file
 
-This is the first and most cooperative layer. If the wave-lead completes Step 6b fully, the orchestrator's verification (Layer 2) will find all agents already terminated.
+This is the first and most cooperative layer. If the wave-lead completes Step 6b fully, the orchestrator's verification (Layer 2) will find the team already deleted.
 
-### Layer 2: Orchestrator Verification (orchestration Step 5g-2)
+### Layer 2: Orchestrator Verification (orchestration Step 5g)
 
-After receiving the wave summary and shutting down the wave-lead:
+After the wave-lead's foreground Task completes and the orchestrator reads the wave summary file:
 
-1. Orchestrator reads `~/.claude/teams/{wave-team-name}/config.json` to enumerate ALL team members
-2. Orchestrator sends `shutdown_request` to any member not yet confirmed terminated
-3. Orchestrator waits 5 seconds for responses (batch wait, not per-agent)
-4. Orchestrator force-stops non-responsive agents via `TaskStop`
+1. Orchestrator checks the wave summary's CLEANUP section for `Team deleted: yes/no`
+2. If `Team deleted: yes` and team directory is gone → cleanup succeeded, proceed
+3. If team directory still exists (wave-lead failed to delete, or crashed before TeamDelete):
+   a. Read `~/.claude/teams/{wave-team-name}/config.json` to enumerate team members
+   b. Force-stop ALL members via `TaskStop` (wave-lead may be gone, so go directly to force-stop)
+   c. Log warning about orphaned team directory — orchestrator cannot call `TeamDelete` (not the team lead)
+4. Proceed to next wave regardless — orphaned team directories use unique names and don't interfere
 
-This layer does NOT trust the wave-lead's self-reported cleanup. It independently verifies by reading the team config and checking each member. This catches cases where the wave-lead skipped or partially completed Step 6b.
+**Note**: The orchestrator CANNOT call `TeamDelete` because it is not the team lead. Only the wave-lead (as team creator) can call `TeamDelete`. If the wave-lead fails to delete the team, the directory remains as an orphan.
 
-### Layer 3: TeamDelete with Retry (orchestration Step 5g-3)
+### Layer 3: Stale Team Cleanup (orchestration Step 4)
 
-1. Orchestrator calls `TeamDelete`
-2. On failure: force-stop ALL members again via `TaskStop`, retry `TeamDelete` (up to 3 attempts total)
-3. On persistent failure: escalate to user (force retry / skip cleanup and continue / abort session)
+During session initialization:
+
+1. Orchestrator scans `~/.claude/teams/` for directories matching `wave-*` patterns from previous sessions
+2. For each stale team directory: force-stop any listed members via `TaskStop`, remove the directory
+3. This catches orphaned teams from previous sessions that crashed before cleanup
 
 ### Layer 4: Inter-Wave Verification (orchestration Step 5h)
 
 Before starting the next wave:
 
-1. Orchestrator verifies previous wave's team directory is removed
-2. Brief 2-second cooldown for async cleanup propagation
-3. Proceed to next wave only after verification passes
+1. Orchestrator checks whether previous wave's team directory still exists
+2. If still present: force-stop any remaining members via `TaskStop`, log warning
+3. Brief 2-second cooldown for async cleanup propagation
+4. Proceed to next wave
 
 ### Crash Scenario Cleanup
 
-If the wave-lead crashes, Layer 1 is skipped (wave-lead never executed its cleanup). The orchestrator compensates with an aggressive variant of Layer 2: force-stop ALL members immediately via `TaskStop` without attempting cooperative shutdown first (agents are likely unresponsive after a crash), then proceed to Layer 3.
+If the wave-lead crashes, Layer 1 is skipped (wave-lead never executed its cleanup). The orchestrator detects the crash because:
+- The foreground Task returns an error
+- No wave summary file exists at `{session_dir}/wave-{N}-summary.md`
+
+The orchestrator then:
+1. Reads `~/.claude/teams/wave-{N}-{session_id}/config.json` to enumerate all team members
+2. Force-stops ALL members via `TaskStop` immediately (skip cooperative shutdown — agents are likely unresponsive after a crash)
+3. Cannot call `TeamDelete` (not the team lead) — logs warning about orphaned team directory
+4. Resets in_progress tasks to pending
+5. Spawns a new wave-lead (creates `wave-{N}-retry-{session_id}` team)

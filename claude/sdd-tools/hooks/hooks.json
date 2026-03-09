@@ -29,7 +29,7 @@
         "hooks": [
           {
             "type": "prompt",
-            "prompt": "Before going idle, verify you have completed all required reporting: 1) Have you sent a TASK RESULT message to the wave-lead with your task's status (PASS/PARTIAL/FAIL)? 2) Have you sent a CONTEXT CONTRIBUTION message to the context manager with any learnings? If either message is missing, send it now before going idle."
+            "prompt": "Before going idle, check if your role is to implement a specific task (you are a task executor). If so, verify: 1) Have you sent a TASK RESULT message to the wave-lead with your task's status (PASS/PARTIAL/FAIL)? 2) Have you sent a CONTEXT CONTRIBUTION message to the context manager with any learnings? If either is missing, send it now. If you are NOT a task executor (e.g., you are a context manager or wave-lead), this check does not apply to you."
           }
         ]
       }
