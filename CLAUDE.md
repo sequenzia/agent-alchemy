@@ -194,7 +194,7 @@ verify (cs-tools) -> solution-verifier (opus) x 1 -> static analysis + test gene
 
 | Group | Skills | Agents | Version |
 |-------|--------|--------|---------|
-| claude-tools | claude-code-tasks, claude-code-teams | — | 0.2.4 |
+| claude-tools | claude-code-tasks, claude-code-teams | — | 0.2.5 |
 | core-tools | deep-analysis, codebase-analysis, language-patterns, project-conventions, technical-diagrams | code-explorer, code-synthesizer, code-architect | 0.2.3 |
 | dev-tools | feature-dev, bug-killer, architecture-patterns, code-quality, project-learnings, changelog-format, docs-manager, release-python-package, document-changes | code-reviewer, bug-investigator, changelog-manager, docs-writer | 0.3.4 |
 | sdd-tools | create-spec, analyze-spec, create-tasks, run-tasks | codebase-explorer, researcher, spec-analyzer, wave-lead, context-manager, task-executor-v2 | 0.2.9 |
