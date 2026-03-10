@@ -1,0 +1,161 @@
+name: dev-tools
+description: "Agent Alchemy Dev Tools — feature development, debugging, code review, documentation, and changelog management"
+mode: "full"
+source:
+  platform: "Claude Code"
+  plugin: "agent-alchemy-dev-tools"
+  version: "0.3.4"
+converted: "2026-03-10"
+
+components:
+  skills:
+    - name: feature-dev
+      file: skills/feature-dev/SKILL.md
+      description: "7-phase feature development workflow with exploration, architecture, implementation, and review"
+      origin: skill
+
+    - name: bug-killer
+      file: skills/bug-killer/SKILL.md
+      description: "Systematic, hypothesis-driven debugging workflow with triage-based quick/deep track routing"
+      origin: skill
+      references:
+        - name: python-debugging
+          file: skills/bug-killer/references/python-debugging.md
+          used_by: [bug-killer]
+        - name: typescript-debugging
+          file: skills/bug-killer/references/typescript-debugging.md
+          used_by: [bug-killer]
+
+    - name: architecture-patterns
+      file: skills/architecture-patterns/SKILL.md
+      description: "Architectural pattern knowledge for MVC, event-driven, microservices, CQRS, and hexagonal patterns"
+      origin: skill
+
+    - name: code-quality
+      file: skills/code-quality/SKILL.md
+      description: "Code quality principles including SOLID, DRY, testing strategies, and best practices"
+      origin: skill
+
+    - name: project-learnings
+      file: skills/project-learnings/SKILL.md
+      description: "Captures project-specific patterns and anti-patterns into project configuration"
+      origin: skill
+
+    - name: changelog-format
+      file: skills/changelog-format/SKILL.md
+      description: "Keep a Changelog format guidelines and entry writing best practices"
+      origin: skill
+
+    - name: docs-manager
+      file: skills/docs-manager/SKILL.md
+      description: "Documentation management workflow for MkDocs sites and standalone markdown files"
+      origin: skill
+      references:
+        - name: markdown-file-templates
+          file: skills/docs-manager/references/markdown-file-templates.md
+          used_by: [docs-manager]
+
+    - name: release
+      file: skills/release/SKILL.md
+      description: "Python package release workflow with verification, changelog, and tagging"
+      origin: skill
+
+    - name: document-changes
+      file: skills/document-changes/SKILL.md
+      description: "Generate markdown reports documenting codebase changes from git history"
+      origin: skill
+
+  agents:
+    - name: code-reviewer
+      file: agents/code-reviewer.md
+      description: "Reviews code for correctness, security, and maintainability with confidence-scored findings"
+      role: reviewer
+
+    - name: bug-investigator
+      file: agents/bug-investigator.md
+      description: "Executes diagnostic investigation tasks to test debugging hypotheses"
+      role: investigator
+
+    - name: changelog-manager
+      file: agents/changelog-manager.md
+      description: "Reviews git history and updates CHANGELOG.md with entries for unreleased section"
+      role: writer
+
+    - name: docs-writer
+      file: agents/docs-writer.md
+      description: "Generates MkDocs-flavored or GitHub-flavored Markdown documentation from analysis findings"
+      role: writer
+
+  hooks:
+    - event: session_start
+      file: hooks/hooks.yaml
+      description: "Cross-plugin dependency resolution for cache environments"
+
+dependencies:
+  internal:
+    - from: feature-dev
+      to: architecture-patterns
+      relationship: "Loads for architecture design in Phase 4"
+    - from: feature-dev
+      to: code-quality
+      relationship: "Loads for quality review in Phase 6"
+    - from: feature-dev
+      to: changelog-format
+      relationship: "Loads for changelog entry in Phase 7"
+    - from: bug-killer
+      to: code-quality
+      relationship: "Loads for quality check in Phase 4 (deep track)"
+    - from: bug-killer
+      to: project-learnings
+      relationship: "Loads for capturing learnings in Phase 5"
+    - from: feature-dev
+      to: code-reviewer
+      relationship: "Spawns 3 review agents in Phase 6"
+    - from: bug-killer
+      to: bug-investigator
+      relationship: "Spawns 1-3 hypothesis testing agents in Phase 3"
+    - from: release
+      to: changelog-manager
+      relationship: "Optionally spawns to update changelog before release"
+    - from: docs-manager
+      to: docs-writer
+      relationship: "Spawns documentation generation agents in Phase 5"
+    - from: docs-writer
+      to: technical-diagrams
+      relationship: "Preloads for Mermaid diagram generation (cross-plugin)"
+  external:
+    - from: feature-dev
+      to: deep-analysis
+      source_plugin: "core-tools"
+      relationship: "Delegates codebase exploration in Phase 2"
+      note: "Not included — convert core-tools separately"
+    - from: feature-dev
+      to: language-patterns
+      source_plugin: "core-tools"
+      relationship: "Loads for language patterns in Phase 4"
+      note: "Not included — convert core-tools separately"
+    - from: feature-dev
+      to: technical-diagrams
+      source_plugin: "core-tools"
+      relationship: "Loads for diagram styling in Phase 4"
+      note: "Not included — convert core-tools separately"
+    - from: feature-dev
+      to: code-architect
+      source_plugin: "core-tools"
+      relationship: "Spawns 2-3 architect agents in Phase 4"
+      note: "Not included — convert core-tools separately"
+    - from: bug-killer
+      to: code-explorer
+      source_plugin: "core-tools"
+      relationship: "Spawns 2-3 exploration agents in Phase 2 (deep track)"
+      note: "Not included — convert core-tools separately"
+    - from: docs-manager
+      to: deep-analysis
+      source_plugin: "core-tools"
+      relationship: "Delegates codebase exploration in Phase 3"
+      note: "Not included — convert core-tools separately"
+    - from: docs-writer
+      to: technical-diagrams
+      source_plugin: "core-tools"
+      relationship: "Agent preloads for diagram generation"
+      note: "Not included — convert core-tools separately"

@@ -1,0 +1,98 @@
+name: core-tools
+description: "Agent Alchemy Core Tools — codebase analysis, deep exploration, language patterns, project conventions, and technical diagram generation for AI agents"
+source:
+  platform: "Claude Code"
+  plugin: "agent-alchemy-core-tools"
+  version: "0.2.3"
+mode: "full"
+converted: "2026-03-10"
+
+components:
+  skills:
+    - name: deep-analysis
+      file: skills/deep-analysis/SKILL.md
+      description: "Deep exploration and synthesis workflow using dynamic planning and hub-and-spoke coordination"
+
+    - name: codebase-analysis
+      file: skills/codebase-analysis/SKILL.md
+      description: "Structured codebase analysis report with architecture overview, critical files, patterns, and actionable recommendations"
+
+    - name: language-patterns
+      file: skills/language-patterns/SKILL.md
+      description: "Language-specific patterns for TypeScript, Python, and React including idioms, best practices, and common patterns"
+
+    - name: project-conventions
+      file: skills/project-conventions/SKILL.md
+      description: "Guides discovery and application of project-specific conventions including code patterns, naming, structure, and team practices"
+
+    - name: technical-diagrams
+      file: skills/technical-diagrams/SKILL.md
+      description: "Mermaid diagram syntax, best practices, and styling rules for technical visualizations"
+      references:
+        - name: sequence-diagrams
+          file: skills/technical-diagrams/references/sequence-diagrams.md
+          used_by: [technical-diagrams]
+        - name: class-diagrams
+          file: skills/technical-diagrams/references/class-diagrams.md
+          used_by: [technical-diagrams]
+        - name: state-diagrams
+          file: skills/technical-diagrams/references/state-diagrams.md
+          used_by: [technical-diagrams]
+        - name: er-diagrams
+          file: skills/technical-diagrams/references/er-diagrams.md
+          used_by: [technical-diagrams]
+
+  agents:
+    - name: code-explorer
+      file: agents/code-explorer.md
+      description: "Explores codebases to find relevant files, trace execution paths, and map architecture"
+      role: explorer
+
+    - name: code-architect
+      file: agents/code-architect.md
+      description: "Designs implementation blueprints for features using exploration findings and architectural best practices"
+      role: architect
+
+    - name: code-synthesizer
+      file: agents/code-synthesizer.md
+      description: "Synthesizes exploration findings into unified analysis with deep investigation and completeness evaluation"
+      role: synthesizer
+
+  hooks:
+    - event: before_action
+      file: hooks/hooks.yaml
+      description: "Auto-approve file operations targeting deep-analysis session and cache directories"
+
+dependencies:
+  internal:
+    - from: codebase-analysis
+      to: deep-analysis
+      relationship: "Delegates codebase exploration and synthesis to deep-analysis in Phase 1"
+    - from: codebase-analysis
+      to: technical-diagrams
+      relationship: "Loads diagram guidance for report generation in Phase 2"
+    - from: deep-analysis
+      to: code-explorer
+      relationship: "Spawns N explorer workers for parallel focus area exploration"
+    - from: deep-analysis
+      to: code-synthesizer
+      relationship: "Spawns 1 synthesizer to merge exploration findings"
+    - from: code-explorer
+      to: project-conventions
+      relationship: "Preloads for pattern recognition during exploration"
+    - from: code-explorer
+      to: language-patterns
+      relationship: "Preloads for language-specific pattern recognition"
+    - from: code-architect
+      to: technical-diagrams
+      relationship: "Preloads for Mermaid diagram generation in blueprints"
+    - from: code-synthesizer
+      to: project-conventions
+      relationship: "Preloads for convention identification during synthesis"
+    - from: code-synthesizer
+      to: language-patterns
+      relationship: "Preloads for language pattern recognition during synthesis"
+    - from: code-synthesizer
+      to: technical-diagrams
+      relationship: "Preloads for architecture diagram generation in synthesis output"
+  external: []
