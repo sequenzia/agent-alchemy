@@ -1,0 +1,12 @@
+description: Cross-plugin dependency resolution for cache environments
+
+hooks:
+  session_start:
+    - type: command
+      description: >-
+        Creates short-name symlinks so cross-plugin references resolve correctly
+        in the plugin cache. In the local monorepo, sibling directory references
+        resolve naturally. In the cache, org-prefixed names and version subdirectories
+        break that convention. This script bridges the gap by creating symlinks.
+      command: bash scripts/resolve-cross-plugins.sh
+      timeout: 10

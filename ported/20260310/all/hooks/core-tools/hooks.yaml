@@ -1,0 +1,14 @@
+description: Auto-approve file operations for deep-analysis session and cache management
+
+hooks:
+  before_action:
+    - matcher: "Write|Edit|Bash"
+      description: >-
+        Auto-approves file write, edit, and command operations targeting
+        deep-analysis session directories (.agents/sessions/__da_live__/*,
+        .agents/sessions/exploration-cache/*, .agents/sessions/da-*/*).
+        All other operations pass through to normal permission handling.
+      hooks:
+        - type: command
+          command: "bash scripts/auto-approve-da-session.sh"
+          timeout: 5
