@@ -1,0 +1,136 @@
+name: dev-tools
+description: "Agent Alchemy Dev Tools — dev utilities, debugging, and workflow enhancements"
+mode: "flatten"
+source:
+  platform: "Claude Code"
+  plugin: "agent-alchemy-dev-tools"
+  version: "0.3.4"
+converted: "2026-03-10"
+
+components:
+  skills:
+    - name: changelog-format
+      file: skills/changelog-format/SKILL.md
+      description: Keep a Changelog format guidelines and entry writing best practices
+      origin: skill
+    - name: code-quality
+      file: skills/code-quality/SKILL.md
+      description: Provides code quality principles including SOLID, DRY, testing strategies, and best practices for implementation review
+      origin: skill
+    - name: release
+      file: skills/release/SKILL.md
+      description: Prepare and execute a Python package release with verification steps
+      origin: skill
+    - name: document-changes
+      file: skills/document-changes/SKILL.md
+      description: Generate a markdown report documenting codebase changes from the current session
+      origin: skill
+    - name: project-learnings
+      file: skills/project-learnings/SKILL.md
+      description: Captures project-specific patterns and anti-patterns into project documentation
+      origin: skill
+    - name: bug-killer
+      file: skills/bug-killer/SKILL.md
+      description: Systematic, hypothesis-driven debugging workflow with triage-based track routing
+      origin: skill
+      references:
+        - name: python-debugging
+          file: skills/bug-killer/references/python-debugging.md
+          used_by: [bug-killer]
+        - name: typescript-debugging
+          file: skills/bug-killer/references/typescript-debugging.md
+          used_by: [bug-killer]
+    - name: docs-manager
+      file: skills/docs-manager/SKILL.md
+      description: Documentation management workflow for MkDocs sites and standalone markdown files
+      origin: skill
+      references:
+        - name: markdown-file-templates
+          file: skills/docs-manager/references/markdown-file-templates.md
+          used_by: [docs-manager]
+    - name: architecture-patterns
+      file: skills/architecture-patterns/SKILL.md
+      description: Provides architectural pattern knowledge for designing feature implementations
+      origin: skill
+    - name: feature-dev
+      file: skills/feature-dev/SKILL.md
+      description: Feature development workflow with exploration, architecture, implementation, and review phases
+      origin: skill
+    - name: changelog-manager
+      file: skills/changelog-manager/SKILL.md
+      description: Reviews git history and updates CHANGELOG.md with entries for [Unreleased] section (converted from agent)
+      origin: agent
+    - name: code-reviewer
+      file: skills/code-reviewer/SKILL.md
+      description: Reviews code implementations for correctness, security, maintainability with confidence-scored findings (converted from agent)
+      origin: agent
+    - name: bug-investigator
+      file: skills/bug-investigator/SKILL.md
+      description: Executes diagnostic investigation tasks to test debugging hypotheses (converted from agent)
+      origin: agent
+    - name: docs-writer
+      file: skills/docs-writer/SKILL.md
+      description: Generates MkDocs-flavored or standard GitHub-flavored Markdown documentation from codebase analysis findings (converted from agent)
+      origin: agent
+    - name: lifecycle-hooks
+      file: skills/lifecycle-hooks/SKILL.md
+      description: Behavioral rules and lifecycle event handlers for the dev-tools package (converted from hooks)
+      origin: hooks
+      references:
+        - name: resolve-cross-plugins
+          file: skills/lifecycle-hooks/references/resolve-cross-plugins.sh
+          used_by: [lifecycle-hooks]
+
+dependencies:
+  internal:
+    - from: bug-killer
+      to: code-quality
+      relationship: "Loads code quality principles for fix validation"
+    - from: bug-killer
+      to: project-learnings
+      relationship: "Loads for capturing project-specific debugging discoveries"
+    - from: feature-dev
+      to: architecture-patterns
+      relationship: "Loads architectural patterns for design phase"
+    - from: feature-dev
+      to: code-quality
+      relationship: "Loads code quality principles for review phase"
+    - from: feature-dev
+      to: changelog-format
+      relationship: "Loads changelog guidelines for summary phase"
+  external:
+    - from: bug-killer
+      to: code-explorer
+      source_plugin: "core-tools"
+      relationship: "Delegates codebase exploration during deep-track investigation"
+      note: "Not included — convert core-tools separately if needed"
+    - from: docs-manager
+      to: deep-analysis
+      source_plugin: "core-tools"
+      relationship: "Loads deep-analysis workflow for codebase exploration before documentation"
+      note: "Not included — convert core-tools separately if needed"
+    - from: feature-dev
+      to: deep-analysis
+      source_plugin: "core-tools"
+      relationship: "Loads deep-analysis workflow for codebase exploration"
+      note: "Not included — convert core-tools separately if needed"
+    - from: feature-dev
+      to: language-patterns
+      source_plugin: "core-tools"
+      relationship: "Loads language-specific coding patterns for implementation"
+      note: "Not included — convert core-tools separately if needed"
+    - from: feature-dev
+      to: technical-diagrams
+      source_plugin: "core-tools"
+      relationship: "Loads diagram conventions for architecture proposals"
+      note: "Not included — convert core-tools separately if needed"
+    - from: feature-dev
+      to: code-architect
+      source_plugin: "core-tools"
+      relationship: "Delegates architecture design to code-architect agents"
+      note: "Not included — convert core-tools separately if needed"
+    - from: docs-writer
+      to: technical-diagrams
+      source_plugin: "core-tools"
+      relationship: "Preloads Mermaid diagram conventions for documentation"
+      note: "Not included — convert core-tools separately if needed"

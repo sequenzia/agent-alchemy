@@ -1,0 +1,19 @@
+name: git-tools
+description: "Agent Alchemy Git Tools — git utilities for version control"
+mode: "flatten"
+source:
+  platform: "Claude Code"
+  plugin: "agent-alchemy-git-tools"
+  version: "0.1.0"
+converted: "2026-03-10"
+
+components:
+  skills:
+    - name: git-commit
+      file: skills/git-commit/SKILL.md
+      description: Commit staged changes with conventional commit message
+      origin: skill
+
+dependencies:
+  internal: []
+  external: []
