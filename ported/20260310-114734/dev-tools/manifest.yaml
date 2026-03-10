@@ -1,0 +1,145 @@
+name: dev-tools
+description: "Feature development, debugging, code review, documentation, and changelog management"
+mode: "nested"
+source:
+  platform: "Claude Code"
+  plugin: "agent-alchemy-dev-tools"
+  version: "0.3.4"
+converted: "2026-03-10"
+
+components:
+  skills:
+    - name: code-quality
+      path: skills/code-quality/SKILL.md
+      type: leaf
+      dependencies: []
+
+    - name: changelog-format
+      path: skills/changelog-format/SKILL.md
+      type: leaf
+      dependencies: []
+      notes: "entry-examples.md reference inlined into skill body"
+
+    - name: architecture-patterns
+      path: skills/architecture-patterns/SKILL.md
+      type: leaf
+      dependencies: []
+
+    - name: document-changes
+      path: skills/document-changes/SKILL.md
+      type: leaf
+      dependencies: []
+
+    - name: project-learnings
+      path: skills/project-learnings/SKILL.md
+      type: leaf
+      dependencies: []
+
+    - name: release
+      path: skills/release-python-package/SKILL.md
+      type: parent
+      dependencies: []
+      nested_agents:
+        - name: changelog-manager
+          path: skills/release-python-package/agents/changelog-manager.md
+          role: writer
+
+    - name: bug-killer
+      path: skills/bug-killer/SKILL.md
+      type: parent
+      dependencies:
+        - code-quality
+        - project-learnings
+      external_dependencies:
+        - package: core-tools
+          skill: code-explorer
+          usage: "Phase 2 deep track — parallel codebase exploration agents"
+      nested_agents:
+        - name: bug-investigator
+          path: skills/bug-killer/agents/bug-investigator.md
+          role: investigator
+      references:
+        - skills/bug-killer/references/python-debugging.md
+        - skills/bug-killer/references/typescript-debugging.md
+      notes: "general-debugging.md reference inlined into skill body"
+
+    - name: feature-dev
+      path: skills/feature-dev/SKILL.md
+      type: parent
+      dependencies:
+        - architecture-patterns
+        - code-quality
+        - changelog-format
+      external_dependencies:
+        - package: core-tools
+          skill: deep-analysis
+          usage: "Phase 2 — codebase exploration and synthesis"
+        - package: core-tools
+          skill: language-patterns
+          usage: "Phase 4 — language-specific pattern guidance"
+        - package: core-tools
+          skill: technical-diagrams
+          usage: "Phase 4 — Mermaid diagram styling for architecture proposals"
+        - package: core-tools
+          agent: code-architect
+          usage: "Phase 4 — parallel architecture design agents"
+      nested_agents:
+        - name: code-reviewer
+          path: skills/feature-dev/agents/code-reviewer.md
+          role: reviewer
+      notes: "adr-template.md and changelog-entry-template.md references inlined into skill body"
+
+    - name: docs-manager
+      path: skills/docs-manager/SKILL.md
+      type: parent
+      dependencies: []
+      external_dependencies:
+        - package: core-tools
+          skill: deep-analysis
+          usage: "Phase 3 — codebase analysis for documentation"
+        - package: core-tools
+          agent: code-explorer
+          usage: "Phase 3 change-summary path — file change analysis"
+      nested_agents:
+        - name: docs-writer
+          path: skills/docs-manager/agents/docs-writer.md
+          role: writer
+          external_skill_knowledge:
+            - package: core-tools
+              skill: technical-diagrams
+              usage: "Mermaid diagram conventions for documentation"
+      references:
+        - skills/docs-manager/references/markdown-file-templates.md
+      notes: "change-summary-templates.md and mkdocs-config-template.md references inlined into skill body"
+
+    - name: lifecycle-hooks
+      path: skills/lifecycle-hooks/SKILL.md
+      type: leaf
+      dependencies: []
+      references:
+        - skills/lifecycle-hooks/references/resolve-cross-plugins.sh
+      notes: "Converted from SessionStart hook — cross-plugin symlink resolution for cached environments"
+
+dependency_graph:
+  internal:
+    feature-dev:
+      - architecture-patterns
+      - code-quality
+      - changelog-format
+    bug-killer:
+      - code-quality
+      - project-learnings
+
+  external:
+    feature-dev:
+      - "core-tools:deep-analysis"
+      - "core-tools:language-patterns"
+      - "core-tools:technical-diagrams"
+      - "core-tools:code-architect (agent)"
+    bug-killer:
+      - "core-tools:code-explorer (agent)"
+    docs-manager:
+      - "core-tools:deep-analysis"
+      - "core-tools:code-explorer (agent)"
+    docs-writer:
+      - "core-tools:technical-diagrams"
