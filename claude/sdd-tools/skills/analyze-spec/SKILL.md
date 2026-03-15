@@ -82,7 +82,7 @@ Extract the spec filename and construct both output paths.
 
 ### Step 6: Launch Analyzer Agent
 
-Launch the Spec Analyzer Agent using the Task tool with subagent_type `spec-analyzer`.
+Launch the Spec Analyzer Agent using the Task tool with subagent_type `agent-alchemy-sdd-tools:spec-analyzer`.
 
 Provide this context in the prompt:
 
