@@ -1,24 +1,10 @@
 ---
 name: execute-tdd-tasks
-description: Execute TDD task pairs autonomously with RED-GREEN-REFACTOR verification. Orchestrates wave-based execution with strategic parallelism, routing TDD tasks to tdd-executor agents and non-TDD tasks to standard task-executor. Use when user says "execute tdd tasks", "run tdd tasks", "start tdd execution", or wants to execute TDD-paired tasks from create-tdd-tasks.
+description: "Execute TDD task pairs autonomously with RED-GREEN-REFACTOR verification. Orchestrates wave-based execution with strategic parallelism, routing TDD tasks to tdd-executor agents and non-TDD tasks to standard task-executor. Use when user says \"execute tdd tasks\", \"run tdd tasks\", \"start tdd execution\", or wants to execute TDD-paired tasks from create-tdd-tasks."
 argument-hint: "[--task-group <group>] [--max-parallel <n>] [--retries <n>]"
 user-invocable: true
 disable-model-invocation: false
-allowed-tools:
-  - Read
-  - Write
-  - Edit
-  - Glob
-  - Grep
-  - Bash
-  - Task
-  - TaskOutput
-  - TaskStop
-  - AskUserQuestion
-  - TaskCreate
-  - TaskGet
-  - TaskList
-  - TaskUpdate
+allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Task, TaskOutput, TaskStop, AskUserQuestion, TaskCreate, TaskGet, TaskList, TaskUpdate
 arguments:
   - name: task-group
     description: Optional task group name to filter tasks. Only tasks with matching metadata.task_group will be executed.

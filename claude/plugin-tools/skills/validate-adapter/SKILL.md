@@ -1,18 +1,10 @@
 ---
 name: validate-adapter
-description: Validates adapter files against live platform documentation to detect stale mappings,missing features, and outdated version information
+description: "Validates adapter files against live platform documentation to detect stale mappings, missing features, and outdated version information across all 9 adapter sections. Use when validating platform adapters, checking adapter staleness, auditing adapter accuracy, updating adapter mappings, or verifying adapter health before a port operation."
 user-invocable: true
 disable-model-invocation: true
 argument-hint: "--target <platform> [--update]"
-allowed-tools:
-  - Read
-  - Write
-  - Edit
-  - Glob
-  - Grep
-  - Bash
-  - AskUserQuestion
-  - Task
+allowed-tools: Read, Write, Edit, Glob, Grep, Bash, AskUserQuestion, Task
 ---
 
 # Validate Adapter
