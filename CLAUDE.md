@@ -161,6 +161,8 @@ bug-killer (deep) -> code-explorer (core-tools, sonnet) x 2-3 + bug-investigator
 codebase-analysis -> technical-diagrams (loaded in Phase 2 for report diagrams)
 docs-manager -> docs-writer -> technical-diagrams (auto-loaded via skills: frontmatter)
 
+interview-me -> question-bank + research-triggers (references, loaded Phase 2) -> interview-researcher (opus) x 0-N per interview, bounded by proactive budget -> templates/{report-detailed,report-summary,implementation-plan}.md (Phase 5) -> technical-diagrams (Phase 5, detailed/deep-dive only)
+
 oc-tool-dev -> triage interview -> dependency detection -> loads oc-create-*/oc-update-* skills -> oc-generator x N -> oc-validator x N
 oc-create-skill/oc-create-agent/oc-create-command (opencode-tools) -> oc-generator x 1 -> oc-validator x 1
 oc-update-skill/oc-update-agent/oc-update-command (opencode-tools) -> oc-researcher x 1 -> oc-validator x 1
@@ -195,7 +197,7 @@ verify (cs-tools) -> solution-verifier (opus) x 1 -> static analysis + test gene
 | Group | Skills | Agents | Version |
 |-------|--------|--------|---------|
 | claude-tools | claude-code-tasks, claude-code-teams | — | 0.2.5 |
-| core-tools | deep-analysis, codebase-analysis, language-patterns, project-conventions, technical-diagrams | code-explorer, code-synthesizer, code-architect | 0.2.3 |
+| core-tools | deep-analysis, codebase-analysis, interview-me, language-patterns, project-conventions, technical-diagrams | code-explorer, code-synthesizer, code-architect, interview-researcher | 0.2.4 |
 | dev-tools | feature-dev, bug-killer, architecture-patterns, code-quality, project-learnings, changelog-format, docs-manager, release-python-package, document-changes | code-reviewer, bug-investigator, changelog-manager, docs-writer | 0.3.4 |
 | sdd-tools | create-spec, analyze-spec, create-tasks, run-tasks | codebase-explorer, researcher, spec-analyzer, wave-lead, context-manager, task-executor-v2 | 0.2.11 |
 | tdd-tools | generate-tests, tdd-cycle, analyze-coverage, create-tdd-tasks, execute-tdd-tasks | test-writer, tdd-executor, test-reviewer | 0.2.1 |
@@ -251,3 +253,9 @@ User preferences are stored in `.claude/agent-alchemy.local.md` (not committed):
 - `plugin-tools.dependency-checker.severity-threshold`: Minimum severity to show (`critical` | `high` | `medium` | `low`, default: `low`)
 - `plugin-tools.dependency-checker.check-docs-drift`: Run Phase 4 CLAUDE.md/README cross-referencing (default: `true`)
 - `plugin-tools.dependency-checker.line-count-tolerance`: Percentage tolerance for line count drift in CLAUDE.md tables (default: `10`)
+- `interview-me.default-depth`: Default interview depth (`overview` | `detailed` | `deep-dive`, default: `detailed`)
+- `interview-me.default-output-type`: Default output type (`report-detailed` | `report-summary` | `implementation-plan` | `something-else`, default: `report-detailed`)
+- `interview-me.output-directory`: Default directory for interview artifacts (default: `internal/interviews/`)
+- `interview-me.proactive-research-budget`: Max proactive research calls per interview; `0` disables proactive research (default: `3`)
+- `interview-me.enable-context-argument`: Whether the skill accepts a `$ARGUMENTS` context (file path or inline text) to pre-load (default: `true`)
+- `interview-me.slug-collision-strategy`: How to handle existing output files (`timestamp-suffix` | `prompt`, default: `timestamp-suffix`)
