@@ -49,7 +49,6 @@ markdown_extensions:
   - pymdownx.highlight:
       anchor_linenums: true
       line_spans: __span
-      pygments_lang_guess: false
   - pymdownx.inlinehilite
   - pymdownx.tabbed:
       alternate_style: true
@@ -59,9 +58,54 @@ markdown_extensions:
   - toc:
       permalink: true
 
+extra_css:
+  - stylesheets/extra.css
+
 nav:
   - Home: index.md
   - Getting Started: getting-started.md
+```
+
+> **`extra_css` is required, not optional.** The template ships a light/dark
+> palette toggle, and the standard Mermaid diagram palette (light fills + dark
+> text) is unreadable in Material's dark `slate` scheme without the companion
+> stylesheet below. Always write `docs/stylesheets/extra.css` when you write this
+> `mkdocs.yml`.
+
+---
+
+## Mermaid dark-mode stylesheet
+
+Write this file to **`docs/stylesheets/extra.css`** whenever you scaffold the
+`mkdocs.yml` above (the palette includes a dark `slate` scheme). Without it,
+Mermaid diagrams that use the standard light-fill palette render light-on-light in
+dark mode and their edges vanish where they cross light fills. The override is
+scoped to the `slate` scheme, so light mode is unaffected, and no diagram source
+needs editing.
+
+> Mirror of the canonical companion documented in the **technical-diagrams** skill
+> (`Styling and Theming → Dark-mode rendering`). Keep the two in sync.
+
+```css
+/* Mermaid dark-mode companion for MkDocs Material.
+   The standard diagram palette uses light fills + dark (color:#000) text, which
+   is correct on a light page. Material's dark (slate) scheme flips the
+   --md-mermaid-* custom properties to light values, so that dark text becomes
+   light-on-light and edges crossing the light fills vanish. These variables
+   inherit into Mermaid's (closed shadow-DOM) SVG — which is how Material themes
+   it — so redefining them for slate restores readability without touching any
+   diagram source. */
+[data-md-color-scheme="slate"] {
+  --md-mermaid-label-fg-color: #1b2330;            /* node + subgraph titles + edge-label text */
+  --md-mermaid-label-bg-color: #eef1f6;            /* edge-label / actor / note chip backgrounds */
+  --md-mermaid-node-fg-color: #5b4b86;             /* node / ER-entity / actor borders */
+  --md-mermaid-node-bg-color: #ece9f6;             /* ER entity + attribute fills, sequence frames */
+  --md-mermaid-edge-color: #737d91;                /* edges/arrows: mid-tone — one edge can cross BOTH the dark page and a light fill */
+  --md-mermaid-sequence-message-fg-color: #cfd6e2; /* message text floats over the dark page — keep it light */
+  --md-mermaid-sequence-note-fg-color: #1b2330;    /* note text sits on a light note box */
+  --md-mermaid-sequence-loop-fg-color: #1b2330;    /* alt/par/loop labels on the now-light frame */
+  --md-mermaid-sequence-box-fg-color: #1b2330;
+}
 ```
 
 ---
@@ -164,8 +208,9 @@ Links to further documentation sections.
    - Remove `repo_url` and `repo_name` if not in a git repository
 
 3. **Write the files:**
-   - Write `mkdocs.yml` to the project root
+   - Write `mkdocs.yml` to the project root (keep the `extra_css` key)
    - Create `docs/` directory
+   - Write `docs/stylesheets/extra.css` with the Mermaid dark-mode companion above
    - Write `docs/index.md` and `docs/getting-started.md` with project-specific content
 
 4. **Customize the nav:**

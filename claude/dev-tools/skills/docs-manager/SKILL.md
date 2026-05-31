@@ -124,10 +124,16 @@ If the user wants to change, loop back to the relevant question.
 
 1. Load `${CLAUDE_PLUGIN_ROOT}/skills/docs-manager/references/mkdocs-config-template.md`
 2. Fill template with detected metadata (ask via `AskUserQuestion` if incomplete)
-3. Generate `mkdocs.yml`, create `docs/index.md` and `docs/getting-started.md`
-4. Present scaffold for confirmation before writing
+3. **Ensure MkDocs dependencies are installed** so the Phase 6 build/serve checks can run:
+   - Python project (`pyproject.toml`): add a `docs` dependency group with `mkdocs-material` and `pymdown-extensions` (e.g. under `[dependency-groups]`), then sync (`uv sync --group docs`, or `pip install mkdocs-material`).
+   - Other projects: MkDocs is Python-based — `pip install mkdocs-material` (or `pipx`).
+   - If `mkdocs` is already importable/on PATH, skip.
+4. Generate `mkdocs.yml` (keep its `extra_css` key) and create:
+   - `docs/index.md` and `docs/getting-started.md`
+   - **`docs/stylesheets/extra.css`** — the Mermaid dark-mode companion from the template. **Not optional:** the palette ships a dark `slate` scheme, and the standard Mermaid palette (light fills + dark text) is unreadable in dark mode without it.
+5. Present scaffold for confirmation before writing
 
-If `MKDOCS_SCOPE = minimal` (getting started only): write the scaffold files and skip to Phase 6.
+If `MKDOCS_SCOPE = minimal` (getting started only): write the scaffold files (including `docs/stylesheets/extra.css`) and skip to Phase 6.
 
 ### Step 4 — Set action-specific context (for update/change-summary)
 
@@ -264,7 +270,7 @@ Project: [project name] at [project root]
 MkDocs site context:
 - Theme: Material for MkDocs
 - Extensions available: admonitions, code highlighting, tabbed content, Mermaid diagrams
-- Diagram guidance: The technical-diagrams skill is loaded — use Mermaid for all diagrams. Follow its styling rules (dark text on nodes).
+- Diagram guidance: The technical-diagrams skill is loaded — use Mermaid for all diagrams with its standard styling (light fills + dark text on nodes). The site ships a dark-mode companion stylesheet (`docs/stylesheets/extra.css`), so diagrams render correctly in both light and dark mode — keep the standard palette; do NOT hand-roll per-diagram dark-mode colors.
 - Existing pages: [list of current doc pages]
 
 Exploration findings:
@@ -294,7 +300,7 @@ Existing file content (if updating):
 
 Generate the complete file content in standard GitHub-flavored Markdown.
 Do NOT use MkDocs-specific extensions (admonitions, tabbed content, code block titles).
-Diagram guidance: The technical-diagrams skill is loaded — use Mermaid for all diagrams. Follow its styling rules (dark text on nodes). GitHub renders Mermaid natively.
+Diagram guidance: The technical-diagrams skill is loaded — use Mermaid for all diagrams with its standard styling (light fills + dark text on nodes). GitHub renders Mermaid natively on a light canvas (standalone Markdown can't ship a dark-mode stylesheet, so the standard light-fill palette is the right choice here).
 ```
 
 ### Step 4 — Review generated content
@@ -330,6 +336,8 @@ Diagram guidance: The technical-diagrams skill is loaded — use Mermaid for all
 - Verify all files referenced in `nav` exist on disk using Glob
 - Check for broken cross-references between pages using Grep
 - If `mkdocs` CLI is available, run `mkdocs build --strict 2>&1` to check for warnings (non-blocking)
+- Confirm `docs/stylesheets/extra.css` exists and `mkdocs.yml` lists it under `extra_css`.
+- **Verify dark mode** — the check that catches hard-coded-color contrast regressions, and the one that would have prevented the Mermaid light-on-light bug. If the site has any Mermaid diagrams: run `mkdocs serve`, open the site, toggle the palette to dark (`slate`), and confirm diagrams are legible in **both** modes — node/subgraph titles, edge labels, **edges/arrows where they cross light fills**, and sequence/ER text. Watch for the two classic failures: light-on-light text, and edges vanishing on light fills. If a diagram is unreadable in dark mode, the companion stylesheet is missing or mis-wired — see the technical-diagrams skill, "Styling and Theming → Dark-mode rendering".
 
 **Basic Markdown:**
 - Validate internal cross-references between files (e.g., README links to CONTRIBUTING)
