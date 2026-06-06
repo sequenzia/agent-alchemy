@@ -1,18 +1,10 @@
 ---
 name: update-ported-plugin
-description: Updates previously-ported plugins when source plugins change or the target platform evolves
+description: "Applies incremental updates to previously-ported plugins by detecting source diffs and platform drift since the original port, then applying targeted changes without re-running the full port workflow. Use when source plugins have changed, the target platform has evolved, updating ported plugins, syncing ported code with upstream changes, or refreshing platform adapter mappings."
 user-invocable: true
 disable-model-invocation: true
 argument-hint: "--target <platform> [--source-only] [--platform-only] [--output-dir <path>]"
-allowed-tools:
-  - Read
-  - Write
-  - Edit
-  - Glob
-  - Grep
-  - Bash
-  - AskUserQuestion
-  - Task
+allowed-tools: Read, Write, Edit, Glob, Grep, Bash, AskUserQuestion, Task
 ---
 
 # Update Ported Plugin

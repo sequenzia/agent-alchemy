@@ -1,16 +1,10 @@
 ---
 name: bump-plugin-version
-description: Bumps plugin versions across the Agent Alchemy ecosystem
+description: "Bumps plugin versions across the Agent Alchemy ecosystem by scanning 5 version locations per plugin, detecting drift, and applying consistent semver updates with changelog entries. Use when bumping plugin versions, updating marketplace versions, checking version drift, releasing plugin updates, or preparing a new plugin release."
 user-invocable: true
 disable-model-invocation: true
 argument-hint: "[--plugin <group,...>] [--level patch|minor|major] [--dry-run]"
-allowed-tools:
-  - Read
-  - Edit
-  - Glob
-  - Grep
-  - Bash
-  - AskUserQuestion
+allowed-tools: Read, Edit, Glob, Grep, Bash, AskUserQuestion
 ---
 
 # Bump Plugin Version
