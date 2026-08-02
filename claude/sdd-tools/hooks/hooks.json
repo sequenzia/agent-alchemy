@@ -7,7 +7,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/auto-approve-session.sh",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/auto-approve-session.sh\"",
             "timeout": 5
           }
         ]
@@ -18,7 +18,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/verify-task-completion.sh",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/verify-task-completion.sh\"",
             "timeout": 120
           }
         ]
@@ -39,7 +39,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/resolve-cross-plugins.sh ${CLAUDE_PLUGIN_ROOT}",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/resolve-cross-plugins.sh\" \"${CLAUDE_PLUGIN_ROOT}\"",
             "timeout": 10
           }
         ]
